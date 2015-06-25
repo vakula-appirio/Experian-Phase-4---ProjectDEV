@@ -1,0 +1,13 @@
+<apex:component access="global" >  
+    <apex:attribute access="global" name="title" type="String"
+        description="Title of the component" />
+        
+    <div class="panel" width="100%">
+	    <div width="100%" class="widgetheader">	        
+	    	<h1 class="label" align="left" style="width: 100%;">{!title}</h1>     
+        </div>
+        <div style="padding: 10px;">
+    		<apex:componentBody />
+    	</div>
+    </div>
+</apex:component>

@@ -1,0 +1,39 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: Timecard_Setup
+ * Description: Page to set up the Locking end date for the User
+ * Created Date: Sep 17th, 2014
+ * Created By: Noopur (Appirio)
+  =====================================================================*/
+-->
+<apex:page controller="TimecardSetupController" tabStyle="Timecard__c" sidebar="false" 
+title="Timecard Setup" id="pg" docType="html-5.0">
+  <apex:sectionHeader subtitle="Timecard Settings for {!currentUser.FirstName} {!currentUser.LastName}"/>
+  <apex:form id="frm">
+    <script >
+      window.onload = setFocus
+      function setFocus() {
+        document.getElementById("pg:frm:pgBlock:btnBlock:cancelBtn").focus();
+      }
+    </script>
+    <apex:pageBlock id="pgBlock">
+      <apex:pageMessages />
+      <apex:pageBlockButtons location="top" id="btnBlock">
+        <!--apex:commandButton value="Edit" disabled="{!hasNoBU}" /-->
+        <apex:commandButton value="Save" disabled="{!hasNoBU}" action="{!doSave}"/>
+        <apex:commandButton value="Back" action="{!doCancel}" id="cancelBtn"/>
+      </apex:pageBlockButtons>
+      <apex:pageBlockSection columns="2" rendered="{!!hasNoBU}">
+        <apex:pageBlockSectionItem >
+          <apex:outputLabel value="Business Unit" />
+          <apex:outputText value="{!timecardSetting.Name}" />
+        </apex:pageBlockSectionItem>
+        <apex:pageBlockSectionItem >
+          <apex:outputLabel value="Locking End Date" />
+          <apex:input type="date" value="{!lockingDate}"/>
+        </apex:pageBlockSectionItem>
+      </apex:pageBlockSection>
+    </apex:pageBlock>
+  </apex:form>
+</apex:page>

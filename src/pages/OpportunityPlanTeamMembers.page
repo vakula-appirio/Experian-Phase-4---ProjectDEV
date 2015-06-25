@@ -1,0 +1,43 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OpportunityPlanTeamMembers.page
+ * Description: T-273984: This page is used to display Opp team members list on the opportunity plan layout
+ * Created Date: 
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * 23rd Dec, 2014     Arpita Bose(Appirio)         Updated as per the Task T-343520
+ * =====================================================================*/
+ -->
+<apex:page standardController="Opportunity_Plan__c" extensions="OpportunityPlanTeamMembersController" action="{!doPageAction}" title="{!$Label.ACCOUNTPLANNING_OppPlanTeam_Title}">
+<link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+<apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/custom-style.css')}" />
+  
+  <apex:form >
+    <apex:pageBlock >
+      <apex:pageBlockButtons location="top">
+        <apex:commandButton value="{!$Label.ACCOUNTPLANNING_OppPlanTeam_Button_Add_Team_Member}" rendered="{!IF(ISNULL(opportunityId),false,true)}" onclick="navigateToAddTeamMember('{!addButtonURL}');return false;"></apex:commandButton> 
+      </apex:pageBlockButtons>
+      <apex:outputpanel styleClass="membersTable">
+          <apex:pageblockTable value="{!oppTeamMembers}" var="oppTeamMember">
+            <apex:column >
+                <apex:facet name="header">{!$Label.ACCOUNTPLANNING_OppPlanTeam_Team_Member}</apex:facet>
+                <apex:outputText value="{!oppTeamMember.User.Name}" /> 
+            </apex:column>
+            <apex:column > 
+                <apex:facet name="header">{!$Label.ACCOUNTPLANNING_OppPlanTeam_Member_Role}</apex:facet>
+                <apex:outputText value="{!oppTeamMember.TeamMemberRole}" />
+            </apex:column>
+        </apex:pageblockTable>
+    </apex:outputpanel>
+    </apex:pageBlock>
+    <apex:outputField value="{!Opportunity_Plan__c.Opportunity_Name__c}" rendered="false"/>
+  </apex:form> 
+  <script type="text/javascript">  
+      var navigateToAddTeamMember = function(urlForAddTeamMember){
+        window.top.location.href = urlForAddTeamMember;
+      }
+  </script> 
+  
+</apex:page>

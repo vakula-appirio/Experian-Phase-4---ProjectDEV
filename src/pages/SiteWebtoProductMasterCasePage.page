@@ -1,0 +1,177 @@
+<apex:page showHeader="true" sidebar="false" standardController="Product_Master__c" extensions="SiteWebtoProductMasterCaseExtCntlr">
+<!-- Added to hide header and show Help Text -->
+<style type="text/css">
+
+.bPageHeader {
+
+    display:none;
+
+}
+
+</style>
+<div>
+<table align="left">
+<tr >
+<td>
+<apex:image url="{!URLFOR($Resource.ExperianBranding, 'ExperianLogo.png')}" />
+</td>
+</tr>
+</table>
+</div>
+<apex:form id="PageForm">
+<Apex:outputPanel id="TypePanel">
+<apex:outputPanel rendered="{!showTypeSelection }"  >
+<br/><br/><br/><br/>
+<table size="100%" align= "center">
+<tr/>
+<tr>
+<td><apex:commandButton Action="{!ReqNewProduct}" value="New Product Request" /></td>
+<td>   <apex:commandButton Action="{!ReqUpdateProduct}" value="Product Update Request"/></td>
+</tr>
+</table>
+</Apex:outputPanel>
+</Apex:outputPanel>
+<Apex:outputPanel id="FieldsPanel">
+<apex:outputPanel id="NewRequest" rendered="{!showNewProductReq }">
+<apex:pageBlock title="New Product Request" >
+<apex:pageBlockButtons ><apex:commandButton action="{!CreateCase}" title="Create a Request" value=" Create a Request"/></apex:pageBlockButtons>
+
+
+<apex:pageBlockSection title="Core product fields"  columns="1">
+
+
+                <apex:inputField value="{!Product_Master__c.name}"/>
+                <apex:inputField value="{!Product_Master__c.Product_master_name__c}"/>
+                <apex:inputField value="{!Product_Master__c.Product_description__c}"/>
+                <apex:inputField value="{!Product_Master__c.Type_of_sale__c}"/>
+                <apex:inputField value="{!Product_Master__c.Simple_or_complex__c}"/>
+
+
+</apex:pageBlockSection>
+
+<apex:pageBlockSection title="Discover Experian fields"  columns="2">
+
+
+                <apex:inputField value="{!Product_Master__c.Capability__c}"/>
+                <apex:inputField value="{!Product_Master__c.Customer_journey__c}"/>
+                <apex:inputField value="{!Product_Master__c.Product_family__c}"/>
+                <apex:inputField value="{!Product_Master__c.Asset_type__c}"/>
+                <apex:inputField value="{!Product_Master__c.Product_group__c}"/>
+                <apex:inputField value="{!Product_Master__c.Provides_insight_into__c}"/>
+                <apex:inputField value="{!Product_Master__c.Eligibility__c}"/>
+                <apex:inputField value="{!Product_Master__c.Other_Guidelines__c}"/>
+
+
+</apex:pageBlockSection>
+
+<apex:pageBlockSection title="Organizational information"  columns="1">
+
+
+                <apex:inputField value="{!Product_Master__c.Product_Global_Business_Line__c}"/>
+                <apex:inputField value="{!Product_Master__c.Line_of_business__c}"/>
+
+
+</apex:pageBlockSection>
+<apex:pageBlockSection title="Unique industries served"  columns="1">
+
+
+                <apex:inputField value="{!Product_Master__c.Unique_industries_served__c}"/>
+                <apex:inputField value="{!Product_Master__c.Sector__c}"/>
+
+
+</apex:pageBlockSection>
+<apex:pageBlockSection title="Financial information"  columns="1">
+
+
+                <apex:inputField value="{!Product_Master__c.Chart_of_Accounts_Subanaysis_PD_code__c}"/>
+                <apex:inputField value="{!Product_Master__c.Chart_of_Accounts_product_description__c}"/>
+
+
+</apex:pageBlockSection>
+<apex:pageBlockSection title="Links to additional information"  columns="1">
+
+
+                <apex:inputField value="{!Product_Master__c.FUSE_product_page_URL__c}"/>
+                <apex:inputField value="{!Product_Master__c.External_URL__c}"/>
+                <apex:inputField value="{!Product_Master__c.Internal_URL__c}"/>
+
+
+</apex:pageBlockSection>
+<apex:pageBlockSection title="Product Manager Information"  columns="2">
+
+                <apex:inputField value="{!Product_Master__c.Primary_Product_Master_Manager__c}"/>
+                <apex:inputField value="{!Product_Master__c.Product_team_email_or_support__c}"/>
+                <apex:inputField value="{!Product_Master__c.Product_Manager_email__c}"/>
+                 <apex:inputField value="{!Product_Master__c.Regional_product_managers__c}"/>
+                  <apex:inputField value="{!Product_Master__c.Product_Manager_phone__c}"/>
+
+</apex:pageBlockSection>
+<apex:pageBlockSection title="Product lifecycle information"  columns="2">
+
+                <apex:inputField value="{!Product_Master__c.Product_life_cycle__c}"/>
+                <apex:inputField value="{!Product_Master__c.Release_date__c}"/>
+                <apex:inputField value="{!Product_Master__c.Latest_enhancement_date__c}"/>
+                 <apex:inputField value="{!Product_Master__c.Anticipated_enhancement_date__c}"/>
+                  <apex:inputField value="{!Product_Master__c.Retirement_date__c}"/>
+
+</apex:pageBlockSection>
+<apex:pageBlockSection title="Legal information"  columns="2">
+
+                <apex:inputField value="{!Product_Master__c.Legal_registration_of_name__c}"/>
+                <apex:inputField value="{!Product_Master__c.Patent_or_intellectual_property__c}"/>
+
+</apex:pageBlockSection>
+<apex:pageBlockSection title="Global Technology Services (GTS)"  columns="2">
+
+                <apex:inputField value="{!Product_Master__c.OS_Operating_system__c}"/>
+                <apex:inputField value="{!Product_Master__c.Application__c}"/>
+                <apex:inputField value="{!Product_Master__c.Database__c}"/>
+                <apex:inputField value="{!Product_Master__c.Application_Flow_Documentation_DFD__c}"/>
+                <apex:inputField value="{!Product_Master__c.Application_documentation_location__c}"/>
+                <apex:inputField value="{!Product_Master__c.Regulatory_restrictions__c}"/>
+                 <apex:inputField value="{!Product_Master__c.Hosting_location__c}"/>
+
+</apex:pageBlockSection>
+<apex:pageBlockSection title="General Services Administration (US only)"  columns="2">
+
+                <apex:inputField value="{!Product_Master__c.GSA_product__c}"/>
+                <apex:inputField value="{!Product_Master__c.GSA_price__c}"/>
+                <apex:inputField value="{!Product_Master__c.GSA_date_added_to_schedule__c}"/>
+
+</apex:pageBlockSection>
+<apex:pageBlockSection title="Comments"  columns="1">
+
+                <apex:inputField value="{!Product_Master__c.Comments__c}"/>
+
+</apex:pageBlockSection>
+</apex:pageBlock>
+
+
+</apex:outputPanel>
+<apex:outputPanel id="UpdateRequest" rendered="{!showProductUpdateReq }">
+<apex:detail inlineEdit="false" relatedList="false" showChatter="False" subject="{!productMasterId }" />
+<apex:pageBlock title="Product Update Request" >
+<apex:pageBlockButtons ><apex:commandButton action="{!CreateUpdateCase}" title="Create an Update Request" value=" Create an Update Request"/></apex:pageBlockButtons>
+
+<apex:pageBlockSection title="Update Product Details"  columns="1">
+<apex:pageBlockSectionItem >
+<apex:outputLabel >Product Name</apex:outputLabel>
+ <c:AutoCompleteV2 allowClear="true" importJquery="true"  labelField="Name"  SObject="Product_Master__c" valueField="Name" targetField="{!Product_Master__c.name}" style="width:80%"/>
+<!--<apex:inputField value="{!Product_Master__c.name}"/>-->
+</apex:pageBlockSectionItem>
+<apex:inputTextarea value="{!productMasterStringUpdate }" label="Update Description" cols="80" />
+
+
+
+</apex:pageBlockSection>
+
+
+
+</apex:pageBlock>
+
+</apex:outputPanel>
+</Apex:outputPanel>
+</apex:form>
+
+
+</apex:page>

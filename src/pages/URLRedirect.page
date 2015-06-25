@@ -1,0 +1,19 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: URLRedirect
+ * Description: 
+ * Created Date: Feb 20th, 2014
+ * Created By: Nathalie Le Guay (Appirio)
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Mar 27th, 2014     Arpita Bose (Appirio)        T-264459: Added Custom Label in place of text
+  =====================================================================*/
+-->
+<apex:page controller="URLRedirectController" action="{!getURL}">
+  <apex:pagemessages />
+  <apex:form >
+    <br/>
+    <apex:commandButton value="{!$Label.Button_Back}" action="{!goBack}"/>
+  </apex:form>
+</apex:page>

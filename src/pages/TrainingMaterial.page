@@ -1,0 +1,104 @@
+<apex:page >
+    <style>
+        h1  {font-size: 2em; font-weight: 800; color: #1797c0}
+        h2  {font-size: 1.5em; font-weight: 800; color: #1797c0; font-family: Times;}
+        p   {font-size: 14px; font-weight: 600; color: charcoal}
+        
+        [class*='col-'] 
+        {
+            float: left;
+            padding-right: 20px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        .col-1-2 {width: 50%; height: 100%}
+        .col-1-2 p {font-size: 12px; font-weight: 500}
+        .col-1-2 a {color: #1797c0; text-decoration: none}
+        .col-1-2 a:hover {text-decoration: none}
+        .gridBorder {border: 1px solid #1797c0; border-radius: 20px; padding: 10px; height: 90%}
+        .grid:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        *, *:after, *:before {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+    </style>
+    
+    <div align="center" style="position: relative; margin-top: 10px; margin-bottom: 10px; height: 160px">
+    <apex:image value="{!$Resource.SalesEffectivenessLogo}"/>
+    </div>
+    <div id="content" style="margin-top: 10px;">
+        <div id="contentbody" style="margin: 0 auto; width: 90%">
+            <div id="trainingIndex">
+                <h1 style="font-family: Times;">{!$Label.Training_Index}</h1>
+                <div id="trainingIndexBody" style="margin: 5px">
+                    <p>{!$Label.Training_Index_Paragraph_1}</p>
+                    <p>{!$Label.Training_Index_Paragraph_2}</p>
+                    <p>{!$Label.Training_Index_Paragraph_3}</p>
+                </div>
+            </div>
+            <div class="grid" style="margin: 10px">
+                <div class="col-1-2">
+                    <div class="gridBorder">
+                        <h2>{!$Label.Training_Case_Label}</h2>
+                        <p>{!$Label.Training_Case_Body}</p>
+                        <p>{!$Label.Training_Case_Link} <a href="{!$Setup.Training_Portal_Links__c.Case__c}" target="_blank">{!$Label.Training_Play_Now}</a></p>
+                    </div>
+                </div>
+                <div class="col-1-2">
+                    <div class="gridBorder">
+                        <h2>{!$Label.Training_Opportunity_Label}</h2>
+                        <p>{!$Label.Training_Opportunity_Body}</p>
+                        <p>{!$Label.Training_Opportunity_Link} <a href="{!$Setup.Training_Portal_Links__c.Opportunity__c}" target="_blank">{!$Label.Training_Play_Now}</a></p>
+                    </div>
+                </div>
+                <div class="col-1-2">
+                    <div class="gridBorder">
+                        <h2>{!$Label.Training_Account_Label}</h2>
+                        <p>{!$Label.Training_Account_Body}</p>
+                        <p>{!$Label.Training_Account_Link} <a href="{!$Setup.Training_Portal_Links__c.Account__c}" target="_blank">{!$Label.Training_Play_Now}</a> </p>
+                    </div>
+                </div>
+                <div class="col-1-2">
+                    <div class="gridBorder">
+                        <h2>{!$Label.Training_Chatter_Label}</h2>
+                        <p>{!$Label.Training_Chatter_Body}</p>
+                        <p>{!$Label.Training_Chatter_Link} <a href="{!$Setup.Training_Portal_Links__c.Chatter__c}" target="_blank">{!$Label.Training_Play_Now}</a> </p>
+                    </div>
+                </div>
+                <div class="col-1-2">
+                    <div class="gridBorder">
+                        <h2>{!$Label.Training_Leads_Label}</h2>
+                        <p>{!$Label.Training_Leads_Body}</p>
+                        <p>{!$Label.Training_Leads_Link} <a href="{!$Setup.Training_Portal_Links__c.Lead__c}" target="_blank">{!$Label.Training_Play_Now}</a> </p>
+                    </div>
+                </div>
+                <div class="col-1-2">
+                    <div class="gridBorder">
+                        <h2>{!$Label.Training_SalesShare_Label}</h2>
+                        <p>{!$Label.Training_SalesShare_Body}</p>
+                        <p>{!$Label.Training_SalesShare_Link} <a href="{!$Setup.Training_Portal_Links__c.SalesShare__c}" target="_blank">{!$Label.Training_Play_Now}</a> </p>
+                    </div>
+                </div>
+                <div class="col-1-2">
+                    <div class="gridBorder">
+                        <h2>{!$Label.Training_Mobile_Label}</h2>
+                        <p>{!$Label.Training_Mobile_Body}</p>
+                        <p>{!$Label.Training_Mobile_Link} <a href="{!$Setup.Training_Portal_Links__c.Mobile__c}" target="_blank">{!$Label.Training_Play_Now}</a> </p>
+                    </div>
+                </div>
+                <div class="col-1-2">
+                    <div class="gridBorder">
+                        <h2>{!$Label.Training_Download_Label}</h2>
+                        <p>{!$Label.Training_Download_Body}</p>
+                        <p><a href="{!$Setup.Training_Portal_Links__c.Download__c}">{!$Label.Training_Download_PDF}</a> </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</apex:page>

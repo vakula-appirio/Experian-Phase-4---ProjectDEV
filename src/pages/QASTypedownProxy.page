@@ -1,0 +1,29 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: QASTypedownProxy
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ *
+  =====================================================================*/
+-->
+<apex:page >
+<!-- Begin Default Content REMOVE THIS -->
+<h1>PROXY PAGE FOR QAS</h1>
+This is your new Page
+<!-- End Default Content REMOVE THIS -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"> </script>
+ <script src="https://online.qas.com/SalesForceV4/Scripts/system.js"> </script>
+ <script src="https://online.qas.com/SalesForceV4/Scripts/xd.js"> </script>
+    
+ <script>
+     var xd = QASNA.typedown.XD;
+        
+     var xdReceiver = xd.createReceiver();
+     xdReceiver.receiveMessage();
+ </script>
+
+</apex:page>

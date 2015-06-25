@@ -1,0 +1,29 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ChatterAutoFollow
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Mar 27th, 2014     Arpita Bose (Appirio)        T-264459: Added Custom Labels in place of text
+  =====================================================================*/
+-->
+<apex:page id="followPage" controller="ChatterAutoFollowController">
+
+    <apex:pageBlock id="schedule" title="{!$Label.Schedule_Run}" >
+    <apex:pagemessages />
+        <apex:form >
+            <apex:PageBlockSection title="Schedule" columns="2">
+                <b>Job Name:</b> Auto Follow Schedule<br/>
+                <br/>                
+                Setup -> Adminstrative Setup -> Monitoring -> Scheduled Jobs to see the Job
+                <br/>      <br/>      
+            </apex:PageBlockSection>
+        <hr/>
+        <apex:commandButton value="{!$Label.Schedule_Button_Nightly_Run}" action="{!Nightly}" rerender="schedule"/><apex:commandButton value="{!$Label.Run_Now}" action="{!RunNow}" rerender="schedule"/>
+        
+        </apex:form>
+    </apex:pageBlock>
+</apex:page>

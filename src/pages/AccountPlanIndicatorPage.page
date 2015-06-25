@@ -1,0 +1,54 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: AccountPlanIndicatorPage
+ * Description: T-279232
+ * Created Date: May 16th, 2014
+ * Created By: Arpita Bose (Appirio)
+ *
+ * Date Modified      Modified By                  Description of the update
+ * May 29th, 2014     Arpita Bose                  T-283409: Updated td.headerActive of CSS stylesheet
+ * Jun 24th, 2014     Sonal Shrivastava            T-288931: Updated Process Button Hover Text
+ * Dec 25th, 2014     Naresh Kr Ojha               T-343510: Account Planning Refactoring (CSS and Lables)
+ * Jan 8th & 9th, 2014  Naresh Kr Ojha             T-349423: Converted page to use dynamic stages and tooltips
+  =====================================================================*/
+-->
+<apex:page standardController="Account_Plan__c" extensions="AccountPlanIndicatorExtension" standardStylesheets="false" sidebar="false">
+<link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+<apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/opptyStageIndicatorCSS.css')}"/>
+<style>
+  .tooltip {width: 200px; border:1px solid #CCC;}
+</style>
+<apex:form id="theForm"  >
+     <!-- Account Plan Indicator -->
+<body>
+        <div class="oppIndicator resetDiv" >
+            <apex:pagemessages ></apex:pagemessages>
+            <table class="oppStages tableWidth10Per" cell-padding="1" >
+              <tbody>
+                <tr>
+                  <apex:repeat value="{!lstStages}" var="sp"> 
+                       <td class="headerActive columnTd" >
+                          <span class="vfHelpText" >
+                            <apex:outputLink value="javascript:return false;" >
+                             <h3 class="active" >{!sp.Name}</h3>
+                             <br>
+                              <apex:outputPanel layout="inline" styleClass="tooltip customTooltip" >
+                              <apex:outputPanel >
+                                  <apex:image url="{!$Resource.bullet_info}" />
+                                  <apex:outputText escape="false" value="{!sp.Tooltip1__c}{!sp.Tooltip2__c}" styleClass="missingCriteria"/><br/> 
+                              </apex:outputPanel>
+                              </apex:outputPanel></br>
+                            </apex:outputLink>
+                          </span>
+                        </td>
+                   </apex:repeat> 
+                </tr>
+              </tbody>
+            </table>
+        </div>
+
+        <!-- *************** CONTENT RENDER END *************** -->
+</body>
+</apex:form>
+</apex:page>

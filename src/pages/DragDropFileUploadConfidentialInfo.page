@@ -1,0 +1,15 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: DragDropFileUploadConfidentialInfo
+ * Description: Allow users to drag files into this area (T-359199)
+ * Created Date: Feb 04th, 2015
+ * Created By: Arpita Bose(Appirio)
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * 
+  =====================================================================*/
+-->
+<apex:page standardController="Confidential_Information__c">
+   <c:DragnDropFileUploader parentId="{!Confidential_Information__c.Id}" multiple="true" retUrl="/{!Confidential_Information__c.Id}"/>
+</apex:page>

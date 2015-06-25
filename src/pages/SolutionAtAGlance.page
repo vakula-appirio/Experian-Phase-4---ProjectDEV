@@ -1,0 +1,133 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: SolutionAtAGlance
+ * Description: T-278512: 
+ * Created Date: June 14th, 2014
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Dec 29th, 2014     Arpita Bose                  Created Custom Labels
+  =====================================================================*/
+-->
+<apex:page standardController="Opportunity_Plan__c" extensions="SolutionAtAGlanceExtension" showHeader="false" sidebar="false" >
+    <apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.pdfCSS)}"/>
+    <style>
+      .SolutionAtAGlance-tdLabel {
+        font-size:11pt; 
+        font-weight:bold;
+        width:50%;
+        padding-left: 17px;
+      }
+      .SolutionAtAGlance-tdContent {
+        font-size:11pt;
+        padding-left: 5px;
+      }
+      .SolutionAtAGlance-spanStyle {
+        font-weight: bold; 
+        font-size: 20pt; 
+        margin-right: 15px;
+      }
+      .SolutionAtAGlance-textAreaStyle {
+        width:99%;
+      }
+      .SolutionAtAGlance-SpriteLogoimg {
+        width:200px;
+      }
+      .SolutionAtAGlance-center {
+        margin:10px;
+      }
+      .SolutionAtAGlance-tdSpanLabel{
+        text-align:right;
+      }
+    </style>
+    <table width="100%">
+        <tr><td>
+            <img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" class="SolutionAtAGlance-SpriteLogoimg"/>
+        </td>
+        <td class="SolutionAtAGlance-tdSpanLabel">
+            <span class="SolutionAtAGlance-spanStyle">{!$Label.ACCOUNTPLANNING_Solution_at_a_Glance}</span>
+        </td></tr>
+    </table>
+   <apex:form id="formId">   
+     <apex:pageMessages id="errorsMsg"/>
+     <apex:actionFunction name="saveAttachment" action="{!saveAttachment}" reRender="none" />
+     <apex:actionFunction name="renderPDF" action="{!generatePDF}" />
+        <center class="SolutionAtAGlance-center">
+            <apex:commandButton action="{!Save}" value="Save" />
+            <!-- <a class="btn" onclick="generatePDF();" style="text-decoration:none;"> Generate PDF</a> -->
+            <apex:commandButton onclick="generatePDF(); return false;" value="Generate PDF" /> 
+            <apex:commandButton action="{!Cancel}" value="Cancel" id="cancel" styleClass="btn" status="status" immediate="true" />
+        </center>
+     
+     <table width="100%" cellpadding="0" cellspacing="0">
+         <tr>
+             <td colspan="2" class="title titletext height20"><h3>{!$Label.ACCOUNTPLANNING_General_Information}</h3></td>
+         </tr>
+         <tr>
+             <td class="SolutionAtAGlance-tdLabel">{!$Label.ACCOUNTPLANNING_Account} </td>
+             <td class="SolutionAtAGlance-tdContent"> {!oppPlan.Account_Name__r.Name} </td>
+         </tr>
+         <tr>
+             <td class="SolutionAtAGlance-tdLabel">{!$Label.ACCOUNTPLANNING_Created_By} : </td>
+             <td class="SolutionAtAGlance-tdContent"> {!oppPlan.CreatedBy.Name} </td>
+         </tr>
+         <tr>
+             <td class="SolutionAtAGlance-tdLabel">{!$Label.ACCOUNTPLANNING_Created_Date} : </td>
+             <td class="SolutionAtAGlance-tdContent"> 
+                 <apex:outputText value="{0,date,dd.MM.yyyy}">
+                    <apex:param value="{!oppPlan.CreatedDate}"/>
+                 </apex:outputText> 
+             </td>
+         </tr>
+     </table>
+     
+     <br /><br />
+      
+     <table cellpadding="0" cellspacing="0" width="100%">
+         <tr>
+         <td width="50%" class="title titletext height20"> 
+            <div><h3>{!$Label.ACCOUNTPLANNING_Objectives_and_Requirements}</h3></div>
+         </td>
+         <td width="50%" class="title titletext"  >
+            <div><h3>{!$Label.ACCOUNTPLANNING_Solution}</h3></div> 
+         </td>
+        </tr>
+        <tr>
+         <td width="50%"  class="dataCell"> 
+            <apex:inputTextarea rows="10" cols="100" value="{!oppPlan.Objectives_and_Requirements__c}" id="oplan_objectives_in" styleClass="SolutionAtAGlance-textAreaStyle"/>
+         </td>
+         <td width="50%" class="dataCell">
+            <apex:inputTextarea rows="10" cols="100" value="{!oppPlan.Solution__c}" id="oplan_solution_in" styleClass="SolutionAtAGlance-textAreaStyle"/>
+         </td>
+        </tr>
+        <tr>
+         <td width="50%" class="title titletext" > 
+            <div><h3>{!$Label.ACCOUNTPLANNING_Benefits}</h3></div>
+         </td>  
+         <td width="50%" class="title titletext" >
+            <div><h3>{!$Label.ACCOUNTPLANNING_Strengths}</h3></div>
+         </td>
+        </tr>
+        <tr>
+         <td width="50%" class="dataCell"> 
+            <apex:inputTextarea rows="10" cols="100" value="{!oppPlan.Benefits__c}" id="oplan_benefits_in" styleClass="SolutionAtAGlance-textAreaStyle"/>
+         </td>
+         <td width="50%" class="dataCell">
+            <apex:inputTextarea rows="10" cols="100" value="{!oppPlan.Strengths__c}" id="oplan_strengths_in" styleClass="SolutionAtAGlance-textAreaStyle"/> 
+         </td>
+        </tr>
+     </table>
+    </apex:form> 
+    <script>
+        function generatePDF() {
+            if(confirm('{!$Label.ACCOUNTPLANNING_Want_To_Attach}')) {
+                window.location.href='apex/SolutionAtAGlancePDF?id={!oppPlan.Id}&mode=pdf';
+                saveAttachment();
+            } else {
+                window.location.href='apex/SolutionAtAGlancePDF?id={!oppPlan.Id}&mode=pdf';
+            }
+        }
+    </script> 
+</apex:page>

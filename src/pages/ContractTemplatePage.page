@@ -1,0 +1,34 @@
+<!-- 
+ /**=====================================================================
+ * Appirio, Inc
+ * Name: ContractTemplatePage
+ * Description: VF Page that will allow a User to choose a Contract Template
+ * Created Date: Jan 27th, 2015
+ * Created By: Noopur (Appirio)
+ * 
+ * Date Modified                Modified By                  Description of the update
+ =====================================================================*/
+ -->
+<apex:page controller="ContractTemplateController" sidebar="false" tabStyle="Contract__c">
+  <apex:sectionHeader subtitle="Select Contract Template"/>
+  <apex:form >
+  <apex:pageBlock title="Select The Contract Template">
+    <apex:pagemessages />
+    <apex:pageBlockSection columns="1">
+      <apex:pageBlockSectionItem >
+        <apex:outputText value="Select Contract Template"/>
+        <apex:inputField value="{!contract.Contract_Template_Name__c}"/>
+      </apex:pageBlockSectionItem>
+      <apex:pageBlockSectionItem >
+        <apex:outputText value=" "/>
+        <apex:outputPanel >
+          <apex:commandButton value="Select" action="{!doSelect}" style="width: 85px;height: 23px;font-size: 11px;border-radius: 15px;"/>
+          <apex:commandButton value="Cancel" action="{!doCancel}" style="width: 85px;height: 23px;font-size: 11px;border-radius: 15px;"/>
+        </apex:outputPanel>
+      </apex:pageBlockSectionItem>
+    </apex:pageBlockSection>
+    
+  </apex:pageBlock>
+  
+  </apex:form>
+</apex:page>

@@ -1,0 +1,40 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ASS_RequestedAccess
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Apr 24, 2014       Nathalie Le Guay (Appirio)   Update to prevent Cross-site Scripting (XSS)
+ * July 30th, 2014    Naresh Kr Ojha(Appirio)      T-286035: Phase 2 Sprint 0 refactoring: Add titles to Apex Pages
+  =====================================================================*/
+-->
+<apex:page controller="RequestAccessExtension" title="Request Access" >
+<apex:sectionHeader title="{!objName}" subtitle="{!Name}"/>
+
+<apex:pageBlock >
+<apex:pageMessages escape="false"/>
+
+
+<apex:form >
+<apex:pageBlock mode="edit">
+    
+    <apex:pageblockButtons >
+        <apex:commandButton value="{!$Label.ASS_Button_Submit}" action="{!submitCase}" rendered="{!IsBlank(newCase.id)}"/>
+        <input type="button" class="btn" onclick="window.location.href='{!JSENCODE(retURL)}';" value="{!IF(IsBlank(newCase.id),$Label.ASS_Button_Cancel,$Label.ASS_Button_Return_to_search)}"/>
+    </apex:pageblockButtons>
+    
+   
+   <apex:pageblockSection columns="1" rendered="{!IsBlank(newCase.id)}"> 
+        <apex:inputField label="{!$Label.ASS_Give_reason_for_access_request}" style="width:70%" value="{!newCase.Description}" required="true"/>
+        <apex:inputField label="{!$ObjectType.Case.Fields.Priority.Label}" value="{!newCase.Priority}"/>
+        
+    </apex:pageblockSection>
+   
+    
+</apex:pageBlock>
+</apex:form>    
+</apex:pageBlock>
+</apex:page>

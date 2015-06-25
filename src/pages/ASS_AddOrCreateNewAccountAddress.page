@@ -1,0 +1,185 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ASS_AddOrCreateNewAccountAddress
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * May 19th, 2014     Nathalie Le Guay             Added page title
+ * Feb 23th, 2015     Noopur                       T-363964 : added logic to show Missing Address field
+ * Feb 24th, 2015     Naresh Kr Ojha               T-364971: Added isSaaS option when goes to create new Account. 
+  =====================================================================*/
+--> 
+<!-- 
+    @author sfdcdev11981
+    VF page to create new account with fields configured using field set.
+ -->
+<apex:page standardcontroller="Account" extensions="AddOrCreateNewAccountAddressController" tabstyle="Account" title="Create an Account Address">
+    <apex:stylesheet value="{!$Resource.custom_stylesheet}" />
+<!--<style>-->
+<!--    .popupBackground {-->
+<!--            background-color:black;-->
+<!--            opacity: 0.20;-->
+<!--            filter: alpha(opacity = 20);-->
+<!--            width: 100%;-->
+<!--            height: 100%;-->
+<!--            top: 0;-->
+<!--            left: 0;-->
+<!--            z-index: 998;-->
+<!--            position: absolute;-->
+<!--        }-->
+<!--        .popupPanel {-->
+<!--            border: solid 1px;-->
+<!--            background-color: white;-->
+<!--            left: 50%;-->
+<!--            width: 200px;-->
+<!--            margin-left: -100px;-->
+<!--            top: 50%;-->
+<!--            height: 50px;-->
+<!--            margin-top: -25px;-->
+<!--            z-index: 999;-->
+<!--            position: fixed;-->
+<!--        }-->
+<!--</style>-->
+
+<apex:sectionHeader title="{!$ObjectType.Account.Label}" subtitle="{!IF(action==$Label.ASS_Operation_AddAccount,$Label.ASS_Button_Add_Account,IF(action==$Label.ASS_Operation_AddAddress,$Label.ASS_Button_Add_Address,IF(action==$Label.ASS_Operation_NewAccountAddress,$Label.ASS_Button_New_Account,'')))}" />
+<apex:actionStatus id="status" stopText="">
+    <apex:facet name="start">
+        <div>
+            <div class="popupBackground" />
+            <div class="popupPanel">
+                <table border="0" width="100%" height="100%">
+                    <tr>
+                        <td align="center" style="font-family: Calibri; font-size: 13px; font-weight: normal;"><b>{!$Label.ASS_Wait_searching}</b></td>
+                    </tr>
+                    <tr>
+                        <td align="center"><img src="/img/loading.gif"/></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </apex:facet>
+</apex:actionStatus>
+
+   <!--<apex:pageMessages id="errorsMsg" />-->
+    <apex:form >
+        <apex:pageBlock title="Duplicate Records" rendered="{!hasDuplicateResult}">
+            <apex:pageMessages />
+            <apex:pageBlockTable value="{!duplicateAccounts}" var="key">
+                <apex:column >
+                    <apex:facet name="header">Name</apex:facet>
+                    <apex:outputLink value="/{!duplicateAccounts[key].Id}" target="_blank">{!duplicateAccounts[key].Name}</apex:outputLink>
+                </apex:column>
+               <apex:column >
+                    <apex:facet name="header">Owner</apex:facet>
+                    <apex:outputLink value="/{!duplicateAccounts[key].OwnerId}" target="_blank">{!duplicateAccounts[key].Owner.Name}</apex:outputLink>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">Last Modified Date</apex:facet>
+                    <apex:outputField value="{!duplicateAccounts[key].LastModifiedDate}"/>
+                </apex:column>
+                
+                <apex:column >
+                    <apex:facet name="header">Street</apex:facet>
+                    <apex:outputField value="{!duplicateAccounts[key].BillingStreet}" />
+                </apex:column>
+
+                <apex:column >
+                    <apex:facet name="header">City</apex:facet>
+                    <apex:outputField value="{!duplicateAccounts[key].BillingCity}" />
+                </apex:column>
+
+                <apex:column >
+                    <apex:facet name="header">State</apex:facet>
+                    <apex:outputField value="{!duplicateAccounts[key].BillingState}" />
+                </apex:column>
+
+                <apex:column >
+                    <apex:facet name="header">Country</apex:facet>
+                    <apex:outputField value="{!duplicateAccounts[key].BillingCountry}" />
+                </apex:column>
+
+                <apex:column >
+                    <apex:facet name="header">ZipCode</apex:facet>
+                    <apex:outputField value="{!duplicateAccounts[key].BillingPostalCode}" />
+                </apex:column>
+
+                <apex:column >
+                    <apex:facet name="header">Region</apex:facet>
+                    <apex:outputField value="{!duplicateAccounts[key].Region__c}" />
+                </apex:column>                                                
+
+                <apex:column >
+                    <apex:facet name="header">Parent</apex:facet>
+                    <apex:outputLink value="/{!duplicateAccounts[key].ParentId}" target="_blank">{!duplicateAccounts[key].Parent.Name}</apex:outputLink>                    
+                </apex:column>
+                                
+                <apex:column >
+                    <apex:facet name="header">Ultimate Parent</apex:facet>
+                    <apex:outputLink value="/{!duplicateAccounts[key].Ultimate_Parent_Account__c}" target="_blank">{!duplicateAccounts[key].Ultimate_Parent_Account__r.Name}</apex:outputLink>                    
+                </apex:column>
+                
+                <apex:column >
+                    <apex:facet name="header">Account type</apex:facet>
+                    <apex:outputField value="{!duplicateAccounts[key].Account_Type__c}" />
+                </apex:column>                                                
+        
+            </apex:pageBlockTable> 
+        </apex:pageBlock>
+        
+    </apex:form>
+
+  
+    <apex:form id="pageForm">     
+    <!-- Add New account page block section -->
+    <apex:pageBlock title="{!$ObjectType.Account.Label}" mode="{!if(enableEditMode,'edit','')}" id="accPageBlock">
+   
+        <apex:pageBlockButtons id="pButtons" location="both">
+            <apex:commandButton action="{!performSave}" value="{!$Label.OCL_Button_Save}" id="save" styleClass="btn" status="status" style="display:none"/>
+            <apex:commandButton action="{!cancel}" value="{!$Label.OCL_Button_Cancel}" id="cancel" styleClass="btn" status="status" immediate="true" />
+        </apex:pageBlockButtons>
+
+
+        
+        
+        <apex:pageBlockSection collapsible="false" columns="2" title="{!$Label.ASS_Title_Account_Information}" >
+            <apex:repeat value="{!$ObjectType.Account.FieldSets.AccountInfoSectionFieldSet}" var="f">
+                <apex:inputField value="{!account[f]}" rendered="{!enableEditMode}" required="{!OR(f.required, f.dbrequired)}"/>
+                <apex:outputField value="{!account[f]}" rendered="{!!enableEditMode}"/>
+            </apex:repeat>
+        </apex:pageBlockSection>
+<!--        
+        <apex:pageBlockSection collapsible="false" columns="2" title="Address Information" >
+            <apex:repeat value="{!$ObjectType.Account.FieldSets.CreateNewAccountAddressSectionFieldSet}" var="f">
+                <apex:inputField value="{!account[f]}"/>
+            </apex:repeat>
+        </apex:pageBlockSection>
+-->        
+        <apex:pageBlockSection collapsible="false" columns="2" title="{!$Label.ASS_Title_Additional_Information}" >
+            <apex:repeat value="{!$ObjectType.Account.FieldSets.AccountAddInfoSectionFieldSet}" var="f">
+                <apex:inputField value="{!account[f]}" rendered="{!IF(enableEditMode,IF(f =='Missing_Address__c',IF(bypassQAS,true,false),true),false)}" 
+               required="{!OR(f.required, f.dbrequired)}"/>
+                
+                <apex:outputField value="{!account[f]}" rendered="{!!enableEditMode}"/>
+            </apex:repeat>
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection collapsible="false" columns="2" title="{!$Label.ASS_Title_Strategic_Information}" >
+            <apex:repeat value="{!$ObjectType.Account.FieldSets.AccountStrategicInfoSectionFieldSet}" var="f">
+                <apex:inputField value="{!account[f]}" rendered="{!enableEditMode}" required="{!OR(f.required, f.dbrequired)}"/>
+                <apex:outputField value="{!account[f]}" rendered="{!!enableEditMode}"/>
+            </apex:repeat>
+        </apex:pageBlockSection>
+
+<!-- <c:ASS_QAS_Address_Lookup addressRec="{!address}" accountAddressRec="{!accountAddress}" enableManualSelection="{!enableManualAddressSelection}" 
+  isAddressPopupOnload="{!isAddressPopupOnload}" 
+  buttonId="{!$Component.pageForm:accPageBlock:pButtons.save}"
+   bypassQAS="{!bypassQAS}"/> -->    
+<c:ASS_QAS_Address_Lookup addressRec="{!address}" accountAddressRec="{!accountAddress}" enableManualSelection="{!enableManualAddressSelection}" 
+         isAddressPopupOnload="{!isAddressPopupOnload}" buttonId="{!$Component.pageForm:accPageBlock:pButtons.save}"/>
+    </apex:pageBlock>
+
+  </apex:form>
+</apex:page>

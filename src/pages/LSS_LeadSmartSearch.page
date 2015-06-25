@@ -1,0 +1,616 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Page Name: LSS_ContactSmartSearch
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified         Modified By                  Description of the update
+ * Jul 31, 2014          Naresh Ojha                  T-286036: moved Javascript from top of class to bottom of class
+ * Jun 23, 2015          Naresh Ojha                  Known issue found on hover of information to show fixed.
+ =====================================================================*/
+ -->
+<apex:page standardController="Lead" extensions="LeadSmartSearchExtension" sidebar="true" tabstyle="Lead" id="pg">
+
+    <!-- 
+    <h1>{!$Label.Smart_Lead_Search}</h1>
+    <img src="/img/msg_icons/info16.png" onmouseover="varleadHelpMain.style.display='block';" onmouseout="varleadHelpMain.style.display='none';"/>  
+     --> 
+ 
+     <apex:sectionHeader title="{!$ObjectType.Lead.Label}" subtitle="{!$Label.Smart_Lead_Search}" id="shMain" />
+
+     <apex:form id="frm">
+       <h1>{!$Label.LSS_Smart_Lead_Account_Contact_Address_Search}</h1>
+       <img src="/img/msg_icons/info16.png" onmouseover="varleadHelpMain.style.display='block';" onmouseout="varleadHelpMain.style.display='none';"/>  
+
+
+        <script>
+          // Character limits of search lead for all fields
+          var searchCharacterLimit = 2;
+        </script>
+
+                <apex:outputPanel styleclass="hidden" id="leadHelpMain">
+                    <apex:pageMessage summary="{!$Label.LSS_Help_Main}"  severity="Info" escape="false" strength="2"  />
+                </apex:outputPanel>  
+ 
+                <script>
+                var varleadHelpMain = document.getElementById('{!$Component.leadHelpMain}');
+                </script>  
+                
+        <table class="list" width="100%">
+<!--
+            <tr class="dataRow" onmouseout="javascript:hiOff(this)" onmouseover="javascript:hiOn(this)">
+                <td class="labelCol" colspan="1" style="width:200px;" ><h2 class="pageDescription">{!$Label.Smart_Lead_Search}</h2></td>
+                <td class="dataCell" colspan="4"><a href="javascript:void(0);" onclick="resetSearchStatus();"> {!$Label.Reset_Search}</a> </td>
+            </tr>   
+-->
+            <tr class="dataRow" onmouseout="javascript:hiOff(this)" onmouseover="javascript:hiOn(this)">
+                <td class="labelCol" style="width:200px;" > {!$Label.ASS_Search_by} </td>
+                <td class="dataCell" >{!$ObjectType.Lead.Fields.FirstName.Label} </td>
+                <td class="dataCell" >{!$ObjectType.Lead.Fields.LastName.Label}</td>
+                <td class="dataCell" >{!$ObjectType.Contact.Fields.Email.Label}</td>
+                <td class="dataCell" >{!$ObjectType.Lead.Fields.Company.Label}/{!$ObjectType.Account.Fields.Name.Label}</td>
+                <td class="dataCell" >{!$Label.ASS_Address_1} </td>
+                <td class="dataCell" >{!$Label.ASS_City}</td>
+                <td class="dataCell" >{!$Label.ASS_State_Province}</td>
+                <td class="dataCell" >{!$Label.ASS_Country} </td>
+                <td class="dataCell" >{!$Label.ASS_Zip_Postal_Code}</td>
+            </tr>   
+            
+            <tr class="bPageBlock" style="background-color:#FFFFFF;" onmouseout="javascript:hiOff(this)" onmouseover="javascript:hiOn(this)">
+                <td class="labelCol" style="width:200px;" > {!$Label.ASS_Search_criteria}: </td>
+                <td class="dataCell" >  <!-- onkeyup="validateForSearch(this);" -->
+                    
+                    <div class="requiredInput">
+                        <div class="requiredBlock"></div>
+                        <apex:inputText onchange="onSearchTermChangeDisableButton();" title="Minimum two characters are required"  value="{!leadFirstNameToSearch}" id="txtLeadFName" style="width:100px;" />
+                    </div>   
+                </td>
+                
+                <td class="dataCell" >  
+                    <div class="requiredInput">
+                        <div class="requiredBlock"></div>
+                           <apex:inputText onchange="onSearchTermChangeDisableButton();" title="Minimum two characters are required"  value="{!leadLastNameToSearch}" id="txtLeadLName" style="width:100px;" />                     
+                    </div>
+                </td>
+                
+                <td class="dataCell" >  
+                    <div class="requiredInput">
+                        <div class="requiredBlock"></div>
+                           <apex:inputText onchange="onSearchTermChangeDisableButton();" title="Minimum two characters are required"   value="{!leadEmailToSearch}" id="txtLeadEmail" style="width:100px;" />
+                    </div>
+                </td>
+                
+                <td class="dataCell" >  
+                    <div class="requiredInput">
+                        <div class="requiredBlock"></div>
+                           <apex:inputText onchange="onSearchTermChangeDisableButton();" title="Minimum two characters are required"  value="{!leadCompanyToSearch}" id="txtLeadCompany" style="width:100px;" />
+                    </div>                    
+                </td>
+                
+                <td class="dataCell" >  
+                     <apex:outputPanel id="op2">
+                        <apex:inputText title="Minimum two characters are required" value="{!addressline1ToSearch}"  id="txtAddressLine1" style="width:100px;" />
+                    </apex:outputPanel> 
+                </td>
+               
+                <td class="dataCell" >  
+                     <apex:outputPanel id="op7">
+                        <apex:inputText title="Minimum two characters are required" value="{!addressCityToSearch}"  id="txtCity" style="width:100px;" />
+                    </apex:outputPanel> 
+                </td>
+                <td class="dataCell" >  
+                     <apex:outputPanel id="op6">
+                        <apex:inputText title="Minimum two characters are required" value="{!addressStateToSearch}"  id="txtState" style="width:100px;" />
+                    </apex:outputPanel> 
+                </td>
+                <td class="dataCell" >  
+                     <apex:outputPanel id="op5">
+                        <apex:inputText title="Minimum two characters are required" value="{!addressCountryToSearch}"  id="txtCountry" style="width:100px;" />
+                    </apex:outputPanel> 
+                </td>
+                <td class="dataCell" >  
+                     <apex:outputPanel id="op8">
+                        <apex:inputText title="Minimum two characters are required" value="{!addressPostalCodeToSearch}"  id="txtPostalCode" style="width:100px;" />
+                    </apex:outputPanel> 
+                </td>
+                              
+            </tr> 
+
+            <!-- Changes done for cloudspokes:3087 -->
+            <tr>
+                 <td class="labelCol" colspan="2" ></td>
+                <td class="labelCol" colspan="7" >     
+                 <apex:actionStatus id="statusSearch">
+                    <apex:facet name="start">
+                      <span style="color:red;">{!$Label.ASS_Wait_Searching}</span> <img src="/img/loading.gif" />
+                    </apex:facet>
+                    
+                    <apex:facet name="stop">
+                    <apex:outputpanel >
+                    
+                    <table >
+                            <tr>
+                                <td class="labelCol" ><apex:commandButton value="{!$Label.ASS_Button_Search}" action="{!performSearch}" onclick="document.getElementById('pg:frm:statusSearch.start').style.display='block';document.getElementById('pg:frm:statusSearch.stop').style.display='none';"/></td>
+                                <td class="labelCol" >
+                                    <apex:commandButton value="{!$Label.New_Lead}" onclick="return createNewLead();" disabled="{!IF(showLeadButton = true, false, true)}" id="btnNewLead"/>
+                                    <script>
+                                        var varButtonNewLeadId = '{!$Component.btnNewLead}';
+                                        function onSearchTermChangeDisableButton()
+                                        {
+                                            try{
+                                                document.getElementById(varButtonNewLeadId).disabled=true;
+                                                document.getElementById(varButtonNewLeadId).setAttribute("disabled","disabled");
+                                                document.getElementById(varButtonNewLeadId).setAttribute("class","btnDisabled");
+                                            }catch(e){alert(e);}
+                                        }
+                                    </script>
+                                </td>
+                                <td class="labelCol" ><apex:commandButton action="{!cancel}" value="{!$Label.Cancel}"  onclick="return goToBack();"/></td>
+                            </tr>
+                        </table>
+                    </apex:outputpanel>
+                    </apex:facet>
+                </apex:actionStatus>
+                 </td>
+             </tr>  
+        </table>
+        
+
+<apex:actionFunction action="{!sortData}" name="sortLeadDataJS" reRender="resultBlock,pnlDisplayMsg" status="status" >
+    <apex:param name="sortField" assignTo="{!sortField}" value="" />
+</apex:actionFunction>
+
+<apex:actionFunction name="nextLeadPage" action="{!nextLeadPage}" reRender="resultBlock,pnlDisplayMsg" status="status" />
+<apex:actionFunction name="previousLeadPage" action="{!previousLeadPage}" reRender="resultBlock,pnlDisplayMsg" status="status" />
+<apex:actionFunction name="resetSearchStatus" action="{!resetSearchStatus}" reRender="frm" status="status" />
+
+<apex:outputPanel id="pnlDisplayMsg">
+    <apex:pageMessages />
+</apex:outputPanel>
+
+<!--##################### LEAD TABLE BEGIN ##########################-->
+<apex:pageBlock id="resultBlock" title="Leads {!IF((searchCount==0), '', ' [' + TEXT(searchCount) + ']')}">
+         
+    
+
+    <apex:pageBlockTable value="{!leads}" var="leadObj">
+            <apex:repeat value="{!$ObjectType.Lead.FieldSets.Lead_Search_Result}" var="item" >
+                <apex:column headerValue="{!$ObjectType.Lead.Fields[item].label}" >
+                    <apex:variable value="{!$ObjectType.Lead.Fields[item].Name}" var="fieldAPIName2"/>
+                    <apex:outputLink value="/{!leadObj.Id}" target="_blank" rendered="{!IF(fieldAPIName2='Name',true,false)}">{!leadObj.Name}</apex:outputLink>
+                    <apex:outputlabel value="{!leadObj[item]}" rendered="{!IF(fieldAPIName2 <>'Name',true,false)}"/>
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                        <apex:variable value="{!$ObjectType.Lead.Fields[item].Name}" var="fieldAPIName"/>
+                            <apex:outputLink value="javascript:void(0);" onclick="sortLeadDataJS('{!$ObjectType.Lead.Fields[item].Name}');">{!$ObjectType.Lead.Fields[item].label}
+                                <img src="{!IF(sortField = fieldAPIName,IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                            </apex:outputLink>                                                              
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:column>
+            </apex:repeat>
+            <apex:column headerValue="{!$ObjectType.Lead.Fields.OwnerId.Label}">
+                    <apex:outputlabel value="{!leadObj.Owner.Name}"/>
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                            <apex:outputLink value="javascript:void(0);" onclick="sortLeadDataJS('Owner.Name');">{!$ObjectType.Lead.Fields.OwnerId.Label}
+                                <img src="{!IF(sortField = 'Owner.Name',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />    
+                            </apex:outputLink>                                                              
+                        </apex:outputPanel>
+                    </apex:facet>
+            </apex:column>
+    </apex:pageBlockTable>
+    
+    <apex:outputPanel id="errorBlock" rendered="{!(searchCount==0)}"><span style="color:red;">{!searchStatus}</span></apex:outputPanel>
+     <apex:outputPanel rendered="{!searchCount>0}">
+                 <hr/>
+                 <table width="100%" >
+                  <tr>
+                   <td align="left" width="33%">
+                        <div id="pagelinkblock" >
+                           <div id="curstate"> {!showingFrom}-{!showingTo} of {!totalResults} </div>
+                        </div>
+                   </td>
+                   <td align="center" width="33%" style="vertical-align:middle;">
+                       <apex:outputLink value="javascript:void(0);"  rendered="{!hasPrevious}" onclick="previousLeadPage();">&lt;&lt;{!$Label.Previous}</apex:outputLink>
+                       <span id="div_mid1" >&nbsp;<apex:outputLabel rendered="{!hasPrevious && hasNext}" value="|"  /> &nbsp;</span>
+                        <apex:outputLink value="javascript:void(0);" rendered="{!hasNext}" onclick="nextLeadPage();">Next&gt;&gt;</apex:outputLink>
+                        <apex:actionStatus id="status">
+                            <apex:facet name="start">
+                              <span style="color:red;">{!$Label.Loading}</span> <img src="/img/loading.gif" />
+                            </apex:facet>
+                        </apex:actionStatus>
+                   </td>   
+                   <td align="right" width="33%" style="vertical-align:middle;">
+                        <div id="pagenumber"> {!$Label.Page} &nbsp;<apex:inputText value="{!requestedPage}" style="width:40px"/> of {!totalPage} <apex:commandButton value="Go" action="{!requestedLeadPage}" reRender="resultBlock,pnlDisplayMsg" status="status" /></div>
+                   </td>
+                 </tr>
+                </table> 
+    </apex:outputPanel>
+  </apex:pageBlock>
+
+<!--############################ACCOUNT RESULT TABLE START########################################-->
+<apex:pageBlock id="accountResultBlock" title="{!$Label.ASS_Account}">
+<apex:actionFunction name="nextAccountPage" action="{!accSearchController.nextAccountPage}" status="accSectionStatus" rerender="accountResultBlock" />
+<apex:actionFunction name="previousAccountPage" action="{!accSearchController.previousAccountPage}" status="accSectionStatus" rerender="accountResultBlock"/>
+
+    <apex:pageBlockTable value="{!accSearchController.accounts}" var="acc" >
+
+<!--       
+       <apex:column headerValue="">
+           <apex:outputpanel rendered="{!IF(CONTAINS(accSearchController.accessibleAccountIds,acc.Account__r.Id),true,false)}">
+                <input type="radio" name='accRadio' id="{!acc.Account__r.Id}"  onchange="saveAccSelection(this);"/>
+            </apex:outputpanel>
+        </apex:column>
+-->
+       <apex:column >
+               <apex:outputLink value="/{!IF(CONTAINS(accSearchController.accessibleAccountIds,acc.Account__r.Id),acc.Account__r.Id,'apex/ASS_RequestAccess?id='+acc.Account__r.Id)}" >{!acc.Account__r.Name}</apex:outputLink>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortAccountDataJS('Account__r.Id');">{!$Label.ASS_Account_Name}<img
+                             src="{!IF(sortField = 'Account__r.Id',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>
+                 
+        <apex:column >
+         <apex:outputText value="{!acc.address__r.Address_1__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortAccountDataJS('address__r.Address_1__c');">{!$Label.ASS_Address_1}<img
+                             src="{!IF(sortField = 'address__r.Address_1__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>  
+      
+        <apex:column >
+         <apex:outputText value="{!acc.address__r.City__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortAccountDataJS('address__r.City__c');">{!$Label.ASS_City}<img
+                             src="{!IF(sortField = 'address__r.City__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+         
+     <apex:column >
+         <apex:outputText value="{!IF(acc.address__r.State__c=acc.address__r.Province__c,acc.address__r.State__c,acc.address__r.State__c+acc.address__r.Province__c)}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortAccountDataJS('address__r.State__c');">{!$Label.ASS_State_Province}<img
+                             src="{!IF(sortField = 'address__r.State__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+      
+      <apex:column id="tdCountry">
+                        <apex:facet name="header">
+                        <apex:outputLink value="javascript:void(0);"
+                         onclick="sortAccountDataJS('address__r.Country__c');">{!$Label.ASS_Country}<img
+                             src="{!IF(sortField = 'address__r.Country__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink> 
+                        </apex:facet> 
+                        {!acc.address__r.Country__c}
+                         
+      </apex:column> 
+      <apex:column >
+         <apex:outputText value="{!IF(acc.address__r.Postcode__c=acc.address__r.Zip__c,acc.address__r.Postcode__c,acc.address__r.Postcode__c+acc.address__r.Zip__c)}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortAccountDataJS('address__r.Postal_Code__c');">{!$Label.ASS_Zip_Postal_Code}<img
+                             src="{!IF(sortField = 'address__r.Postal_Code__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+                  
+      
+     
+       <apex:column id="tdParent">
+                        <apex:facet name="header">
+                        <apex:outputLink value="javascript:void(0);"
+                         onclick="sortAccountDataJS('Account__r.Parent.Name');">{!$Label.ASS_Parent_Account}<img
+                             src="{!IF(sortField = 'Account__r.Parent.Name',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink> 
+                        </apex:facet> 
+                        {!acc.Account__r.Parent.Name}         
+      </apex:column>    
+      
+       <apex:column id="tdUltParent">
+                        <apex:facet name="header">
+                        <apex:outputLink value="javascript:void(0);"
+                         onclick="sortAccountDataJS('Account__r.Ultimate_Parent_Account__r.Name');">{!$Label.ASS_Ultimate_Parent}<img
+                             src="{!IF(sortField = 'Account__r.Ultimate_Parent_Account__r.Name',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink> 
+                        </apex:facet> 
+                        {!acc.Account__r.Ultimate_Parent_Account__r.Name}
+      </apex:column>
+      
+        <apex:column id="tdRegion">
+                        <apex:facet name="header">
+                        <apex:outputLink value="javascript:void(0);"
+                         onclick="sortAccountDataJS('Account__r.Region__c');">{!$Label.ASS_Region}<img
+                             src="{!IF(sortField = 'Account__r.Region__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink> 
+                        </apex:facet> 
+                        {!acc.Account__r.Region__c}
+      </apex:column>
+
+      
+      <apex:column id="tdAddrType">
+                        <apex:facet name="header">{!$Label.ASS_Address_Type}</apex:facet> 
+                        {!acc.Address_Type__c}
+      </apex:column>       
+      
+      <apex:column id="tdType">
+                        <apex:facet name="header">{!$Label.ASS_Account_Type}</apex:facet> 
+                        {!acc.Account__r.Account_Type__c}
+      </apex:column>
+      
+              
+    </apex:pageBlockTable>
+    <apex:outputPanel id="errorBlock" rendered="{!(NOT(ISBlank(accSearchController.searchAddrStatus)) || accSearchController.searchCount==0)}"><span style="color:red;">{!accSearchController.searchStatus}</span></apex:outputPanel>
+     <apex:outputPanel rendered="{!accSearchController.searchCount>0}">
+                 <hr/>
+                 <table width="100%" >
+                  <tr>
+                   <td align="left" width="33%">
+                        <div id="pagelinkblock" >
+                           <div id="curstate"> {!accSearchController.showingFrom}-{!accSearchController.showingTo} {!$Label.ASS_Footer_Of} {!accSearchController.totalResults} </div>
+                        </div>
+                   </td>
+                   <td align="center" width="33%" style="vertical-align:middle;">
+                       <apex:outputLink value="javascript:void(0);"  rendered="{!accSearchController.hasPrevious}" onclick="previousAccountPage();">&lt;&lt;{!$Label.ASS_Link_Previous}</apex:outputLink>
+                       <span id="div_mid1" >&nbsp;<apex:outputLabel rendered="{!accSearchController.hasPrevious && accSearchController.hasNext}" value="|"  /> &nbsp;</span>
+                        <apex:outputLink value="javascript:void(0);" rendered="{!accSearchController.hasNext}" onclick="nextAccountPage();">{!$Label.ASS_Link_Next}&gt;&gt;</apex:outputLink>
+                        <apex:actionStatus id="accSectionStatus">
+                            <apex:facet name="start">
+                              <span style="color:red;">{!$Label.Loading}</span> <img src="/img/loading.gif" />
+                            </apex:facet>
+                        </apex:actionStatus>
+                   </td>   
+                   <td align="right" width="33%" style="vertical-align:middle;">
+                        <div id="pagenumber">{!$Label.ASS_Footer_Page} &nbsp;<apex:inputText value="{!accSearchController.requestedPage}" style="width:40px"/> {!$Label.ASS_Footer_Of} {!totalPage} <apex:commandButton value="{!$Label.ASS_Button_Go}" action="{!accSearchController.requestedAccountPage}" reRender="accountResultBlock" status="status" /></div>
+                   </td>
+                 </tr>
+                </table> 
+    </apex:outputPanel>
+  </apex:pageBlock>
+<!--############################ACCOUNT RESULT TABLE END########################################-->
+
+<!--###################### Contact TABLE START #########################-->
+<apex:pageBlock id="contactResultBlock" title="{!$Label.CSS_Contact}"  >
+<apex:actionFunction name="nextContactPage" action="{!conSearchController.nextContactPage}" status="conSectionStatus" rerender="contactResultBlock"/>
+<apex:actionFunction name="previousContactPage" action="{!conSearchController.previousContactPage}" status="conSectionStatus" rerender="contactResultBlock"/>  
+    <apex:pageBlockTable value="{!conSearchController.contacts}" var="con">
+       
+       <apex:column >
+               <apex:outputLink value="/{!IF(CONTAINS(conSearchController.accessibleContactIds,con.Contact__r.Id),con.Contact__r.Id,'apex/ASS_RequestAccess?id='+con.Contact__r.Id)}" >{!con.Contact__r.Name}</apex:outputLink>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.Name');">{!$ObjectType.Contact.Fields.Name.Label}<img
+                             src="{!IF(sortField = 'Contact__r.Name',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>
+        
+        
+          
+        <!--
+        <apex:column >
+               <apex:outputText value="{!con.Contact__r.LastName}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.LastName');">{!$Label.CSS_Last_Name}<img
+                             src="{!IF(sortField = 'Contact__r.LastName',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>  
+        -->
+        <apex:column >
+               <apex:outputText value="{!con.Contact__r.Title}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.Title');">{!$ObjectType.Contact.Fields.Title.Label}<img
+                             src="{!IF(sortField = 'Contact__r.Title',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>  
+        
+        <apex:column >
+               <apex:outputText value="{!con.Contact__r.Phone}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.Phone');">{!$ObjectType.Contact.Fields.Phone.Label}<img
+                             src="{!IF(sortField = 'Contact__r.Phone',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>  
+        
+        <apex:column >
+               <apex:outputText value="{!con.Contact__r.Email}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.Email');">{!$Label.CSS_Email}<img
+                             src="{!IF(sortField = 'Contact__r.Email',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>  
+        
+        <apex:column >
+               <apex:outputText value="{!con.Contact__r.Account.Name}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.Id');">{!$Label.ASS_Account_Name}<img
+                             src="{!IF(sortField = 'Contact__r.Id',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>  
+        
+         
+        <apex:column >
+         <apex:outputText value="{!con.address__r.Address_1__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Address_1__c');">{!$Label.ASS_Address_1}<img
+                             src="{!IF(sortField = 'address__r.Address_1__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>  
+      
+        <apex:column >
+         <apex:outputText value="{!con.address__r.City__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.City__c');">{!$Label.ASS_City}<img
+                             src="{!IF(sortField = 'address__r.City__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+         
+     <apex:column >
+         <apex:outputText value="{!IF(con.address__r.State__c=con.address__r.Province__c,con.address__r.State__c,con.address__r.State__c+con.address__r.Province__c)}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.State__c');">{!$Label.ASS_State_Province}<img
+                             src="{!IF(sortField = 'address__r.State__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+      
+      <apex:column id="tdCountry">
+                        <apex:facet name="header">
+                        <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Country__c');">{!$Label.ASS_Country}<img
+                             src="{!IF(sortField = 'address__r.Country__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink> 
+                        </apex:facet> 
+                        {!con.address__r.Country__c}
+                         
+      </apex:column> 
+      
+      <apex:column >
+         <apex:outputText value="{!IF(con.address__r.Postcode__c=con.address__r.Zip__c,con.address__r.Postcode__c,con.address__r.Postcode__c+con.address__r.Zip__c)}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Postal_Code__c');">{!$Label.ASS_Zip_Postal_Code}<img
+                             src="{!IF(sortField = 'address__r.Postal_Code__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+      
+<!--     
+      <apex:column id="tdType">
+                        <apex:facet name="header">{!$Label.ASS_Account_Type}</apex:facet> 
+                        {!con.Contact__r.Type__c}
+      </apex:column>
+-->
+              
+    </apex:pageBlockTable>
+    <apex:outputPanel id="errorBlock" rendered="{!(NOT(ISBlank(conSearchController.searchAddrStatus)) || conSearchController.searchCount==0)}"><span style="color:red;">{!conSearchController.searchStatus}</span></apex:outputPanel>
+     <apex:outputPanel rendered="{!conSearchController.searchCount>0}">
+                 <hr/>
+                 <table width="100%" >
+                  <tr>
+                   <td align="left" width="33%">
+                        <div id="pagelinkblock" >
+                           <div id="curstate"> {!conSearchController.showingFrom}-{!conSearchController.showingTo} {!$Label.ASS_Footer_Of} {!conSearchController.totalResults} </div>
+                        </div>
+                   </td>
+                   <td align="center" width="33%" style="vertical-align:middle;">
+                       <apex:outputLink value="javascript:void(0);"  rendered="{!conSearchController.hasPrevious}" onclick="previousContactPage();">&lt;&lt;{!$Label.ASS_Link_Previous}</apex:outputLink>
+                       <span id="div_mid1" >&nbsp;<apex:outputLabel rendered="{!conSearchController.hasPrevious && conSearchController.hasNext}" value="|"  /> &nbsp;</span>
+                        <apex:outputLink value="javascript:void(0);" rendered="{!conSearchController.hasNext}" onclick="nextContactPage();">{!$Label.ASS_Link_Next}&gt;&gt;</apex:outputLink>
+                        <apex:actionStatus id="conSectionStatus">
+                            <apex:facet name="start">
+                              <span style="color:red;">{!$Label.Loading}</span> <img src="/img/loading.gif" />
+                            </apex:facet>
+                        </apex:actionStatus>
+                   </td>   
+                   <td align="right" width="33%" style="vertical-align:middle;">
+                        <div id="pagenumber">{!$Label.ASS_Footer_Page} &nbsp;<apex:inputText value="{!conSearchController.requestedPage}" style="width:40px"/> {!$Label.ASS_Footer_Of} {!totalPage} <apex:commandButton value="{!$Label.ASS_Button_Go}" action="{!conSearchController.requestedContactPage}" reRender="contactResultBlock,pnlDisplayMsg" status="status" /></div>
+                   </td>
+                 </tr>
+                </table> 
+    </apex:outputPanel>
+  </apex:pageBlock>
+<!--###################### Contact TABLE END #########################-->
+  
+</apex:form>
+<script>
+   
+    function goToBack(){
+        window.location.href = '/{!leadPrefix}/o';
+        return false;
+    }
+    
+    function createNewLead(){
+        var txtLeadFirstName     = encodeURI(document.getElementById("pg:frm:txtLeadFName").value);
+        var txtLeadLastName      = encodeURI(document.getElementById("pg:frm:txtLeadLName").value);
+        var txtLeadEmailToSearch = encodeURI(document.getElementById("pg:frm:txtLeadEmail").value);
+        var txtLeadCompany = encodeURI(document.getElementById("pg:frm:txtLeadCompany").value);
+        
+        //MIrfan. 13Dec13. Passing Address fields.
+        var txtStreet = encodeURI(document.getElementById("pg:frm:txtAddressLine1").value);
+        var txtCity = encodeURI(document.getElementById("pg:frm:txtCity").value);
+        var txtState = encodeURI(document.getElementById("pg:frm:txtState").value);
+        var txtZip = encodeURI(document.getElementById("pg:frm:txtPostalCode").value);
+        var txtCountry = encodeURI(document.getElementById("pg:frm:txtCountry").value);
+        //JWeatherall. 11Mar14. Changed txtUserRegion to reference User record.
+        //var txtUserRegion = "North America";
+        var txtUserRegion = "{!userRegion}";
+        //[RJ] - 13 June 14 . Created txtUserBU to retrieve and transfer User Business Unit. Case # 2289
+        var txtUserBU = "{!userBU}";
+         //[RJ] - 23 June 14 . Added lea21 field in URL to auto populate it as True -Lead Assigment Case #3216
+         
+        window.location.href = "../{!leadPrefix}/e?retURL={!$Page.LSS_LeadSmartSearch}&nooverride=1"
+                             + "&name_firstlea2=" + txtLeadFirstName
+                             + "&name_lastlea2="  + txtLeadLastName
+                             + "&lea11="          + txtLeadEmailToSearch
+                             + "&lea3="           + txtLeadCompany 
+                             + "&lea16street="    + txtStreet
+                             + "&lea16city="      + txtCity
+                             + "&lea16state="     + txtState
+                             + "&lea16zip="       + txtZip
+                             + "&lea16country="   + txtCountry
+                             + "&{!$Setup.Custom_Fields_Ids__c.Lead_Region__c}=" + txtUserRegion 
+                             + "&{!$Setup.Custom_Fields_Ids__c.Lead_Referrer_Business_Unit__c}=" + txtUserBU 
+                             + "&lea21=1"
+                             ;
+        return false;
+    }
+    
+</script>
+
+</apex:page>

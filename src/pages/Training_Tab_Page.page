@@ -1,0 +1,15 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: Training_Tab_Page
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ *
+  =====================================================================*/
+-->
+<apex:page sidebar="false" >
+   <iframe src="https://help.salesforce.com/htsctrainingcatalog" width="100%" height="900px"></iframe>
+</apex:page>

@@ -1,0 +1,36 @@
+<apex:page standardController="Opportunity" extensions="SavoOpportunityExt"> 
+<savo_classic:Header ></savo_classic:Header>
+<savo_classic:Html title="Link to FUSE product page">
+    <apex:outputText rendered="{!products.size==0}">No Results...</apex:outputText>
+    <apex:dataList value="{!products}" var="p">
+        <apex:outputLink value="{!p.PricebookEntry.Product2.Product_Master__r.FUSE_product_page_URL__c}" target="_blank" id="fuseLink">{!p.PricebookEntry.Product2.Name}</apex:outputLink>
+    </apex:dataList>
+</savo_classic:Html>
+<savo_classic:List title="Suggested Product Content" tags="{!listTags}" assetTypes="{!assetTypes}" recordDownloads="True" numResults="5"></savo_classic:List>
+<savo_classic:Html title="Recommended Assets">
+                <ul>
+                    <li>
+                        <apex:outputLink value="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=1635875');" rendered="{!if(Opportunity.StageName == $Label.OPPTY_STAGE_QUALIFY, true, false)}">Sales Stage: {!Opportunity.StageName}</apex:outputLink>    
+                        <apex:outputLink value="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=1657259');" rendered="{!if(Opportunity.StageName == $Label.OPPTY_STAGE_PROPOSE, true, false)}">Sales Stage: {!Opportunity.StageName}</apex:outputLink>    
+                        <apex:outputLink value="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=1657335');" rendered="{!if(Opportunity.StageName == $Label.OPPTY_STAGE_COMMIT, true, false)}">Sales Stage: {!Opportunity.StageName}</apex:outputLink>    
+                        <apex:outputLink value="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=1657576');" rendered="{!if(Opportunity.StageName == $Label.OPPTY_STAGE_CONTRACT, true, false)}">Sales Stage: {!Opportunity.StageName}</apex:outputLink>    
+                        <apex:outputLink value="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=1657624');" rendered="{!if(Opportunity.StageName == $Label.OPPTY_STAGE_EXECUTE, true, false)}">Sales Stage: {!Opportunity.StageName}</apex:outputLink>
+                        <apex:outputText rendered="{!if(Opportunity.StageName = 'Closed Lost', true, false)}">Closed Lost</apex:outputText>
+                    </li>
+                    <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=31452773');">Contact Role Definitions </a></li>
+                    <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/Document/Document.aspx?id=30216058');">Start a proposal using this template </a></li>
+                    <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=1538432');">FUSE training </a></li>
+                    <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=30399540');">Global FAQs </a></li>
+                    <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=30571227');">FAQ specific to UK region </a></li> 
+    		        <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=12147749');">New starters </a></li> 
+                    <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=1244824');">Presentation design and graphics assistance </a></li>
+ 
+               </ul>
+</savo_classic:Html>
+<savo_classic:Html title="Competitor Intelligence">
+    <apex:outputText rendered="{!Competitors.size==0}">No Results...</apex:outputText>
+    <apex:dataList value="{!Competitors}" var="c">
+        <apex:outputLink value="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=' + {!c.Account__r.FUSE_Tag_Id__c})">{!c.Account__r.Name}</apex:outputLink>
+    </apex:dataList>
+</savo_classic:Html>
+</apex:page>

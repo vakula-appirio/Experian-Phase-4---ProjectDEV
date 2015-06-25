@@ -1,0 +1,126 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OrderLineItem_ScheduleSetup
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Mar 27th, 2014     Arpita Bose (Appirio)        T-264459: Added Custom Labels in place of text
+ * Apr 03rd, 2014     Arpita Bose (Appirio)        T-267983: Added the tag <apex:inputField value="{!conStartDate.Birthdate}" type="date"/>
+  =====================================================================*/
+-->
+<apex:page controller="OrderLineItem_ScheduleSetupController" tabStyle="Order__c" id="pg" showHeader="true" title="{!$Label.OLISS_Title}" docType="html-5.0">
+<apex:outputPanel rendered="{!step1}">
+  <apex:sectionHeader title="Establish Revenue Schedule for {!oli.Name}" />
+  <apex:outputText >Establish a schedule for this Order Line Item. The Revenue field defaults to show Total Price, including Discount (if any). Changing the revenue amount in the schedule will not override Discount percentage. Discount applies only to the original Sales Price, not to any new revenue amount you enter.</apex:outputText><br /><br />
+  <apex:outputText >Changing the quantity or revenue in the schedule will override the quantity or price amounts stored on the product. Select "Divide" as the Schedule Type to split the amount into multiple installments occurring every week, month, or other period. Select "Repeat" to repeat the entire amount every week, month, or other period for multiple installments. You can edit the resulting schedule on the following page.</apex:outputText>
+  <br /><br />
+  <apex:form >
+      <apex:pageBlock > 
+        <apex:pageMessages />
+         <apex:pageBlockButtons location="bottom">
+             <apex:commandButton action="{!save}" value="{!$Label.OCL_Button_Save}"/> 
+             <apex:commandButton action="{!parentURL}" value="{!$Label.OCL_Button_Cancel}" immediate="true"/>
+         </apex:pageBlockButtons>
+          <apex:pageBlockSection showHeader="true" columns="1" collapsible="false"
+            title="Establish Revenue Schedule for {!orderName}">
+       <apex:pageBlockSectionItem >
+        <apex:outputLabel value="{!$Label.OLISS_Order}" for="order__name"/>
+        <apex:commandLink action="/{!orderId}" value="{!orderName}" target="_blank" />
+       </apex:pageBlockSectionItem>
+       <apex:pageBlockSectionItem >
+        <apex:outputLabel value="{!$Label.OLISS_Start_Date}" for="start__date"/>
+        <apex:outputPanel >
+         <img src="/img/samples/color_red.gif" style="height: 14px; width: 3px; margin-top: 1px;"/>
+         <!-- <apex:inputField style="margin-left:2px;" label="Start Date" value="{!conStartDate.Birthdate}" id="start__date"/> -->
+         <apex:inputField value="{!conStartDate.Birthdate}" type="date"/> 
+         
+        </apex:outputPanel>            
+       </apex:pageBlockSectionItem>          
+       <apex:pageBlockSectionItem >
+        <apex:outputLabel value="{!$Label.OLISS_Revenue} ({!oli.CurrencyISOCode})" for="revenue_id"/>
+        <apex:outputPanel >
+         <img src="/img/samples/color_red.gif" style="height: 14px; width: 3px; margin-top: 1px;"/>
+         <apex:inputText label="{!$Label.OLISS_Revenue} ({!oli.CurrencyISOCode})" value="{!revenue}" id="revenue_id" required="true"/> 
+        </apex:outputPanel>          
+       </apex:pageBlockSectionItem>
+       <!--<apex:pageBlockSectionItem >
+        <apex:outputLabel value="Schedule Type" for="schedule__type"/>
+         <apex:outputPanel >
+         <img src="/img/samples/color_red.gif" style="height: 14px; width: 3px; margin-top: 1px;"/>                
+         <apex:selectList label="Schedule Type" value="{!scheduleTypeSelected}" multiselect="false" size="1"
+          id="schedule__type" required="true">
+          <apex:selectOptions value="{!ScheduleTypes}"/>
+         </apex:selectList>
+        </apex:outputPanel>         
+       </apex:pageBlockSectionItem>-->
+       <apex:pageBlockSectionItem >
+        <apex:outputLabel value="{!$Label.OLISS_Installment_Period}" for="installment__period"/> 
+        <apex:outputPanel >
+          <img src="/img/samples/color_red.gif" style="height: 14px; width: 3px; margin-top: 1px;"/>                
+         <apex:selectList label="{!$Label.OLISS_Installment_Period}" value="{!installmentPeriodSelected}" multiselect="false" size="1"
+          id="installment__period" required="true">
+          <apex:selectOptions value="{!InstallmentPeriods}"/>
+         </apex:selectList>
+        </apex:outputPanel>
+       </apex:pageBlockSectionItem>                 
+       <apex:pageBlockSectionItem >
+        <apex:outputLabel value="{!$Label.OLISS_Number_of_Installments}" for="installment_id"/>
+        <apex:outputPanel >
+          <img src="/img/samples/color_red.gif" style="height: 14px; width: 3px; margin-top: 1px;"/>                
+         <apex:inputText label="{!$Label.OLISS_Number_of_Installments}" value="{!numberOfInstallments}" id="installment_id" 
+          required="true"/>
+        </apex:outputPanel>           
+       </apex:pageBlockSectionItem>
+          </apex:pageBlockSection>
+      </apex:pageBlock>
+  </apex:form>
+</apex:outputPanel>  
+<apex:outputPanel rendered="{!AND(NOT(step1), NOT(editModeNoRecords))}">  
+<apex:sectionHeader title="Edit Revenue Schedule for {!oli.Name}" />
+  <apex:outputText >Modify the schedule for this Order Line Item. Click Recalculate to preview how your changes affect the total amount of the Order Line Item. The total amount is the sum of the schedule installments. This total amount will override the amount stored on the Order Line Item.</apex:outputText>
+  <br /><br />
+  <apex:form >
+      <apex:pageBlock id="pb2"> 
+        <apex:pageMessages />
+         <apex:pageBlockButtons > 
+             <apex:commandButton action="{!saveORS}" value="{!$Label.OCL_Button_Save}"/>
+             <!-- <apex:commandButton action="{!parentURL}" value="Save & More"/> -->
+             <apex:commandButton action="{!parentURL}" value="{!$Label.OCL_Button_Cancel}"/>
+         </apex:pageBlockButtons>
+          <apex:pageBlockTable value="{!lstORS}" var="item" id="pbTable">
+            <apex:column headerValue="{!$Label.OLISS_Date}">
+                <apex:inputField value="{!item.Scheduled_Date__c}" id="pbcol1" />
+            </apex:column>
+            <apex:column headerValue="{!$Label.OLISS_Revenue} ({!oli.CurrencyISOCode})">
+                <apex:inputField value="{!item.Revenue__c}" id="pbcol2"/>
+            </apex:column>
+            <apex:column headerValue="{!$Label.OLISS_Comments}">
+                <apex:inputField value="{!item.Comment__c}" id="pbcol3" />
+            </apex:column> 
+        </apex:pageBlockTable>  
+        <apex:pageBlockSection columns="3">
+         <apex:outputText value="{!$Label.OLISS_Total}" />
+         <apex:outputText value="{!oli.CurrencyISOCode} {!revenue}" />
+         <apex:outputPanel onclick="reCalculate()" styleClass="btn" >
+                {!$Label.Recalculate}
+          </apex:outputPanel>
+        </apex:pageBlockSection>
+      </apex:pageBlock>
+      <apex:actionFunction name="reCalculate" action="{!reCalculateRevenue}" rerender="pb2" /> 
+  </apex:form> 
+</apex:outputPanel>
+<apex:outputPanel rendered="{!AND(NOT(step1), editModeNoRecords)}">
+  <center><apex:outputText ><strong style="color:red;">{!$Label.OLISS_Establish_Schedule_First}</strong></apex:outputText></center>
+  <apex:form >
+   <center><apex:commandButton action="{!parentURL}" value="{!$Label.OCL_Button_Cancel}"/></center>
+   </apex:form>
+</apex:outputPanel>  
+<script>
+window.onload = function(){
+document.getElementById('{!$Component.start__date}').blur();
+}
+</script>    
+</apex:page>

@@ -1,0 +1,203 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: JointActionPlan_PDF.page
+ * Description: 
+ * Created Date:
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Dec 29th,2014      Arpita Bose                  Updated as per task T-343516
+ * Feb 17th, 2015     Paul Kissick                 Case #552965 - Added body font
+*  =====================================================================*/
+-->
+<!-- Page that is triggered from Button click on Opportunity Plan Record -->
+<apex:page standardController="Opportunity_Plan__c" showHeader="false" sidebar="false" standardStylesheets="false" docType="html-5.0" 
+    extensions="JointActionPlanExt" title="{!$Label.ACCOUNTPLANNING_JointActionPDF_TITLE}" applyHtmlTag="false" applyBodyTag="false" renderAs="pdf">
+    <head>
+      <apex:stylesheet value="{!URLFOR($Resource.pdfCSS)}"/>
+      <apex:stylesheet value="{!URLFOR($Resource.prototypeCss, 'css/style.css')}"/>
+      <apex:stylesheet value="{!URLFOR($Resource.opptyStageIndicatorCSS, 'opptyStageIndicatorCSS/opptyStageIndicatorCSS.css')}"/>
+      <apex:styleSheet value="{!URLFOR($Resource.BootstrapJS,'css/bootstrap-datetimepicker.min.css')}"/>
+      <!--<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+      <link rel="stylesheet" media="print" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+      <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+      <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+      <script src="{!URLFOR($Resource.BootstrapJS,'js/moment.js')}"/>
+      <script src="{!URLFOR($Resource.BootstrapJS,'js/bootstrap-datetimepicker.min.js')}"/> -->
+      
+      <apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/JointActionPlanPDF_CSS.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" />     
+      <style>
+        /*body { font-family: 'Arial Unicode MS' !important; }*/
+        
+        body {  /* PK Case #552965 */
+                font-family: sans-serif;
+                font-weight: normal;
+              }
+      </style>
+
+    </head>
+    
+    <body>
+    <div class="header">
+        <div class="inner">
+            <img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;margin-left:77px !important"/>
+        </div>
+    </div>
+     <apex:form >  
+
+    <apex:outputPanel id="theContainerPanel" rendered="{!NOT(isError)}" >
+    
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+        <!-- MAIN HEADERS -->
+        <div class="row">
+            <br />
+            <table cell-padding="6" class="oppStages containerHead" width="700px">
+                <tbody>
+                    <tr>
+                        <td class="headerComplete icon-navigation headerIcon_style" >
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Understand} <br/>
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Value} <br/>
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Propositions}
+                        </td>
+                        <td class="headerComplete icon-navigation headerIcon_style">
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Request} <br/>
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_for} <br/>
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Proposal}
+                        </td>
+                        <td class="headerComplete icon-navigation headerIcon_style">
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Make} <br/>
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Decision}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- END MAIN HEADERS -->
+        <br/>
+        <!-- TABLE BEGINS -->
+        <table class="table table-bordered containerHead" style="" width="700px">
+            <thead class="title">
+                <th style="width:90px;"></th>
+                <th class="titletext" style="width:160px;">{!$Label.ACCOUNTPLANNING_JointActionPDF_Initial_Discussion}</th>
+                <th class="titletext" style="width:160px;">{!$Label.ACCOUNTPLANNING_JointActionPDF_Needs_Analysis}</th>
+                <th class="titletext" style="width:160px;">{!$Label.ACCOUNTPLANNING_JointActionPDF_Solution} </th>
+                <th class="titletext" style="width:160px;">{!$Label.ACCOUNTPLANNING_JointActionPDF_Fulfillment}</th>
+            </thead>
+            <tbody>
+              <apex:repeat value="{!jActionPlan.aPlans}" var="a">
+                <tr>
+                    <td class="title titletext">
+                        <p class="outputPanel">                         
+                            <apex:outputPanel rendered="{!a.cType == 'Customer'}">
+                                {!oPlan.Account_Name__r.Name}
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!a.cType != 'Customer'}">
+                                {!a.cType}
+                            </apex:outputPanel>
+                        </p>
+                    </td>
+                    <td class="vertical_header"><apex:inputTextarea value="{!a.initialdiscussion}" styleClass="inputTextarea"></apex:inputTextarea></td>
+                    <td class="vertical_header"><apex:inputTextarea value="{!a.needsAnalysis}" styleClass="inputTextarea"></apex:inputTextarea></td>
+                    <td class="vertical_header"><apex:inputTextarea value="{!a.solution}" styleClass="inputTextarea"></apex:inputTextarea></td>
+                    <td class="vertical_header"><apex:inputTextarea value="{!a.fulfillment}" styleClass="inputTextarea"></apex:inputTextarea></td>
+                </tr>
+              </apex:repeat>
+               <tr>
+                   <td class="title titletext titletext_font">{!$Label.ACCOUNTPLANNING_JointActionPDF_Deadline}</td>
+
+                   <td class="border_style">
+                     <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                        <apex:param value="{!jActionPlan.oPlan.Action_Item_Initial_Discussions_Deadline__c}" /> 
+                     </apex:outputText>
+                   </td>
+
+                   <td class="border_style">
+                     <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                       <apex:param value="{!jActionPlan.oPlan.Action_Item_Needs_Analysis_Deadline__c}" /> 
+                     </apex:outputText>
+                   </td>
+
+                   <td class="border_style">
+                     <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                       <apex:param value="{!jActionPlan.oPlan.Action_Item_Solution_Deadline__c}" /> 
+                     </apex:outputText>
+                   </td>
+                   <td class="border_style">
+                     <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                       <apex:param value="{!jActionPlan.oPlan.Action_Item_Fulfillment_Deadline__c}" /> 
+                     </apex:outputText>
+                   </td>
+               </tr>
+                <tr>
+                    <td class="title titletext titletext_font">{!$Label.ACCOUNTPLANNING_JointActionPDF_Complete}</td>
+                    <td class="border_style">
+                      <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                        <apex:param value="{!jActionPlan.oPlan.Action_Item_Initial_Discussions_Complete__c}" /> 
+                      </apex:outputText>
+                    </td>
+                    <td class="border_style">
+                      <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                        <apex:param value="{!jActionPlan.oPlan.Action_Item_Needs_Analysis_Completed__c}" /> 
+                      </apex:outputText>
+                    </td>
+                    <td class="border_style">
+                      <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                        <apex:param value="{!jActionPlan.oPlan.Action_Item_Solution_Completed__c}" /> 
+                      </apex:outputText>
+                    </td>
+                    <td class="border_style">
+                      <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                        <apex:param value="{!jActionPlan.oPlan.Action_Item_Fulfillment_Completed__c}" /> 
+                      </apex:outputText>
+                    </td>
+                </tr>   
+
+            </tbody>
+        </table>
+        <!-- TABLE ENDS -->
+        
+        <!-- MAIN FOOTER -->
+        <div class="row">
+            <!-- <div class="col-md-4">
+                <p class="lead titletext">Draft Project Plan</p>
+            </div>
+            <div class="col-md-4">
+                <p class="lead titletext">Requirements Understood</p>
+            </div>
+            <div class="col-md-4">
+                <p class="lead titletext">Solution Proposal</p>
+            </div> -->
+                        <br/>
+            <table cell-padding="6" class="oppStages containerHead" width="700px">
+                <tbody>
+                    <tr>
+                        <td class="headerComplete icon-navigation headerIcon_style" >
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Draft} <br/>
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Project} <br/>
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Plan}
+                        </td>
+                        <td class="headerComplete icon-navigation headerIcon_style" >
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Requirements} <br/>
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Understood}
+                        </td>
+                        <td class="headerComplete icon-navigation headerIcon_style" >
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Solution} <br/>
+                            {!$Label.ACCOUNTPLANNING_JointActionPDF_Proposal}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+                        <br/>
+        </div>
+        <!-- END MAIN FOOTER -->
+    </div>
+    
+    </apex:outputPanel>
+
+    </apex:form>
+    
+    </body>
+</apex:page>

@@ -1,0 +1,438 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: Exports_FinanceInvoicing.page
+ * Description: To list out Orders and to export them for finance invoicing.
+ * Created Date: Sept 09th, 2014
+ * Created By: Naresh Kr Ojha (Appirio)
+ *
+ * Date Modified        Modified By             Description
+ * Nov 14th, 2014       Arpita Bose             Updated for the issue I-139036
+ * Dec 2nd, 2014        Terri Kellough          S-274030/T-337168: add multi-select country filter
+ * Feb 20th, 2015       Richard Joseph          Case 542797- Updating the code to eliminate multiple refreshes.
+ * Mar 4th, 2015        Tyaga Pati              Case #00540660 Status Filter Changes and Credited Date Filter Addition
+ * Apr 17th, 2015       Richard Joseph          Case # 00586159- To add a new filter for EMEA to check the Order Products BL for EDQ Product.
+  =====================================================================*/
+-->
+<apex:page controller="Exports_FinanceInvoicingController" title="Finance Invoicing Exports">
+ <apex:includeScript value="{!URLFOR($Resource.datepicker, 'jquery.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.datepicker, 'jquery-ui.min.js')}"/>
+  <apex:stylesheet value="{!URLFOR($Resource.datepicker, 'jquery-ui.css')}"/>
+  <style>
+    .fitlerSelect {width:250px;}
+  </style>
+  <apex:sectionHeader title="Finance Invoicing Exports"/>
+  
+  <apex:form id="frm">
+    <apex:actionFunction name="searchOrdersJS" action="{!searchOrders}" status="searching" reRender="pb" />
+    <apex:actionFunction name="exportBatchJS" action="{!exportBatches}" status="exporting" reRender="pb"  />
+        <apex:commandButton value="Export" style="float:right;" styleClass="exportBtn" reRender="pb" />
+
+        <apex:pageBlock id="filterPb">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockSectionItem >
+                <apex:outputLabel style="width:200px;">{!$Label.EXPORT_BATCH_REGION}</apex:outputLabel> 
+                    <apex:outputPanel id="regionPL">
+                    <apex:selectList styleClass="fitlerSelect" size="1" multiselect="false" value="{!selectedRegion}" >
+                      <apex:selectOptions value="{!regionOptions}" />
+                      <apex:actionSupport event="onchange" action="{!resetCountry}" rerender="countryPL" />
+                      <apex:actionSupport event="onchange" action="{!resetBusinessUnit}" rerender="businessUnitPL" />
+                      
+                    </apex:selectList>
+                </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$Label.EXPORT_BATCH_HELP_COUNTRY}">
+                <apex:outputLabel style="width:200px;">{!$Label.EXPORT_BATCH_COUNTRY}</apex:outputLabel> 
+                    <apex:outputPanel id="countryPL">
+                    <apex:selectList styleClass="fitlerSelect" size="6" multiselect="true" value="{!selectedCountries}" > 
+                      <apex:selectOptions value="{!countryOptions}" />
+                    </apex:selectList>
+                </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$Label.EXPORT_BATCH_HELP_BUSINESS_UNIT}">
+                <apex:outputLabel style="width:200px;">{!$Label.BUSINESS_UNIT}</apex:outputLabel> 
+                    <apex:outputPanel id="businessUnitPL">
+                    <apex:selectList rendered="true" styleClass="fitlerSelect" size="6" multiselect="true" value="{!selectedBusinessUnits}" > 
+                      <apex:selectOptions value="{!businessUnitOptions}" />
+                    </apex:selectList>
+                </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                                
+               
+                <apex:pageBlockSectionItem >
+                <apex:outputLabel style="width:200px;">{!$Label.EXPORT_BATCH_STATUS}</apex:outputLabel> 
+                    <apex:outputPanel >
+                    <apex:selectList styleClass="fitlerSelect" size="1" multiselect="true" value="{!selectedStatus}" > 
+                      <apex:selectOptions value="{!statusOptions}" />
+                    </apex:selectList>
+                </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                            
+                <apex:pageBlockSectionItem >
+                <apex:outputLabel style="width:200px;">{!$Label.EXPORT_BATCH_BATCH}</apex:outputLabel>
+                <apex:outputPanel >
+                    <apex:selectList size="1" multiselect="false" value="{!selectedBatchRecLink}" styleClass="batchSelect fitlerSelect">
+                      <apex:selectOptions value="{!batchRecOptions}" />
+                    </apex:selectList>
+                </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem dataStyleClass="clsDate" labelStyleClass="clsDate">                                                               
+                        <apex:outputLabel style="width:200px;" for="specificNumberId">{!$Label.EXPORT_BATCH_BATCH} #</apex:outputLabel>
+                        <apex:inputText value="{!specificBatchNo}" id="specificNumberId"/>
+                            </apex:pageBlockSectionItem>
+                 <!-- added by Tyaga Pati for credited date -->           
+               <!-- RJ - Case 607717- Changes to credit process - Removed Credit date filter
+                <apex:pageBlockSectionItem >
+                <apex:outputLabel style="width:200px;">{!$Label.EXPORT_BATCH_CREDITED_DATE}</apex:outputLabel>
+                 <apex:outputPanel >
+                 <apex:inputText styleClass="dateRange1" html-placeholder="Enter Start Date for range" value="{!selectedCreditedStaDate}" />
+                 <apex:inputText styleClass="dateRange1" html-placeholder="Enter End Date for range" value="{!selectedCreditedEndDate }" />
+                 </apex:outputPanel>  
+             </apex:pageBlockSectionItem>    -->        
+                    
+             <apex:pageBlockSectionItem >
+                    <apex:outputLabel style="width:200px;">{!$Label.EXPORT_BATCH_CLOSE_DATE}</apex:outputLabel>
+                    <apex:outputPanel >
+                         <apex:selectList size="1" multiselect="false" value="{!selectedOrderDate}" styleClass="closeDateSelect fitlerSelect" > 
+                             <apex:selectOptions value="{!orderDateOptions}" />
+                         </apex:selectList>                  
+                    </apex:outputPanel>
+             </apex:pageBlockSectionItem>
+            
+            <!-- RJ - Added this filter for case 00586159 -->
+                <apex:pageBlockSectionItem >
+                
+                 
+                 <apex:outputLabel style="width:200px;" styleClass="BatchFilterEMEAEDQOrderLabel">{!$Label.Export_Batch_EDQ_Products}</apex:outputLabel>
+                 <apex:outputPanel >
+                        <apex:inputCheckbox value="{!OrdersWithEDQProducts}" styleClass="BatchFilterEMEAEDQOrderChkBx"/>
+                 </apex:outputPanel>  
+             </apex:pageBlockSectionItem>    
+            
+            
+          </apex:pageBlockSection>
+             <div style="display:none; margin-left:200px;" class="closeDatePick" >
+                <apex:outputLabel styleClass="dateRange1" style="width:200px;">{!$Label.EXPORT_BATCH_DATE}</apex:outputLabel>
+                <apex:inputText styleClass="dateRange1 selectedClosedDate dateInput" value="{!selectedClosedDate}" />
+             </div>
+            <div style="display:none; margin-left:200px;" class="dateRange" >
+                <apex:outputLabel styleClass="dateRange1" style="width:200px;">{!$Label.EXPORT_BATCH_START_DATE}</apex:outputLabel>
+                <apex:inputText styleClass="dateRange1 startDateInput dateInput" value="{!dateRange1}" />
+                <apex:outputLabel styleClass="dateRange2" style="width:200px;">{!$Label.EXPORT_BATCH_END_DATE}</apex:outputLabel>
+                <apex:inputText styleClass="dateRange2 endDateInput dateInput" value="{!dateRange2}" />
+            </div>
+            <div style="text-align:center;" >
+               <apex:commandButton style="float:center;" onclick="validateAndCallSearch(); return false;" value=" Filter "/>
+            </div>
+        
+            <br /><br />
+        </apex:pageBlock>
+
+        <apex:pageBlock id="pb">        
+           <apex:pageMessages escape="false" />
+            <apex:outputPanel style="color:#4AA02C;font-weight:bold">
+              <apex:actionStatus id="searching" startText="Fetching..." stopText=""/>
+            </apex:outputPanel>
+            <apex:outputPanel style="color:#4AA02C;font-weight:bold">
+              <apex:actionStatus id="exporting" startText="Exporting..." stopText="" onstop="callExportPage('{!generatedBatchId }');" /> 
+            </apex:outputPanel>
+            
+            <table width="100%" style="margin:10px;">
+                <tr class=" headerRow ">
+                     <th style="border:0x solid #e0e3e5; width:1% !important"><apex:inputCheckbox styleClass="selectAll" /></th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Account</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Billing Account</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:100% !important">Order Name</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Order Number</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:100% !important">Order Value</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Status</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Owner</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Billing Address</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Shipping Address</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">PO Number</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Contract Start Date</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Close Date</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Credited Date</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Invoice to End User</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Batch #</th>
+                     <th style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">Exported for Invoicing</th>
+                </tr>
+                <apex:repeat value="{!Batches}" var="ordWrap">
+                   <tr>
+                     <td style="border:0px solid #e0e3e5; width:1% !important"><apex:inputCheckbox value="{!ordWrap.selected}"  styleClass="input_{!ordWrap.order.Id} childCheckbox"  /></td>
+                     
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:outputLink value="/{!ordWrap.order.Account__c}" target="_blank">{!ordWrap.order.Account__r.Name}</apex:outputLink></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:outputField value="{!ordWrap.order.Billing_Account__c}"/></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:100% !important"><apex:outputLink value="/{!ordWrap.order.Id}" target="_blan">{!ordWrap.order.Name}</apex:outputLink></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:inputField value="{!ordWrap.order.Order_Number__c}"/></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:100% !important"><apex:inputField value="{!ordWrap.order.Total__c}" /></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:inputField value="{!ordWrap.order.Status__c}" /></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important">{!ordWrap.order.Owner.FirstName} {!ordWrap.order.Owner.LastName}</td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><a href="/{!ordWrap.order.Billing_Address__c}"
+                      id="lookup{!ordWrap.order.Billing_Address__c}opp4"
+                      onblur="LookupHoverDetail.getHover('lookup{!ordWrap.order.Billing_Address__c}opp4').hide();"
+                      onfocus="LookupHoverDetail.getHover('lookup{!ordWrap.order.Billing_Address__c}opp4', '/{!ordWrap.order.Billing_Address__c}/m?retURL=/{!ordWrap.order.Billing_Address__c}&isAjaxRequest=1').show();"
+                      onmouseout="LookupHoverDetail.getHover('lookup{!ordWrap.order.Billing_Address__c}opp4').hide();"
+                      onmouseover="LookupHoverDetail.getHover('lookup{!ordWrap.order.Billing_Address__c}opp4', '/{!ordWrap.order.Billing_Address__c}/m?retURL=/{!ordWrap.order.Billing_Address__c}&isAjaxRequest=1').show();">
+                      {!ordWrap.order.Billing_Address__r.Name}
+                      </a></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><a href="/{!ordWrap.order.Shipping_Address__c}"
+                      id="lookup{!ordWrap.order.Shipping_Address__c}opp4"
+                      onblur="LookupHoverDetail.getHover('lookup{!ordWrap.order.Shipping_Address__c}opp4').hide();"
+                      onfocus="LookupHoverDetail.getHover('lookup{!ordWrap.order.Shipping_Address__c}opp4', '/{!ordWrap.order.Shipping_Address__c}/m?retURL=/{!ordWrap.order.Shipping_Address__c}&isAjaxRequest=1').show();"
+                      onmouseout="LookupHoverDetail.getHover('lookup{!ordWrap.order.Shipping_Address__c}opp4').hide();"
+                      onmouseover="LookupHoverDetail.getHover('lookup{!ordWrap.order.Shipping_Address__c}opp4', '/{!ordWrap.order.Shipping_Address__c}/m?retURL=/{!ordWrap.order.Shipping_Address__c}&isAjaxRequest=1').show();">
+                      {!ordWrap.order.Shipping_Address__r.Name}
+                      </a></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:outputField value="{!ordWrap.order.PO_Number__c}"/></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:outputField value="{!ordWrap.order.Contract_Start_Date__c}"/></td>
+
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:outputField value="{!ordWrap.order.Close_Date__c}" /></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:outputField value="{!ordWrap.order.Credited_Date__c}" /></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:outputField value="{!ordWrap.order.Invoice_to_End_User__c}" /></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:outputLink value="/{!ordWrap.batch.Id}" target="_blan">{!ordWrap.batch.Name}</apex:outputLink></td>
+                     <td style="padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:14% !important"><apex:outputField value="{!ordWrap.order.Exported_for_Invoicing__c}" /></td>
+                   </tr>                
+                </apex:repeat>
+            </table>
+            
+          <!--   <apex:pageBlockTable value="{!Batches}" var="ordWrap">
+                <apex:column headerValue="Select">
+                    <apex:facet name="header">
+                      <apex:inputCheckbox styleClass="selectAll" />
+                   </apex:facet>
+                   <apex:inputCheckbox value="{!ordWrap.selected}"  styleClass="input_{!ordWrap.order.Id} childCheckbox"  />
+                </apex:column>
+                <apex:column headerValue="Order Name">
+                   <apex:outputLink value="/{!ordWrap.order.Id}" target="_blan">{!ordWrap.order.Name}</apex:outputLink>
+                </apex:column>
+                <apex:column headerValue="Order Number" value="{!ordWrap.order.Order_Number__c}" />
+                <apex:column headerValue="Order Value" value="{!ordWrap.order.Total__c}" />
+                <apex:column headerValue="Status" value="{!ordWrap.order.Status__c}" />
+                <apex:column headerValue="Owner" value="{!ordWrap.order.Owner.FirstName} {!ordWrap.order.Owner.LastName} " />
+                <apex:column headerValue="Billing Address">
+                  <a href="/{!ordWrap.order.Billing_Address__c}"
+                      id="lookup{!ordWrap.order.Billing_Address__c}opp4"
+                      onblur="LookupHoverDetail.getHover('lookup{!ordWrap.order.Billing_Address__c}opp4').hide();"
+                      onfocus="LookupHoverDetail.getHover('lookup{!ordWrap.order.Billing_Address__c}opp4', '/{!ordWrap.order.Billing_Address__c}/m?retURL=/{!ordWrap.order.Billing_Address__c}&isAjaxRequest=1').show();"
+                      onmouseout="LookupHoverDetail.getHover('lookup{!ordWrap.order.Billing_Address__c}opp4').hide();"
+                      onmouseover="LookupHoverDetail.getHover('lookup{!ordWrap.order.Billing_Address__c}opp4', '/{!ordWrap.order.Billing_Address__c}/m?retURL=/{!ordWrap.order.Billing_Address__c}&isAjaxRequest=1').show();">
+                      {!ordWrap.order.Billing_Address__r.Name}
+                      </a>
+                 </apex:column>              
+                <apex:column headerValue="Shipping Address" >
+                  <apex:outputLink value="/{!ordWrap.order.Shipping_Address__c}" target="_blank">  </apex:outputLink>
+                  <a href="/{!ordWrap.order.Shipping_Address__c}"
+                      id="lookup{!ordWrap.order.Shipping_Address__c}opp4"
+                      onblur="LookupHoverDetail.getHover('lookup{!ordWrap.order.Shipping_Address__c}opp4').hide();"
+                      onfocus="LookupHoverDetail.getHover('lookup{!ordWrap.order.Shipping_Address__c}opp4', '/{!ordWrap.order.Shipping_Address__c}/m?retURL=/{!ordWrap.order.Shipping_Address__c}&isAjaxRequest=1').show();"
+                      onmouseout="LookupHoverDetail.getHover('lookup{!ordWrap.order.Shipping_Address__c}opp4').hide();"
+                      onmouseover="LookupHoverDetail.getHover('lookup{!ordWrap.order.Shipping_Address__c}opp4', '/{!ordWrap.order.Shipping_Address__c}/m?retURL=/{!ordWrap.order.Shipping_Address__c}&isAjaxRequest=1').show();">
+                      {!ordWrap.order.Shipping_Address__r.Name}
+                      </a>
+                </apex:column>              
+                
+
+                <apex:column headerValue="Account" >
+                   <apex:outputLink value="/{!ordWrap.order.Account__c}" target="_blank">{!ordWrap.order.Account__r.Name}</apex:outputLink>
+                </apex:column>              
+                <apex:column headerValue="Close Date" value="{!ordWrap.order.Close_Date__c}" />
+                
+                <apex:column headerValue="Invoice to End User" value="{!ordWrap.order.Invoice_to_End_User__c}" />
+                <apex:column headerValue="Batch #" >
+                   <apex:outputLink value="/{!ordWrap.batch.Id}" target="_blan">{!ordWrap.batch.Name}</apex:outputLink>
+                </apex:column>              
+                <apex:column headerValue="Exported for Invoicing" value="{!ordWrap.order.Exported_for_Invoicing__c}" />
+            </apex:pageBlockTable>  -->
+           
+            <div style="text-align:center; float:right;">
+              <apex:panelGrid columns="7" style="float:left;">
+                <apex:commandButton oncomplete="uncheckSelectAll();" styleClass="pgBtn" status="fetchStatus" reRender="pb" value="|<" action="{!first}" disabled="{!!hasPrevious}" title="{!$Label.EXPORT_BATCH_FIRST_PAGE}"/>
+                <apex:commandButton oncomplete="uncheckSelectAll();"  styleClass="pgBtn" status="fetchStatus" reRender="pb" value="<" action="{!previous}" disabled="{!!hasPrevious}" title="{!$Label.EXPORT_BATCH_PREVIOUS_PAGE}"/>
+                <apex:commandButton oncomplete="uncheckSelectAll();"  styleClass="pgBtn" status="fetchStatus" reRender="pb" value=">" action="{!next}" disabled="{!!hasNext}" title="{!$Label.EXPORT_BATCH_NEXT_PAGE}"/>
+                <apex:commandButton oncomplete="uncheckSelectAll();"  styleClass="pgBtn" status="fetchStatus" reRender="pb" value=">|" action="{!last}" disabled="{!!hasNext}" title="{!$Label.EXPORT_BATCH_LAST_PAGE}"/>
+                <apex:outputText >{!(pageNumber * size)+1-size}-{!IF((pageNumber * size)>noOfRecords, noOfRecords,(pageNumber * size))} of {!noOfRecords}</apex:outputText>
+                <apex:commandButton oncomplete="uncheckSelectAll();"  styleClass="pgBtn" status="fetchStatus" reRender="pb" value="{!$Label.EXPORT_BATCH_REFRESH}" action="{!refresh}" title="{!$Label.EXPORT_BATCH_REFRESH}"/>
+
+                <apex:outputPanel style="color:#4AA02C;font-weight:bold">
+                    <apex:actionStatus id="fetchStatus" startText="{!$Label.EXPORT_BATCH_FETCHING}" stopText=""/>
+                </apex:outputPanel>
+              </apex:panelGrid>
+              <apex:panelGrid columns="1" style="float:left;">
+                <apex:selectList value="{!size}" size="1" multiselect="false" onchange="refreshJS();">
+                   <apex:selectOptions value="{!sizeOptions}" />
+                </apex:selectList>
+              </apex:panelGrid>
+            </div> <br /><br /><br />
+        </apex:pageBlock>
+        <!-- RJ Commented out to elimiate mutliple refresh during pagination size change- Case # 542797
+        <apex:actionFunction name="refreshJS" action="{!refresh}" status="fetchStatus" reRender="pb, scriptPanel"/> -->
+        <apex:actionFunction name="refreshJS" action="{!refresh}" status="fetchStatus" reRender="pb"/>
+        <apex:actionFunction name="assignSpecificDate" rerender="frm">
+            <apex:param value="" name="spDate" assignTo="{!dateRange1}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="assignSpecificDateIncluding" reRender="frm">
+            <apex:param value="" name="spDateInc" assignTo="{!dateRange1}"/>
+            <apex:param value="" name="spDateIncG" assignTo="{!dateRange2}" />      
+        </apex:actionFunction>
+        
+    </apex:form>
+        <apex:outputPanel id="scriptPanel">
+      <script type="text/javascript">
+        $(document).ready(function(){
+          $('.clsDate').hide();
+          $('.selectAll').live('click', function(){
+             if(this.checked) { 
+               $('.childCheckbox').each(function() { 
+                 this.checked = true; 
+               });
+             } else {
+               $('.childCheckbox').each(function() { 
+                 this.checked = false;
+               });
+             }
+          });
+          
+          $('.exportBtn').click(function(){
+             if($('.childCheckbox:checked').length > 0) {
+               exportBatchJS();
+             } else {
+               alert("{!$Label.EXPORT_BATCH_SELECT_A_RECORD}");
+             }
+
+            return false;
+          });
+          
+                 
+
+          
+          $('.batchSelect').live('change', function(){
+            if ($(this).val() != '{!BATCH_CONDITION_SELECT_BATCH_NO}') {
+              $('.clsDate').hide();
+              $('input.clsDate').val('');
+            } else {
+              $('.clsDate').show();
+            }
+          });
+//RJ Added this for EMEA EDQ Product Order filter.
+
+        $('.fitlerSelect').live('change', function(){
+            if ($('.fitlerSelect').val() != 'EMEA') {
+              $('.BatchFilterEMEAEDQOrderChkBx').hide();
+              $('.BatchFilterEMEAEDQOrderLabel').hide();
+               
+            } else {
+              $('.BatchFilterEMEAEDQOrderChkBx').show();
+              $('.BatchFilterEMEAEDQOrderLabel').show();
+            }
+          });
+          
+          if ($('.fitlerSelect').val() != 'EMEA') {
+              $('.BatchFilterEMEAEDQOrderChkBx').hide();
+              $('.BatchFilterEMEAEDQOrderLabel').hide();
+               
+            } else {
+              $('.BatchFilterEMEAEDQOrderChkBx').show();
+              $('.BatchFilterEMEAEDQOrderLabel').show();
+            }
+          
+          //
+          $('.closeDateSelect').live('change', function(){
+            $('.dateInput').attr('readonly', 'readonly');
+            $('.dateInput').val('');
+            //$('.dateRange').hide().('.dateRange1').hide().('.dateRange2').hide();
+            if ($(this).val() == 'Specific Date') {
+              //show first date
+              $('.dateRange').hide();
+              $('.closeDatePick').show();
+            } else if ($(this).val() == 'Date Range Include' || $(this).val() == 'Date Range Exclude') {
+              //Show date range
+              $('.closeDatePick').hide();
+              $('.dateRange').show();
+            } else {
+              $('.closeDatePick').hide();
+              $('.dateRange').hide();              
+            }
+          });
+
+          $('.dateRange1').datepicker( {
+            showOtherMonths: true,  
+            changeYear: true,
+            monthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],         
+            selectOtherMonths: true,
+            onSelect: function(dateText, inst) { 
+               $('.dateRange1 dateInput').val(dateText);
+               $('.ui-datepicker').hide();
+               startDate = dateText;
+            }
+          });  
+          $('.dateRange2').datepicker( {
+            showOtherMonths: true,   
+            changeYear: true,        
+            selectOtherMonths: true,
+            onSelect: function(dateText, inst) { 
+               $('.dateRange2 dateInput').val(dateText);
+               $('.ui-datepicker').hide();
+               return false;
+            }
+          });
+          
+        });
+
+        function uncheckSelectAll() {
+          var chkAll = $('input.selectAll');
+          chkAll.attr('checked', false);
+          var isCheckAll = true;
+        }
+        
+        function validateAndCallSearch () {
+          if ($('.closeDateSelect').val() == 'Specific Date' && $('.selectedClosedDate').val() == '') {
+            alert('{!$Label.EXPORT_BATCH_SELECT_CLOSEDATE}');
+            return false;
+          } else if ($('.closeDateSelect').val() == 'Date Range Include' && 
+                                               ($('.startDateInput').val() == '' || $('.endDateInput').val() == '')) {
+            alert('{!$Label.EXPORT_BATCH_SELECT_START_END_DATE}');
+            return false;
+          } else if ($('.closeDateSelect').val() == 'Date Range Exclude' && 
+                                               ($('.startDateInput').val() == '' || $('.endDateInput').val() == '')) {
+            alert('{!$Label.EXPORT_BATCH_SELECT_START_END_DATE_EXCL}');
+            return false;
+          }
+          searchOrdersJS();
+        }
+         //Changes from Richard
+                
+       function callExportPage(batchId){
+                        
+                       //alert('{!currentUserRegion }');
+                        
+                       var region = '{!currentUserRegion }';
+                         
+                       if (region != 'UK&I')
+                       {
+                    var url = '/apex/ExportBatchExtractProcess?BatchID='+batchId+'&ExportFile=CustomerFile' ;
+                            var newWindow = openPopupFocus(url); 
+                             
+                            url = '/apex/ExportBatchExtractProcess?BatchID='+batchId+'&ExportFile=PartnerFile' ;
+                            newWindow = openPopupFocus(url);   
+                             
+                            url = '/apex/ExportBatchExtractProcess?BatchID='+batchId+'&ExportFile=RoyaltiesFile' ;
+                            newWindow = openPopupFocus(url); 
+                             
+                            url = '/apex/ExportBatchExtractProcess?BatchID='+batchId+'&ExportFile=SummitFile' ;
+                            newWindow = openPopupFocus(url); 
+                           }
+                           else {  
+                            url = '/apex/ExportBatchExtractProcess?BatchID='+batchId+'&ExportFile=RPMFile' ;
+                            newWindow = openPopupFocus(url);  
+                                     }
+               }
+                
+                 //Changes ends    
+
+        
+      </script>  
+     </apex:outputPanel>
+</apex:page>

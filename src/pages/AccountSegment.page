@@ -1,0 +1,92 @@
+<!-- 
+/**=====================================================================
+ * Appirio, Inc
+ * Name: AccountSegment
+ * Description: T-372669 - Page used to override the "View" standard behavior
+ * 
+ * Created Date: March 22nd, 2015
+ * Created By: Nathalie Le Guay (Appirio)
+ *
+ * Date Modified            Modified By           Description of the update
+ * Apr 28th, 2015           Nathalie Le Guay      Added Histories related list
+ ======================================================================*/
+ -->
+<apex:page standardController="Account_Segment__c" extensions="AccountSegmentController" title="{!title}">
+  <apex:pageBlock id="thePage" title="{!title}" mode="maindetail">
+    <apex:detail subject="{!segment.Id}" relatedList="false" title="true" inlineEdit="true" showChatter="true"/>
+  </apex:pageBlock>
+  <apex:form >
+  <apex:pageBlock mode="maindetail" title="{!segmentMapEntryName}">
+    <apex:pageMessages />
+    <apex:pageBlockButtons location="top">
+      <apex:outputPanel id="buttons">
+      <apex:commandButton value="Edit" action="{!edit}" rerender="segmentSpecific, buttons" id="editButton" rendered="{!NOT(isEdit)}"/>
+      <apex:commandButton value="Save" action="{!save}" rerender="segmentSpecific, buttons" id="saveButton"  rendered="{!isEdit}"/>
+      <apex:commandButton value="Cancel" action="{!cancel}" rerender="segmentSpecific, buttons" id="cancelButton" rendered="{!isEdit}"/>
+      </apex:outputPanel>
+    </apex:pageBlockButtons>
+    <apex:outputPanel id="segmentSpecific">
+      
+        <apex:pageBlockSection rendered="{!NOT(isEdit)}">
+          <apex:outputLabel value="There are no data specific to this segment" rendered="{!fieldSet == null}"/>
+          <apex:pageBlockSectionItem dataStyle="text-align: right;" rendered="{!fieldSet != null}"> 
+            <apex:outputPanel >
+              
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <apex:pageBlockSectionItem />
+          <apex:repeat value="{!fieldSet}" var="field">
+            <apex:outputField value="{!segment[field.fieldPath]}">
+              <!-- <apex:inlineEditSupport event="ondblClick"  showOnEdit="saveButton,cancelButton" hideOnEdit="editButton" /> -->
+            </apex:outputField>
+          </apex:repeat>
+           
+        </apex:pageBlockSection>
+  
+        <apex:pageBlockSection title="Segment Specific Section {!IF(segmentMapEntryName==null, '', segmentMapEntryName)}" rendered="{!isEdit}">
+          <apex:pageBlockSectionItem dataStyle="text-align: right;" rendered="{!fieldSet != null}">
+          </apex:pageBlockSectionItem>
+          <apex:pageBlockSectionItem />
+          <apex:repeat value="{!fieldSet}" var="field">
+            <apex:inputField value="{!segment[field.fieldPath]}"/>
+          </apex:repeat>
+        </apex:pageBlockSection>
+      
+    </apex:outputPanel>
+  
+  </apex:pageBlock>
+  </apex:form>
+  <apex:relatedList list="Opportunities_Global_Lines_of_Business__r"
+                    rendered="{!segment.Segment_Type__c == 'Global Business Line'}"/>
+  <apex:relatedList list="Opportunities_Business_Lines__r"
+                    rendered="{!segment.Segment_Type__c == 'Business Line'}"/>
+  <apex:relatedList list="Opportunities_Business_Units__r"
+                    rendered="{!segment.Segment_Type__c == 'Business Unit'}"/>
+  <apex:relatedList list="Opportunities_Regions__r"
+                    rendered="{!segment.Segment_Type__c == 'Region'}"/>
+  <apex:relatedList list="Opportunities_Countries__r"
+                    rendered="{!segment.Segment_Type__c == 'Country'}"/>
+
+  <apex:relatedList list="Orders_Global_Business_Lines__r"
+                    rendered="{!segment.Segment_Type__c == 'Global Business Line'}"/>
+  <apex:relatedList list="Orders_Business_Lines__r"
+                    rendered="{!segment.Segment_Type__c == 'Business Line'}"/>
+  <apex:relatedList list="Orders_Business_Units__r"
+                    rendered="{!segment.Segment_Type__c == 'Business Unit'}"/>
+  <apex:relatedList list="Orders_Regions__r"
+                    rendered="{!segment.Segment_Type__c == 'Region'}"/>
+  <apex:relatedList list="Orders_Countries__r"
+                    rendered="{!segment.Segment_Type__c == 'Country'}"/>
+  <apex:relatedList list="Child_Account_Segments__r"/>
+  
+  <apex:pageBlock title="Account Segment History">
+    <apex:pageblocktable value="{!segment.Histories}" var="hist">
+      <apex:column value="{!hist.CreatedDate}"/>
+      <apex:column value="{!hist.Createdby.Name}"/>
+      <apex:column value="{!hist.Field}"/>
+      <apex:column value="{!hist.OldValue}"/>
+      <apex:column value="{!hist.NewValue}"/>
+    </apex:pageblocktable>
+  </apex:pageBlock> 
+
+</apex:page>

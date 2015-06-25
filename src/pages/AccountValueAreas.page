@@ -1,0 +1,19 @@
+<apex:page standardcontroller="Account_Plan__c" extensions="AccountValueAreasExt">
+    <apex:pageBlock >
+        <apex:pageBlockTable value="{!listAPO}" var="apo">
+            <apex:column headervalue="Type">
+                <apex:outputText value="{!apo.Type__c}" style="{!if(apo.Type__c='Total','font-weight: bold;', 'font-weight:normal;')}"/>
+            </apex:column>
+            <apex:column headervalue="Current Year"> 
+                    <apex:outputfield value="{!apo.Current_Year_Revenue__c}" />
+            </apex:column>
+            <apex:column headervalue="Year+1">
+                    <apex:outputfield value="{!apo.Year_1_Revenue__c}" /> 
+            </apex:column>
+            <apex:column headervalue="Year+2">             
+                    <apex:outputfield value="{!apo.Year_2_Revenue__c}" />
+            </apex:column>
+        </apex:pageBlockTable>
+    </apex:pageblock>
+
+</apex:page>

@@ -1,0 +1,362 @@
+<!-- 
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ARIASupplementalPlanTree
+ * Description: THIS VF PAGE WAS CREATED FROM A TOP CODER CHALLENGE
+ *              
+ * Created Date: April 07, 2014
+ * Created By: Nathalie Le Guay (Appirio)
+ * 
+ * Date Modified                Modified By                  Description of the update
+ =====================================================================*/
+ -->
+<apex:page standardController="ARIA_Billing_Account__c" extensions="ARIASupplementalPlanTreeController" 
+      showHeader="true" sidebar="true">
+  <apex:sectionHeader subtitle="Plan Tree View" />
+  <head>
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"/>
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"/>
+      <script src="{!URLFOR($Resource.ARIATreeView,'/js/jquery.treeview.js')}" type="text/javascript"></script>
+      
+      
+      <link rel="stylesheet" type="text/css" href="{!$Resource.ARIATreeView}/css/jquery-ui.css"/>
+      <link rel="stylesheet" type="text/css" href="{!$Resource.ARIATreeView}/css/jquery.treeview.css"/>
+      <link rel="stylesheet" type="text/css" href="{!$Resource.ARIATreeView}/css/treeview.css"/>
+
+      <style type="text/css">
+        span.plan{
+          color :black;
+          background-image :none;
+          white-space:nowrap;
+          cursor:pointer;
+          width:inherit !important;
+        }
+        li#masterplan{
+          cursor:pointer;
+        }
+        
+        .err {
+            color:red;
+                    font-style:bold;
+                    font-size:18px;
+        }
+        
+        .lblClass {
+                
+        }
+        .icon-close {
+          vertical-align : 0px;
+        }
+        .icon-open {
+          vertical-align : 0px;
+        }
+      </style>
+
+      <script type="text/javascript" >
+        var planId = '';
+        $(document).ready(function() {
+          //Initialize Tree using jquery treeview plugin
+        $("#planTree").treeview({
+          collapsed : 'true',
+          toggle: function(e) {
+            var className = $(this).children("span").attr("class");
+            if(className.indexOf("blank") != -1) {
+              e.preventDefault();
+            }
+            var reqSpan = $(this).children("span");
+            if(className.indexOf("icon-close") != -1 ) { 
+              reqSpan.removeClass("icon-close");
+              reqSpan.addClass("icon-open");
+            } else if(className.indexOf("icon-open") != -1 ) { 
+              reqSpan.removeClass("icon-open");
+              reqSpan.addClass("icon-close");
+            }
+          }
+        });
+
+        // Check if master plan exits for an account
+        var tempMasterId = ''; //added by JG
+        var tempId = '';       //added by JG
+        planId = '{!Aria_Billing_Account__c.Master_Plan__c}';
+        if (planId != '' && planId != null) {
+          var accountId = '{!Aria_Billing_Account__c.Id}';
+          if (accountId != '' && accountId != null){
+            Visualforce.remoting.Manager.invokeAction(
+                          '{!$RemoteAction.ARIASupplementalPlanTreeController.getSupplementalPlans}', 
+                          accountId,
+                          function(result, event){
+                              if(event.status) {
+                                 if (result != null){
+                                    for (var i=0;i<result.length;i++){
+                                                                            $("#planTree").find('li#masterplan').each(function() {
+                                                                            tempMasterId = $(this).find('b').prev().attr('id');
+                                                                              if (tempMasterId.indexOf(planId) !== -1){
+                                                                                $(this).find('input').each(function() {
+                                                                                  tempId = $(this).attr('id');
+                                                                                  if (tempId.indexOf(result[i]) !== -1) {
+                                                                                    $(this).attr('checked',true);
+                                                                                    $(this).next().next().css( "display", "" );
+                                                                                  }
+                                                                                });
+                                                                                $(this).find('b').prev().attr('checked', true);
+                                                                                $(this).find('b').next().css( "display", "" );
+                                                                                //show child plans
+                                          showChildren(tempMasterId);
+                                                                              }        
+                                                                            });                                          
+                                      /*$('#'+result[i]).attr('checked',true);
+                                      $('#'+result[i]).parents('li#masterplan').find('b').prev().attr('checked',true);                              
+                                      $('#'+'label-'+result[i]).css('display',''); //vikas
+                                      var masterPlanId = $('#'+planId).parents('li#masterplan').find('b').prev().attr('id');
+                                      $('#'+'label-'+masterPlanId).css('display','');*/ //vikas 
+                                    }
+                                 } 
+                              }else {
+                                  console.log(event);
+                                  alert(event.message);
+                              }
+                          }, 
+                          {escape: true} 
+                      );
+          }
+        }
+        
+        //enablePlan(planId,'default');
+        //showChildren(planId);
+        
+        // Check the picklist value
+        // disable selection in tree if Push_to_ARIA__c is 'Yes'
+        if ('{!Aria_Billing_Account__c.Push_to_ARIA__c}' == 'Yes'){
+          $("#planTree").find('input').each(function() {
+            $(this).attr('disabled','disabled');
+          });
+        }
+        })//document.ready method ENDS
+        
+        
+     
+
+      function enableChildPlans(eId,type){
+        if ('{!Aria_Billing_Account__c.Push_to_ARIA__c}' != 'Yes'){
+          // Disabled and hide all the other children
+            $("#planTree").find('li#masterplan').each(function() {
+              if ($(this).find('b').prev().attr('id') != eId){
+                $(this).find('input').attr('checked',false);
+                $(this).find('span').addClass('icon-close');
+                $(this).find('ul').css('display','none');
+                // parent disable
+                $(this).find('label').css('display','none');
+                /*var cid = $(this).find('input').attr('Id');
+                var lbl = "label-"+cid;
+                $('#' + lbl).css('display','none');
+                // child disable
+                $('#'+lbl).closest('li').find('input').each(function() {
+                  var childPlanId = $(this).attr('Id');
+                  var lbl = "label-"+childPlanId;
+                        $('#' + lbl).css('display','none');
+                });*/
+              }
+            });
+
+            // Child Elements
+         $('#'+eId).closest('li').find('input').each(function() {           
+              $(this).attr('checked',$('#'+eId).attr('checked'));              
+              // Added by Vikas
+                /*var childPlanId = $(this).attr('Id');
+                var lbl = "label-"+childPlanId;*/
+                if($('#'+eId).attr('checked')) {
+                   //$('#' + lbl).css('display','');
+                   $('#'+eId).closest('li').find('input').next().next().css('display','');  
+                }
+                else {
+                   //$('#' + lbl).css('display','none');
+                   $('#'+eId).closest('li').find('label').css('display','none'); 
+                   $('#'+eId).closest('li').find('input').each(function() {
+                     $(this).attr('checked',false);
+                   });
+                }
+          });
+          showChildren(eId);
+        }
+        
+         var lbl = "label-"+eId;
+          if($('#'+eId).attr('checked')) {
+                $('#' + lbl).css('display','');
+          }
+          else {
+                $('#' + lbl).css('display','none');
+          }
+      }
+
+        // Enable/disable all the child plans when a parent is selected
+        function enablePlan(eId,type){
+          // Select parent of children                  
+          selectParents(eId);
+          var lbl = "label-"+eId;
+          if($('#'+eId).attr('checked')) {
+                $('#' + lbl).css('display','');
+          }
+          else {
+                $('#' + lbl).css('display','none');
+          } 
+          //in case of grandchildren
+          // Child Elements
+          $('#'+eId).closest('li').find('input').each(function() {          
+            $(this).attr('checked',$('#'+eId).attr('checked')); 
+            // Added by Vikas            
+            //var childPlanId = $(this).attr('Id');
+            //var lbl = "label-"+childPlanId;
+            if($('#'+eId).attr('checked')) {
+               //$('#' + lbl).css('display','');
+               $(this).next().next().css( "display", "" );
+            }
+            else {
+               //$('#' + lbl).css('display','none');
+               $(this).next().next().css( "display", "none" );
+            }
+            
+          });
+        }
+
+
+        // function used to select parents 
+        function selectParents(eId){
+          if ('{!Aria_Billing_Account__c.Push_to_ARIA__c}' != 'Yes'){
+            var planId = '';
+            var masterPlanId = '';
+            if ($('#'+eId).attr('checked')){
+              do{
+                if (planId == '') planId = eId;
+                $('#'+planId).attr('checked',true);              
+                //in case a grand-child is selected then show the label on the parent
+                //var lbl = "label-"+planId;
+                //$('#' + lbl).css('display','');
+                $('#' + planId).next().next().css( "display", "" );
+                planId = $('#'+planId).parent().parent().parent().find('input').attr('id');
+              }while($('#'+planId).closest('li').attr('id') != 'masterplan');
+              $('#'+planId).parents('li#masterplan').find('b').prev().attr('checked',true);
+              masterPlanId = $('#'+planId).parents('li#masterplan').find('b').prev().attr('id');
+              //display plan number on master plan
+              $('#' + masterPlanId).next().next().css( "display", "" );
+              //var lbl = "label-"+masterPlanId;
+              //$('#' + lbl).css('display','');
+                            
+              // Disable other master elements 
+              $("#planTree").find('li#masterplan').each(function() {
+                if ($(this).find('b').prev().attr('id') != masterPlanId){
+                  $(this).find('input').attr('checked',false);                  
+                  $(this).find('label').css('display','none');
+                  // commented by Vikas
+                  // lbl = "label-"+ $(this).find('input').attr('Id');
+                  // $('#' + lbl).css('display','none');
+                  $(this).find('span').addClass('icon-close');
+                  $(this).find('ul').css('display','none');
+                  otherId = $(this).find('b').prev().attr('id');
+                  var lbl = "label-"+otherId;
+                  $('#' + lbl).css('display','none');
+                }
+              }); 
+            }else{
+              $('#'+eId).attr('checked',false);
+              $('#'+eId).next().next().css( "display", "none" );
+              $('#'+eId).closest('li').find('input').each(function() {
+                $(this).attr('checked',false);
+                $(this).next().next().css( "display", "none" );
+              });
+            }
+          }
+        }
+
+        // Enable the checkbox
+        function enableCheckbox(eId){        
+          if ('{!Aria_Billing_Account__c.Push_to_ARIA__c}' != 'Yes'){
+            //var planId = eId.replace('text-','');
+            var planId = eId.substring(eId.lastIndexOf("-")+1,eId.length);
+            $('#'+planId).attr('checked',$('#'+planId).attr('checked') ? false : true);
+            if ($('#'+planId).closest('li').attr('id') != 'masterplan') enablePlan(planId,'tree');
+            else enableChildPlans(planId,'tree');
+          }
+        }
+
+
+
+        // show all the child plans
+      function showChildren(eleId){
+        $('#'+eleId).closest('li').each(function() {
+          $(this).find('span').removeClass('icon-close').addClass('icon-open');
+          $(this).find('ul').css('display','block');
+        });
+      }
+
+      // Get all the selected Ids
+      function selectedPlansToSave(){
+        var selectedPlan = '';
+        // Get all the selected id from the tree
+        $("#planTree").find('input').each(function() {
+          var planId = ($(this).attr('checked') && $(this).closest('li').attr('id') != 'masterplan' ? $(this).attr('id') : '');
+          selectedPlan += (selectedPlan != '' && planId != '') ? ','+planId : ''+planId;
+        })
+        $('#selectedPlans').val(selectedPlan);
+
+        // Get the selected master plan
+        $("#planTree").find('li#masterplan').each(function() {
+          if ($(this).find('b').prev().attr('checked')){
+            $('#masterPlanId').val($(this).find('b').prev().attr('id'));
+          }
+        });
+        //save plans 
+        //savePlans();
+      }
+
+
+      // Confirmation on Save
+      function confirmSubmission(){ 
+          return confirm('{!$Label.ARIA_Supplemental_Plan_Tree_Warning_Message}');
+      }
+
+      </script>
+  </head>
+  <body>
+    <apex:form rendered="{!ISBLANK(ARIA_Billing_Account__c.Billing_System_Ref__c)}">
+      <apex:pageMessages id="errDisplay" />
+      <input type="hidden" id="masterPlanId" name="masterPlanId" value="" />
+      <input type="hidden" id="selectedPlans" name="selectedPlans" value="" />
+      <apex:pageBlock title="Plan Tree Hierarchy" >
+        <ul id="planTree" class="treeview">
+          <apex:outputText value="{!PlanTreeHierarchy}" escape="false" />
+        </ul>
+        <apex:pageBlockButtons location="both">
+          <apex:commandButton value="Save" action="{!savePlansRelated}" onclick="if(confirmSubmission()){selectedPlansToSave();}else{return false;}" rendered="{!ARIA_Billing_Account__c.Push_To_Aria__c != 'Yes'}"/>
+          <apex:commandButton value="Back" action="{!goBack}" />
+        </apex:pageBlockButtons>
+      </apex:pageBlock>
+<!--      <apex:actionFunction name="savePlans" action="{!savePlansRelated}" reRender="errDisplay" status="waitStatus" />-->
+    </apex:form>
+   
+    <apex:form rendered="{!NOT(ISBLANK(ARIA_Billing_Account__c.Billing_System_Ref__c))}">
+       <!--render this part in case some error occurs on page load-->
+       <apex:outputText value="{!$Label.ARIABillingAccount_Error_Selecting_Plan}" styleClass="err"/>
+       <br /><br />
+       <apex:commandButton value="Back" action="{!goBack}" />
+      </apex:form>
+  </body>
+<style>
+    .overlay {
+    background-color: #ffffff ; position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+    opacity:0.5; filter:Alpha(opacity=50); /* IE8 and earlier */
+    z-index: 9999!Important;
+    background-image : url(/static/170/img/loading32.gif);
+    background-repeat: no-repeat;
+    background-position:center;
+    }
+</style>
+<apex:actionStatus startText="(Retrieving data...)" id="waitStatus" layout="block">
+    <apex:facet name="start">
+    <div class="overlay">
+    </div>
+    </apex:facet>
+    <apex:facet name="stop">
+    </apex:facet>
+</apex:actionStatus>
+
+</apex:page>

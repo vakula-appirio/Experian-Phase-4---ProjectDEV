@@ -1,0 +1,530 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc;
+ * Name: BuyingCenterAnalysis.page
+ * Description:
+ * Created Date: June 6th, 2014
+ * Created By: Appirio
+ *
+ * Date Modified      Modified By                  Description of the update
+ * Dec 30th, 2014     Naresh Kr Ojha               T-343377: Refactoring CSS/Labels
+ * Feb 12th, 2015     Paul Kissick                 Case #383855, Added js call to postmessage back to parent frame to confirm rendering completed.
+ * March 31th, 2015   Nur Azlini                   Case #554908, Add information on Opportunity Plan Contact Diagram. Job Title Role Primary Owner Business Goal (First entry) Personal Goal (First Entry) Decision Criteria (First Entry)
+ * =====================================================================*/
+-->
+<apex:page showheader="false" sideBar="false" controller="BuyingCenterAnalysisController" standardStylesheets="false" title="{!$Label.ACCOUNTPLANNING_Icon}">
+
+  <meta charset="utf-8"/>
+
+  <link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+  <link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/style.css')}" type="text/css"/>
+  <link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/jquery.selectbox.css')}" type="text/css"/>
+
+  <!--style sheets
+  <link rel="stylesheet" href="{!URLFOR($Resource.OppRelationship, 'css/style.css')}" type="text/css"/>
+  <link rel="stylesheet" href="{!URLFOR($Resource.OppRelationship, 'css/jquery.selectbox.css')}" type="text/css"/>
+   -->
+  <link rel="stylesheet" href="{!$Resource.AllResource}/stylefile.css" type="text/css" />
+
+  <style>
+
+    .relationship-box .inner .relationship-section .employee-window{
+    width: 100%;
+    }
+    .icons {
+    margin: -4px;
+    position: relative;
+    }
+    .relationship-box .inner .relationship-section {
+      width: 100% !important;
+      overflow: visible !important;
+    }
+    .row .element{
+        height:25px;
+        padding: 4px 3px;
+    }
+
+    .row .element td{
+        width : 15px;
+    }
+
+    .row .element table{
+        width : 100%;
+
+    }
+
+    /*.employee-window .row{
+        height:33px;
+        width : 220px;
+        margin: -4px -4px
+    }*/
+
+    .employee-window .row {
+    clear: both;
+    display: block;
+    height: 33px;
+    margin: 0;
+    width: 100%;
+}
+
+
+    .table-upper {
+      margin: 10px;
+      padding-top: 5px;
+      display: inline-block;
+    }
+    .custom-table-first {
+        border: 2px solid #ccc;
+        width: 915px;
+    }
+    .custom-table th {
+        padding: 10px 1px;
+        border: 1px solid #ccc;
+    }
+    .custom-table td {
+        vertical-align: top;
+        border-top: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        padding: 10px 1px;
+    }
+    .Remarks{<!-- Start Case#554908  -->
+      background-color: #CCFFCC;    
+    } <!-- End Case#554908  -->
+
+
+        .custom-table td p {
+            padding: 0;
+            margin: 3px 0;
+        }
+        .custom-table td .inline-block {
+            vertical-align: middle;
+        }
+
+        .custom-table td img {
+            vertical-align: middle;
+        }
+     .left-padding-350 {padding-left:350px}
+
+  </style>
+
+  <!-- javascript libs -->
+  <apex:includeScript value="{!URLFOR($Resource.OppRelationship,'js/jquery-1.7.2.min.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.OppRelationship,'js/jquery-ui-1.9.2.min.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.OppRelationship,'js/jquery.selectbox-0.2.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.OppRelationship,'js/jquery.knob.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.OppRelationship,'js/script.js')}"/>
+
+<!--  <apex:includeScript value="{!URLFOR($Resource.Script)}"/>-->
+  <apex:includeScript value="{!URLFOR($Resource.JqueryConnection)}"/>
+
+    <apex:includeScript value="{!URLFOR($Resource.OppRelationship,'js/jquery.jsPlumb-1.6.0.js')}"/>
+
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/jspdf.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/html2canvas.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/canvas2image.js')}" />
+    <apex:includeScript value="/soap/ajax/28.0/connection.js"/>
+    <apex:includeScript value="/soap/ajax/28.0/apex.js"/>
+
+
+
+  <apex:outputpanel rendered="{!$Request.mode != 'pdf'}">
+  <header>
+    <div class="inner">
+      <a href="#" class="logo"></a>
+    </div>
+  </header>
+
+  <nav>
+    <div class="inner">
+      <ul>
+        <li class="first margin-left-zero" ><apex:outputLink value="/{!planId}"><span class="icon icon-home"></span>{!$Label.ACCOUNTPLANNING_BACKTOPLAN}</apex:outputLink></li>
+        <li class="active margin-left-zero" ><apex:outputLink value="/apex/BuyingCenterAnalysis?Id={!planId}">
+             <span class="icon icon-navigation"></span>{!$Label.ACCOUNTPLANNING_Icon}</apex:outputLink><span class="icon icon-arrow"></span></li>
+      </ul>
+      <div class="clear"></div>
+    </div>
+  </nav>
+  <br/>
+  </apex:outputpanel>
+   <div class="table-upper left-padding-350" >
+                    <table class="custom-table-first" cellpadding="0" cellspacing="0" style ="width:650px;height:50px;">
+                        <thead>
+                            <tr align="center" style = "font-size:13px;border-bottom:2px;">
+                                <th class = "Influence colorIndicatorDetail" style = "border-bottom:3px solid #ccc;">{!$Label.ACCOUNTPLANNING_Degree_of_Influence}</th>
+                                <th class = "Opinion colorIndicatorDetail" style = "border-bottom:3px solid #ccc;">{!$Label.ACCOUNTPLANNING_Opinion}</th>
+                                <th class = "Urgency colorIndicatorDetail" style = "border-bottom:3px solid #ccc;">{!$Label.ACCOUNTPLANNING_Urgency}</th>
+                                <th class = "Remarks colorIndicatorDetail" style = "border-bottom:3px solid #ccc;">Remarks</th><!-- Case#554908  -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr align="center" style = "font-size:12px">
+                               <td class = "Influence colorIndicatorDetail">
+                               <div><div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_High}</strong></div>
+
+                                    <div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Medium}</strong></div>
+                                    </div>
+                                    <div><div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Low}</strong></div>
+                                    <div class="float-left width-50per" > </div>
+                                    </div>
+
+                               </td>
+
+                                <td class = "Opinion colorIndicatorDetail">
+                                <div><div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Compelling}</strong></div>
+
+                                    <div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Significant}</strong></div>
+                                    </div>
+                                    <div><div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Minor}</strong></div>
+                                    <div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_None}</strong></div>
+                                    </div>
+                                </td>
+
+                                <td class = "Urgency colorIndicatorDetail">
+                                <div><div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Enthusatic}</strong></div>
+
+                                    <div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Supportive}</strong></div>
+                                    </div>
+                                    <div><div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Neutral}</strong></div>
+                                    <div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Negative}</strong></div>
+                                    </div>
+                                    <div><div class="float-left width-50per" ><strong>{!$Label.ACCOUNTPLANNING_Hostile}</strong></div>
+                                    <div class="float-left width-50per" ><strong></strong></div>
+                                    </div>
+                                </td>
+                                <!-- Start Case#554908  -->
+                                <td class = "Remarks colorIndicatorDetail">
+                                <div><div class="float-left width-50per"><strong>BG = Business Goal</strong></div>
+
+                                    <div class="float-left width-50per"><strong>DC = Decision Criteria</strong></div>
+                                    </div>
+                                    <div><div class="float-left width-50per"><strong>PG = Personal Goals</strong></div>
+                                    </div>
+                                </td><!-- End Case#554908  -->
+                            </tr>
+
+                        </tbody>
+                    </table>
+                    </div>
+  <div Id="nonSVGPanel"  style="width:1400px;height:670px;">
+    <div id="connectionHolder"></div>
+          <div class="content">
+              <div class="relationship-box">
+                  <div class="inner" style="border:none">
+                  <div class="relationship-section">
+
+                   <div class="hierarchy">
+                          <table align="center" border="0" cellspacing="5px" style="margin:0px;height:620px;width:900px" >
+                              <apex:repeat var="level" value="{!mapLevels}">
+                                <tr align="center">
+                                  <apex:repeat var="levelWrapper" value="{!mapLevels[level]}">
+                                    <td colspan="{!levelWrapper.LevelSize}" style="vertical-align:top">
+                                        <div Id="connector_{!levelWrapper.currentContact.Id}" class="connector" ></div>
+                                        <!-- Start Case#554908  -->
+                                        <div Id="{!levelWrapper.currentContact.Id}" class="employee-window " >
+                                          <img src="{!URLFOR($Resource.AccountRelationship,'i/user.png')}" class="user" alt="User Information"/>
+                                          <p class="strong" style="margin-bottom: 2px;white-space:nowrap"><font size="2">  {!levelWrapper.currentContact.Contact__r.Name} </font></p>
+                                          <div style="white-space:nowrap"><strong>Role: </strong> {!levelWrapper.currentContact.Role__c}</div>
+                                          <div style="white-space:wrap"><strong>Job Title: </strong>{!levelWrapper.currentContact.Contact__r.Title}</div>
+                                          <div style="white-space:wrap"><strong>Primary Owner: </strong> {!levelWrapper.currentContact.Primary_Owner__r.Name}</div>
+                                          <div style="white-space:wrap;"><strong>BG: </strong>{!levelWrapper.currentContact.Business_Goal_1__c}</div>
+                                          <div style="white-space:wrap;"><strong>DC: </strong>{!levelWrapper.currentContact.Decision_Criteria_1__c}</div>
+                                          <div style="white-space:wrap;margin-bottom: 5px"><strong>PG: </strong>{!levelWrapper.currentContact.Personal_Goal_1__c}</div>
+
+
+                                            <div class="icons">
+                                            <div class="row" style = "font-size: 15px;width: 100%;">
+                                            <table cellpadding="2" cellspacing="0" width="100%" height="100%" >
+                                            <tr>
+                                            <td width="33.333%" class="Influence text-align-center border-right"><strong>{!LEFT(levelWrapper.currentContact.Degree_of_Influence__c,1)}</strong></td>
+                                            <td width="33.333%" class="Opinion  text-align-center border-right"><strong>{!LEFT(levelWrapper.currentContact.Urgency__c,1)}</strong></td>
+                                            <td  style="text-align:center;" class="Urgency" ><strong>{!RIGHT(levelWrapper.currentContact.Opinion__c,4)}</strong></td>
+                                            </tr>
+                                            </table>
+                                            </div>
+                                            </div>
+
+                                        </div>
+                                        <!-- End Case#554908  -->
+                                    </td>
+                                  </apex:repeat>
+                                </tr>
+                              </apex:repeat>
+                          </table>
+                      </div>
+                    <div class="table-wrapper">
+                    <table class="custom-table" cellpadding="0" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>{!$Label.ACCOUNTPLANNING_Contact_Name}</th>
+                                <th class="positive"><span class="picon icon-positive-right"></span>{!$Label.ACCOUNTPLANNING_Feels_Positive_About}</th>
+                                <th class="negative"><span class="picon icon-negative-right"></span>{!$Label.ACCOUNTPLANNING_Feels_Negative_About}</th>
+                                <th class="positive"><span class="picon icon-positive-left"></span>{!$Label.ACCOUNTPLANNING_Feels_Positive_About}<br />{!$Label.ACCOUNTPLANNING_This_Contact}</th>
+                                <th class="negative"><span class="picon icon-negative-left"></span>{!$Label.ACCOUNTPLANNING_Feels_Negative_About}<br />{!$Label.ACCOUNTPLANNING_This_Contact}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!OppPlanContacts}" var="opCon">
+                            <tr class="{!opCon.currentContact.Id}">
+                               <td >
+                                  {!opCon.currentContact.Contact__r.Name}
+                                  {!opCon.currentContact.Role__c}
+
+                             </td>
+
+                                <td class="positive {!opCon.currentContact.Id}-positive-left">
+                                    <apex:repeat value="{!opCon.positiveForSomeone}" var="pos">
+                                      <p>
+                                         <img src="{!URLFOR($Resource.OppRelationship,'i/sm-user.png')}" class="user" alt="User Information"/>
+                                        <strong>{!pos.currentContact.Contact__r.Name}</strong>
+                                     </p>
+                                    </apex:repeat>
+                                </td>
+
+                                <td class="negative {!opCon.currentContact.Id}-negative-left">
+                                     <apex:repeat value="{!opCon.NegativeForSomeone}" var="neg">
+                                      <p>
+                                         <img src="{!URLFOR($Resource.OppRelationship,'i/sm-user.png')}" class="user" alt="User Information"/>
+                                        <strong>{!neg.currentContact.Contact__r.Name}</strong>
+
+                                     </p>
+                                     </apex:repeat>
+                                </td>
+                                <td class="positive {!opCon.currentContact.Id}-positive-right">
+                                    <apex:repeat value="{!opCon.positiveAboutMyself}" var="pos">
+                                    <p>
+                                         <img src="{!URLFOR($Resource.OppRelationship,'i/sm-user.png')}" class="user" alt="User Information"/>
+                                        <strong>{!pos.currentContact.Contact__r.Name}</strong>
+
+                                     </p>
+                                    </apex:repeat>
+                                </td>
+                                <td class="negative {!opCon.currentContact.Id}-negative-right">
+                                    <apex:repeat value="{!opCon.negativeAboutMyself}" var="pos">
+                                     <p>
+                                         <img src="{!URLFOR($Resource.OppRelationship,'i/sm-user.png')}" class="user" alt="User Information"/>
+                                        <strong>{!pos.currentContact.Contact__r.Name}</strong>
+                                     </p>
+                                     </apex:repeat>
+                                </td>
+                            </tr>
+                           </apex:repeat>
+                        </tbody>
+                    </table>
+                    </div>
+                   </div>
+                  </div>
+              </div>
+          </div>
+     </div>
+
+   <div class="tooltip-window negative left">
+        <div class="arrow"></div>
+        <div class="container">
+        </div>
+    </div>
+
+  <script type="text/javascript">
+     //variable to hold resource path, this will be used in script.js
+     var globalStaticResourcePath = '{!URLFOR($Resource.AccountRelationship)}';
+
+     $(document).ready(function(){
+       setTimeout(addRemoveConnections, 1000);
+     });
+
+     $( window ).resize( debouncer( function ( e ) {
+        addRemoveConnections('remove');
+        addRemoveConnections();
+     } ) );
+
+    function debouncer( func , timeout ) {
+       var timeoutID , timeout = timeout || 200;
+       return function () {
+           var scope = this , args = arguments;
+           clearTimeout( timeoutID );
+           timeoutID = setTimeout( function () {
+               func.apply( scope , Array.prototype.slice.call( args ) );
+           } , timeout );
+       }
+    }
+
+
+     function addRemoveConnections(option){
+        <apex:repeat value="{!OppPlanContacts}" var="con">
+           if('{!con.currentContact.Reports_to__c}' != ''){
+              $('#{!con.currentContact.Reports_to__c}, #connector_{!con.currentContact.Id}').connections(option);
+              $('#connector_{!con.currentContact.Id}, #{!con.currentContact.Id}').connections(option);
+           }
+        </apex:repeat>
+
+        if('{!$Request.mode}' == 'pdf'){
+           $('connection').each(function(){
+               $('#connectionHolder').append($(this).clone());
+               $(this).remove();
+           });
+
+           setTimeout(function(){createPDF('nonSVGPanel',false);}, 1000);
+       }
+     }
+
+
+      var mainContainer;
+
+      sforce.connection.sessionId = "{!$Api.Session_ID}";
+    // Create Base64 Object to convert svc in base64 String
+        var base64encodedSVG;
+        var svgId;
+
+        /*    Method create PDF file for Salesforce standard charts  */
+        function createPDF(chart,isSVG) {
+            clearTemp();
+            // get svg element Id
+
+            // Create temporary Div to hold image file that are created during the
+            // process
+            var svgDiv = document.createElement("div");
+            svgDiv.id = 'imageDiv';
+            svgDiv.style='display: none;';
+            document.getElementById(chart).appendChild(svgDiv);
+
+            var cnvs = document.createElement("canvas");
+            cnvs.width = $('#'+chart).attr('width') != null ? $('#'+chart).attr('width'):900;
+            cnvs.width = String(parseInt(cnvs.width)+10);
+            cnvs.height = $('#'+chart).attr('width') != null ? $('#'+chart).attr('height'):450;
+            cnvs.height = String(parseInt(cnvs.height)+10);
+            cnvs.id = 'cvs';
+            document.getElementById('imageDiv').appendChild(cnvs);
+
+
+            if(isSVG){
+                $('text').each(function(){
+                    $(this).css("font-size","12px");
+                    $(this).css("font-family","Helvetica");
+                });
+
+                // Get Id of the SVG component form apex chart id
+                $("svg").each(function () {
+                     svgId = this.id;
+                });
+                if(svgId == null) {
+                    alert('Error : Invalid chart Id');
+                }
+
+                console.log('1. ================= Process Started =====================');
+                // Get the base64 string code of the chart and parse that base64 string to
+                // image format
+                generateBase64OfGraphicImage(function() {
+                    // callback methods when base64 code of graph is generated continue process
+                    getSVGImage(svgId);
+                });
+            }else{getNonSVGImage(chart);}
+        }
+
+        // Generate the base64 string of chart
+        // Charts generated by apex are based on HTML5 SVG tags
+        function generateBase64OfGraphicImage(callback) {
+            console.log('2. ================= Generate graphic image ==============');
+            var svg = document.getElementById(svgId); // or whatever you call it
+            var serializer = new XMLSerializer();
+            var svgstr = serializer.serializeToString(svg);
+            base64encodedSVG = btoa(svgstr);
+        callback();
+        }
+
+        // Create image file from the chart's base64 string and create canvas objtect
+        // to do final merging of files (text image and graphic image)
+        function getSVGImage() {
+            console.log('3. ================= Process graphic image ===============');
+            var imgsrc = 'data:image/svg+xml;base64,'+ base64encodedSVG;
+            // add canvas
+            //<canvas width="900" height="450" id="cvs"></canvas>
+
+            // Add graphics Image
+            var imageSVG = document.createElement("img");
+            imageSVG.src = imgsrc;
+            imageSVG.style = "display:none";
+            imageSVG.id = 'generatedImage';
+            document.getElementById('imageDiv').appendChild(imageSVG);
+            storePDFANDImage();
+        }
+
+        // Charts base64 string image contains only graphics , below methods will
+        // retrieve a image that contains all text of chart
+        function getNonSVGImage(chart) {
+            console.log('4. ================= Process text image ==================');
+
+            html2canvas($('#'+chart), {
+              onrendered: function(canvas) {
+                theCanvas = canvas;
+                //var cnt = Canvas2Image.saveAsPNG(canvas);
+                var cnt = Canvas2Image.convertToPNG(canvas);
+                cnt.id = 'generatedImage';
+                document.getElementById('imageDiv').appendChild(cnt);
+
+                storePDFANDImage();
+              }
+            });
+
+        }
+
+        // Merge generated graphic and text image and create pdf
+        function storePDFANDImage() {
+          console.log('5. ================= Merge text and graphic images =======');
+            var generatedImage = document.getElementById('generatedImage');
+
+            var canvas = document.getElementById("cvs");
+            var context = canvas.getContext("2d");
+            var width = generatedImage.width;
+            var height = generatedImage.height;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Set canvas background to white color
+            context.fillStyle = "#FFFFFF";
+            context.fillRect(0,0,width,height);
+
+            context.drawImage(generatedImage, 0, 0);
+            var image1 = context.getImageData(0, 0, width, height);
+            var imageData1 = image1.data;
+            context.putImageData(image1, 0, 0);
+            var finalImage = canvas.toDataURL("image/jpeg");
+
+            /*pdf code*/
+            console.log('6. ================= Create PDF ==========================');
+            var doc = new jsPDF();
+            doc.setFontSize(10);
+            doc.text(40, 30, "Generated PDF", 1);
+            // adjust the Widht and Height parameter to set aspect ratio of image
+            doc.addImage(finalImage, 10, 40, 180, 100);
+            console.log('7. ================= Save PDF ============================');
+            //doc.save('GenerateImage.pdf');
+
+
+            var Atch = new sforce.SObject("Attachment");
+            if('{!ContactRelationImage}' != null){
+            Atch.Id = '{!contactRelationImage.Id}';
+            }
+            Atch.ParentId = '{!planId}';
+            Atch.Name = 'ContactRelationImage';
+            Atch.ContentType = 'image/jpeg';
+            Atch.Body = finalImage.replace('data:image/jpeg;base64,','');
+            try{
+            var result = sforce.connection.upsert("Id",[Atch]);
+            }catch(e){
+            alert(e);
+            }
+
+            parent.postMessage("BuyingCentreAnalysisLoaded", "*"); // PK Case #383855 to call to parent on completed rendering
+            clearTemp();
+        }
+
+        // Clear the temp div that contains the chart images
+        // Note : to see the generated images comment text of this
+        // method and set the visibilt of div 'imageDiv' to display=""
+        function clearTemp() {
+            if(document.getElementById('imageDiv') != null) {
+                document.getElementById('imageDiv').remove()
+            }
+            base64encodedSVG = null;
+        }
+  </script>
+ </apex:page>

@@ -1,0 +1,39 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: LeadConvertStatus
+ * Description: 
+ * Created Date: Feb 06th, 2014
+ * Created By: Nathalie Le Guay (Appiiro)
+ * 
+ * Item #       Date Modified      Modified By                  Description of the update
+ *   1          24 March 2015      Nur Azlini                   Add "Additional fields need to be filled in if you also want to convert to an Opportunity:" List
+  =====================================================================*/
+-->
+<apex:page standardController="Lead" showHeader="false" showChat="false" sidebar="false" extensions="LeadConvertController">
+
+<apex:stylesheet value="{!$Resource.custom_stylesheet}" />
+<!--  <style>-->
+<!--    .errorDiv {color:#d74c3b}-->
+<!--  </style>-->
+
+
+    <apex:outputText escape="true" rendered="{!IF(errorOnfields.size>0, true, false)}">
+      <span>
+            <apex:image url="{!$Resource.bullet_warning}" /> To convert this lead you also need to fill in: <br />
+            <div class="fieldList">
+              <apex:repeat var="field" value="{!errorOnfields}">
+                <apex:image url="{!IF(!fieldStatusMap[field], $Resource.bullet_red, $Resource.bullet_greentick)}"/><span class="{!IF(!fieldStatusMap[field], 'errorDiv', '')}">{!field}</span><br />
+              </apex:repeat>
+            </div>
+            <apex:image url="{!$Resource.bullet_warning}" /> Additional fields need to be filled in if you also want to convert to an Opportunity: <br />
+            <div class="fieldList">
+              <apex:repeat var="field" value="{!errorOnfieldsOppt}">
+                <apex:image url="{!IF(!fieldStatusMap[field], $Resource.bullet_red, $Resource.bullet_greentick)}"/><span class="{!IF(!fieldStatusMap[field], 'errorDiv', '')}">{!field}</span><br />
+              </apex:repeat>
+            </div>
+      </span>
+    </apex:outputText>
+    <apex:outputText value="Ok" escape="true" rendered="{!IF(errorOnfields.size < 1, true, false)}" />
+
+</apex:page>

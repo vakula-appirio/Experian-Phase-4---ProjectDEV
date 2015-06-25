@@ -1,0 +1,16 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ContactOpportunityRoles
+ * Description: 
+ * Created Date: Feb 24th, 2014
+ * Created By: Nathalie Le Guay (Appirio)
+ * 
+ * Date Modified       	Modified By                 Description of the update
+ * June 13, 2014		James Weatherall			accountId property added to Component		
+  =====================================================================*/
+-->
+<apex:page sidebar="false" showHeader="false"
+    standardController="Contact">
+    <c:ContactOpportunityRoles contactId="{!Contact.Id}" accountId="{!Contact.AccountId}" noRolesMessage="true"/>
+</apex:page>

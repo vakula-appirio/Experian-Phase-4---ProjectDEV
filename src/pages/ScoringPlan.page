@@ -1,0 +1,479 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ScoringPlan.page
+ * Description: 
+ * Created Date: Aug 20th, 2014
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Dec 26th, 2014     Naresh Kr Ojha               T-343522: VF Page: ScoringPlan - CSS/Labels
+ * Feb 17th, 2015     Paul Kissick                 Case #383855, Added js call to postmessage back to parent frame to confirm rendering completed.
+*  =====================================================================*/
+-->
+<apex:page sidebar="false" showHeader="false" Controller="ScoringPlanController" title="Opportunity Plan Scoring Dashboard">
+    <!--Include style sheets-->
+    <apex:stylesheet value="{!URLFOR($Resource.ScoringModel, 'css/style.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.ScoringModel, 'css/jquery.selectbox.css')}" />
+
+    <!--Include Scripts-->
+    <apex:includeScript value="{!URLFOR($Resource.ScoringModel, 'js/jquery-1.7.2.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.ScoringModel, 'js/jquery-ui-1.9.2.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.ScoringModel, 'js/jquery.selectbox-0.2.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.ScoringModel, 'js/jquery.knob.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.ScoringModel, 'js/jquery.jsPlumb-1.6.0.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.ScoringModel, 'js/script.js')}" />
+     <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/jspdf.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/html2canvas.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/canvas2image.js')}" />
+   
+    <apex:includeScript value="/soap/ajax/28.0/connection.js"/>
+    <apex:includeScript value="/soap/ajax/28.0/apex.js"/>
+     <style type="text/CSS"> 
+        ul li, ol li{margin-left: 0;}
+     </style>
+    
+    <apex:form id="frm">
+    <apex:outputLink rendered="{!$Request.mode != 'pdf'}">  
+    <header>
+    <div class="inner">
+        <a href="#" class="logo"></a>
+
+    </div>
+    
+    </header>
+    <apex:PageMessages />
+    <nav>
+        <div class="inner">
+            <ul>
+                <li class="first">
+                    <apex:commandLink action="{!cancelAction}">
+                        <span class="icon icon-home"></span>{!$Label.ACCOUNTPLANNING_SCORING_BACKTOPLAN}
+                    </apex:commandLink>
+                </li>
+                <li class="active"><a href="#"><span
+                        class="icon icon-opportunities"></span>{!$Label.ACCOUNTPLANNING_SCORING_OPPTYPLANSCRBOARD}</a>
+                    <span class="icon icon-arrow"></span>
+                </li>
+                <li>
+                    <apex:commandLink onclick="openPdf(); return false;">
+                        <span class="icon icon-navigation"></span>{!$Label.ACCOUNTPLANNING_SCORING_GENERATEPDF}
+                    </apex:commandLink>
+                    
+                </li> 
+            </ul>
+            <div class="clear"></div>
+        </div>
+        </nav>
+        </apex:outputLink>
+        <div class="content" id="QualParentId" >
+        
+        <div id="ScoringPlan1">
+            <!-- Account Data section -->
+            <div class="content-box pull-left" style="width: 475px;">
+                <div class="title">
+                    <div class="icon icon-account"></div>
+
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_ACCOUNTDATA}</h2>
+                </div>
+                <div class="loader"></div>
+                <!-- All the field will be replace with the data retrieved from controller variable-->
+
+                <div class="inner">
+                    <div class="row">
+                        <label>{!$Label.ACCOUNTPLANNING_SCORING_CUSTOMER_PROSPECT}</label> <span>:</span> <span
+                            class="value">{!opportunityPlanObj.Account_Name__r.name}</span>
+                    </div>
+                    <div class="row">
+                        <label>{!$Label.ACCOUNTPLANNING_SCORING_OPPORTUNITY}</label> <span>:</span> <span class="value"
+                            style="width: 236px; line-height: 17px;">{!opportunityPlanObj.Opportunity_Name__r.Name}</span>
+                    </div>
+                    <div class="row">
+                        <label>{!$Label.ACCOUNTPLANNING_SCORING_OPPORTUNITY_MANAGER}</label> <span>:</span> <span
+                            class="value">{!opportunityPlanObj.Opportunity_Owner__r.Name}</span>
+                    </div>
+                    <div class="row">
+                        <table cellpadding="0" cellspacing="0" ><tr>
+                        <td style="color:#656565;vertical-align: top;line-height:17px" ><label>{!$Label.ACCOUNTPLANNING_SCORING_TOTALCONTRACTVALUE}</label> <span>:</span>&nbsp;&nbsp;&nbsp;</td>
+                        <td style="color:#656565;vertical-align: top;line-height:17px" ><div style="width: 240px;"><apex:outputField value="{!opportunityPlanObj.Opportunity_TCV__c}" /></div></td></tr></table>
+                            
+                    </div>
+                    <div class="row">
+                        <label>{!$Label.ACCOUNTPLANNING_SCORING_PROBOFWINNING}</label> <span>:</span> <span
+                            class="value">{!opportunityPlanObj.Opportunity_Probability__c} %</span>
+                    </div>
+                    <div class="row">
+                        <label class="large">{!$Label.ACCOUNTPLANNING_SCORING_EXPECTED_CLOSE_DATE}</label> <span>:</span> <span
+                            class="value "> <apex:outputText value="{0,date,dd'/'MM'/'yyyy}">
+                                <apex:param value="{!opportunityPlanObj.Opportunity_Expected_Close_Date__c}" />
+                            </apex:outputText> </span>
+                    </div>
+                    <div class="phase-box">
+                        <h4>{!$Label.ACCOUNTPLANNING_SCORING_CURRENT_PHASE_SP}</h4>
+                        <div class="icon step">
+                            <div class="icon step-progress step{!oppStageProgress}"></div>
+                        </div>
+                        <br/><br/><br/>
+                        <em>{!opportunityPlanObj.Opportunity_Name__r.StageName}</em>
+                        <div class="clear"></div>
+                    </div>
+
+                    <div class="dotted-line"></div>
+
+
+                    <!-- These fields will be displyed dynamically.
+                    Known       is shown by a green circle with a + sign,
+                    Not Known   is a red circle with a - sign and
+                    --None--    is a blue circle with a question -->
+                    <h3>{!$Label.ACCOUNTPLANNING_SCORING_CUSTOMER_BUDGET}</h3>
+                    <apex:outputPanel rendered="{!IF(opportunityPlanObj.Client_Budget_Confidence__c == '' || opportunityPlanObj.Client_Budget_Confidence__c == null ||
+                                                     opportunityPlanObj.Client_Budget_Confidence__c == '--None--', true, false)}">
+                        <a href="#" class="icon icon-help"></a>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!IF(opportunityPlanObj.Client_Budget_Confidence__c != '' && opportunityPlanObj.Client_Budget_Confidence__c != null &&
+                                                     opportunityPlanObj.Client_Budget_Confidence__c == 'Known', true, false)}">
+                        <a href="#" class="icon icon-plus"></a>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!IF(opportunityPlanObj.Client_Budget_Confidence__c != '' && opportunityPlanObj.Client_Budget_Confidence__c != null &&
+                                                     opportunityPlanObj.Client_Budget_Confidence__c == 'Not Known', true, false)}">
+                        <a href="#" class="icon icon-minus"></a>
+                    </apex:outputPanel>
+
+                    <div class="clear"></div>
+                    <p>{!opportunityPlanObj.Opportunity_Client_Budget__c}</p>
+
+                    <h3>{!$Label.ACCOUNTPLANNING_SCORING_RESOURCE_INVESTMENT}</h3>
+
+                    <apex:outputPanel rendered="{!IF(opportunityPlanObj.Resource_Investment_Confidence__c == '' || opportunityPlanObj.Resource_Investment_Confidence__c == null || opportunityPlanObj.Resource_Investment_Confidence__c == '--None--', true, false)}">
+                        <a href="#" class="icon icon-help"></a>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!IF(opportunityPlanObj.Resource_Investment_Confidence__c != '' && opportunityPlanObj.Resource_Investment_Confidence__c != null && opportunityPlanObj.Resource_Investment_Confidence__c == 'Known', true, false)}">
+                        <a href="#" class="icon icon-plus"></a>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!IF(opportunityPlanObj.Resource_Investment_Confidence__c != '' && opportunityPlanObj.Resource_Investment_Confidence__c != null && opportunityPlanObj.Resource_Investment_Confidence__c == 'Not Known', true, false)}">
+                        <a href="#" class="icon icon-minus"></a>
+                    </apex:outputPanel>
+
+
+                    <div class="clear"></div>
+                    <p>{!opportunityPlanObj.Resource_Investment__c}</p>
+
+                    <h3>{!$Label.ACCOUNTPLANNING_SCORING_POTENTIAL_GROWTH}</h3>
+                    <apex:outputPanel rendered="{!IF(opportunityPlanObj.Annual_Potential_Growth_Confidence__c == '' || opportunityPlanObj.Annual_Potential_Growth_Confidence__c == null || opportunityPlanObj.Annual_Potential_Growth_Confidence__c == '--None--', true, false)}">
+                        <a href="#" class="icon icon-help"></a>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!IF(opportunityPlanObj.Annual_Potential_Growth_Confidence__c != '' && opportunityPlanObj.Annual_Potential_Growth_Confidence__c != null && opportunityPlanObj.Annual_Potential_Growth_Confidence__c == 'Known', true, false)}">
+                        <a href="#" class="icon icon-plus"></a>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!IF(opportunityPlanObj.Annual_Potential_Growth_Confidence__c != '' && opportunityPlanObj.Annual_Potential_Growth_Confidence__c != null && opportunityPlanObj.Annual_Potential_Growth_Confidence__c == 'Not Known', true, false)}">
+                        <a href="#" class="icon icon-minus"></a>
+                    </apex:outputPanel>
+
+                    <div class="clear"></div>
+                    <p>{!opportunityPlanObj.Annual_Potential_Growth__c} %</p>
+
+                </div>
+            </div>
+
+            <!-- Information section -->
+            <div class="content-box pull-right">
+                <div class="title">
+                    <div class="icon icon-information"></div>
+
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_OVERALL_SCORE}</h2>
+                </div>
+                <div class="loader"></div>
+                <div class="inner">
+                    <div class="chart">
+                        <input type="text" value="{!overallScore}"
+                            class="progress" /> <span><strong>{!overallScore}</strong>%</span>
+                    </div>
+                    <div class="dotted-line"></div>
+                    <a href="#" class="link">{!$Label.ACCOUNTPLANNING_SCORING_OPPTY_HISTORY}</a>
+
+                    <p>{!opportunityPlanObj.Opportunity_History__c}</p>
+                    <!-- PK #383855 Fixing styling on chart. -->
+                    <div class="chart" style="height:105px;">
+                        <input type="text" value="{!informationScoringScore}"
+                            class="small-chart" />
+                        <span style="font-size:28px;margin-top:-10px;margin-left:-50px;"><strong>{!informationScoringScore}</strong>%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="clear"></div>
+            </div>
+            
+            <div id="ScoringPlan2" >
+            <div style="margin-top:20px;">&nbsp;</div>
+            <div class="small-box pull-left first">
+                <div class="title">
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_QUALITYPROFILE}</h2>
+                </div>
+                <div class="loader"></div>
+                <div class="inner" >
+                    <div class="chart" >
+                        <input type="text" value="{!qualificationScoringScore}"
+                            class="small-chart" /> <span><strong>{!qualificationScoringScore}</strong>%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="small-box pull-left">
+                <div class="title">
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_BUYING_CENTER_ANALYSIS}</h2>
+                </div>
+                <div class="loader"></div>
+                <div class="inner">
+                    <div class="chart">
+                        <input type="text" value="{!buyingCentreScore}" class="small-chart" />
+                        <span><strong>{!buyingCentreScore}</strong>%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="small-box pull-left">
+                <div class="title">
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_VALUE_PROP}</h2>
+                </div>
+                <div class="loader"></div>
+                <div class="inner">
+                    <div class="chart">
+                        <input type="text" value="{!valuePropositionScore}"
+                            class="small-chart" /> <span><strong>{!valuePropositionScore}</strong>%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="small-box pull-left">
+                <div class="title">
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_COMPETITION}</h2>
+                </div>
+                <div class="loader"></div>
+                <div class="inner">
+                    <div class="chart">
+                        <input type="text" value="{!competitionScoringScore}"
+                            class="small-chart" /> <span><strong>{!competitionScoringScore}</strong>%</span>
+                    </div>
+                </div>
+            </div>
+            <!-- second line -->
+            <div class="small-box pull-left first last">
+                <div class="title">
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_SUMMARY_POS_TODAY}</h2>
+                </div>
+                <div class="loader"></div>
+                <div class="inner">
+                    <div class="chart">
+                        <input type="text" value="{!summaryPositionScore}"
+                            class="small-chart" /> <span><strong>{!summaryPositionScore}</strong>%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="small-box pull-left last">
+                <div class="title">
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_ACTION_PLAN}</h2>
+                </div>
+                <div class="loader"></div>
+                <div class="inner">
+                    <div class="chart">
+                        <input type="text" value="{!actionPlanScore}" class="small-chart" />
+                        <span><strong>{!actionPlanScore}</strong>%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="small-box pull-left last">
+                <div class="title">
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_JOINT_ACTION_PLAN}</h2>
+                </div>
+                <div class="loader"></div>
+                <div class="inner">
+                    <div class="chart">
+                        <input type="text" value="{!jointActionPlanScore}"
+                            class="small-chart" /> <span><strong>{!jointActionPlanScore}</strong>%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="small-box pull-left last">
+                <div class="title">
+                    <h2>{!$Label.ACCOUNTPLANNING_SCORING_SOL_A_GLANCE}</h2>
+                </div>
+                <div class="loader"></div>
+                <div class="inner">
+                    <div class="chart">
+                        <input type="text" value="{!solutionAtGlanceScore}" 
+                            class="small-chart" /> <span><strong>{!solutionAtGlanceScore}</strong>%</span>
+                    </div>
+                </div>
+            </div>
+             <div class="clear"></div>
+            </div>
+            
+           
+        </div>
+        <div class="clear"></div>
+        <footer> </footer>
+    </apex:form>
+    <script>
+      var mainContainer;     
+      
+      sforce.connection.sessionId = "{!$Api.Session_ID}"; 
+      
+      $(document).ready(function(){
+        setTimeout(function(){createPDF('ScoringPlan1','1');},1300);
+        setTimeout(function(){createPDF('ScoringPlan2','2');},2200);
+      });
+       var base64encodedSVG;
+        var svgId;
+         
+       /*    Method create PDF file for Salesforce standard charts  */
+        function createPDF(chart,chartNo) {
+            clearTemp();
+            svgId = chart; 
+            
+            var svgDiv = document.createElement("div");
+            svgDiv.id = 'svgdataDiv';
+            svgDiv.style='display: none;';
+            document.getElementById(chart).parentNode.appendChild(svgDiv);
+            
+            if(svgId == null) {
+                alert('Error : Invalid chart Id');
+            }
+            
+            // Add SVG temp-element comtainer
+            
+            
+            console.log('1. ================= Process Started =====================');
+            // Get the base64 string code of the chart and parse that base64 string to
+            // image format
+            generateBase64OfGraphicImage(function() {
+                // callback methods when base64 code of graph is generated continue process
+                processImage();
+            });
+        }
+        // Generate the base64 string of chart 
+        // Charts generated by apex are based on HTML5 SVG tags
+        function generateBase64OfGraphicImage(callback) {
+            console.log('2. ================= Generate graphic image ==============');
+            var svg = document.getElementById(svgId); // or whatever you call it
+            var serializer = new XMLSerializer();
+            var svgstr = serializer.serializeToString(svg);
+            
+            // PROD Case #8417 - Call function to handle non base64 characters
+            //base64encodedSVG = btoa(svgstr);
+            base64encodedSVG = utf8_to_b64(svgstr);
+            // End of Prod Case change
+            
+        callback();
+        }
+         // Create image file from the chart's base64 string and create canvas objtect
+        // to do final merging of files (text image and graphic image)
+        function processImage() {
+            console.log('3. ================= Process graphic image ===============');
+            var imgsrc = 'data:image/svg+xml;base64,'+ base64encodedSVG;
+           
+            var cnvs = document.createElement("canvas");
+            cnvs.width = $('#'+svgId).attr('width') != null ? $('#'+svgId).attr('width'):900;
+            cnvs.width = String(parseInt(cnvs.width)+10);
+            cnvs.height = $('#'+svgId).attr('width') != null ? $('#'+svgId).attr('height'):450;
+            cnvs.height = String(parseInt(cnvs.height)+10);
+            cnvs.id = 'cvs';
+            document.getElementById('svgdataDiv').appendChild(cnvs);
+        
+            // Add graphics Image
+            var imageSVG = document.createElement("img");
+            imageSVG.src = imgsrc;
+            imageSVG.style = "display:none";
+            imageSVG.id = 'i1';
+            document.getElementById('svgdataDiv').appendChild(imageSVG);
+            getTextImage(function() {
+                mergeImages();
+            });
+        }
+        // Charts base64 string image contains only graphics , below methods will 
+        // retrieve a image that contains all text of chart
+        function getTextImage(mergeImages) {
+            console.log('4. ================= Process text image ==================');
+            html2canvas($('#'+svgId), {
+              onrendered: function(canvas) {
+                theCanvas = canvas;
+                //var cnt = Canvas2Image.saveAsPNG(canvas);
+                var cnt = Canvas2Image.convertToPNG(canvas);
+                cnt.id = 'i2';
+                document.getElementById('svgdataDiv').appendChild(cnt);
+                mergeImages();
+              }
+            });
+            
+        }
+          // Merge generated graphic and text image and create pdf
+        function mergeImages() {
+          console.log('5. ================= Merge text and graphic images =======');
+            var img1 = document.getElementById('i1');
+            var img2 = document.getElementById('i2');
+        
+            var canvas = document.getElementById("cvs");
+            var context = canvas.getContext("2d");
+            var width = img2.width;
+            var height = img2.height;
+            canvas.width = width;
+            canvas.height = height;
+            // Set canvas background to white color
+            context.fillStyle = "#FFFFFF";
+            context.fillRect(0,0,width,height);
+            
+            context.drawImage(img2, 0, 0);
+             console.log('6. =================draw Image ==========================');
+            var image1 = context.getImageData(0, 0, width, height);
+             console.log('6. =================get Image Data ==========================');
+            var imageData1 = image1.data;
+            context.putImageData(image1, 0, 0);
+            var finalImage = canvas.toDataURL("image/jpeg");
+            console.log('6. ================= Create PDF ==========================');
+            /*var doc = new jsPDF();
+            doc.setFontSize(10);
+            doc.text(40, 30, "Generated PDF for Radar chart", 1);
+            // adjust the Widht and Height parameter to set aspect ratio of image
+            doc.addImage(finalImage, 10, 40, 180, 100);
+            console.log('7. ================= Save PDF ============================');
+            doc.save('RadarChart.pdf');*/
+            
+            var Atch = new sforce.SObject("Attachment");
+            if(svgId != null && svgId =='ScoringPlan1'){
+             Atch.Id = '{!radarChartImageFirstId}';
+            } else if(svgId != null && svgId =='ScoringPlan2'){
+             Atch.Id = '{!radarChartImageSecondId}';
+            }
+            Atch.ParentId = '{!planIds}';
+            Atch.Name = ''+svgId;
+            Atch.ContentType = 'image/jpeg';
+            Atch.Body = finalImage.replace('data:image/jpeg;base64,','');
+            try{
+            var result = sforce.connection.upsert("Id",[Atch]);
+            }catch(e){
+            alert(e);
+            }
+            // at this point, it should be saved, so send a message to the parent, if this is part of an iframe...
+            parent.postMessage("ScoringPlanLoaded", "*"); // PK #383855 to call to parent on completion.
+            clearTemp();
+        }
+        
+        // Clear the temp div that contains the chart images
+        // Note : to see the generated images comment text of this 
+        // method and set the visibilt of div 'svgdataDiv' to display=""
+        function clearTemp() {
+            if(document.getElementById('svgdataDiv') != null) {
+                document.getElementById('svgdataDiv').remove()
+            }
+            base64encodedSVG = null;
+        }
+         function openPdf() {
+         
+             var generateUrl = '/apex/ScoringPlan_PDF?Id={!planIds}'; // Modified for T-295628 by Arpita Bose(Appirio)
+             window.open(generateUrl);
+         }
+         
+         // PROD Case #8417 - function to handle issue with non base64 characters 
+         function utf8_to_b64( str ) {
+           return window.btoa(encodeURIComponent( escape( str )));
+         }
+         // End of Prod Case change
+      </script>
+    
+</apex:page>

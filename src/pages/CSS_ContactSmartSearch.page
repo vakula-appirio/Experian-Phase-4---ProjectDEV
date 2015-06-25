@@ -1,0 +1,582 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Page Name: CSS_ContactSmartSearch
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified         Modified By                  Description of the update
+ * Mar 18, 2014          Arpita Bose (Appirio)        T-256343: Use of native Apex Tags
+ * Mar 19, 2014          Arpita Bose (Appirio)        T-251969: Join Button functionality is no longer required,
+ *                                                             so validateAndLinkRecords function and its related action functions
+ *                                                             and apex tags are commented and have included red bar using custom style sheet.
+ * Mar 27, 2014          Arpita Bose (Appirio)        T-264459: Added custom label in place of text
+ * April 23, 2014        Jinesh Goyal (Appirio)       I-113176: modified JS method 'callAddAddress' to pass account id in URL
+ * Jul 31, 2014          Naresh Ojha                  T-286036: moved Javascript from top of class to bottom of class
+ * Feb 19, 2014          Noopur                       T-363891: added the button "New Contact" and made email field required.
+ * Feb 24th, 2015        Naresh Kr Ojha               T-364970: Added isSaaS option when goes to create new Contact.
+ =====================================================================*/
+ -->
+<apex:page standardController="Contact" extensions="ContactSmartSearchExtention" sidebar="true" tabstyle="Contact" id="pg">
+  <apex:includeScript value="{!$Resource.jquery1_8}"/>
+  <apex:stylesheet value="{!$Resource.CSS_Custom_stylesheet}" />
+  <apex:sectionHeader title="{!$Label.CSS_Contact}" subtitle="{!$Label.CSS_SubTitle}" id="shMain" />
+  <h1>Contact &amp; Address Search</h1>
+  <img src="/img/msg_icons/info16.png" onmouseover="varOppHelpMain.style.display='block';" onmouseout="varOppHelpMain.style.display='none';"/>  
+    
+   <script>
+    var varSelectedContId;
+    var varSelectedAddrId;
+   </script>
+     <style>
+       .reqdField {border:2px solid #c00;}
+     </style>
+    <apex:form id="frm">
+        <script>
+          // Character limits of search product for all fields
+          var searchCharacterLimit = 2;
+        </script>
+
+                <apex:outputPanel styleclass="hidden" id="oppHelpMain">
+                    <apex:pageMessage summary="{!$Label.CSS_Help_Main}"  severity="Info" escape="false" strength="2"  />
+                </apex:outputPanel>  
+ 
+                <script>
+                var varOppHelpMain=document.getElementById('{!$Component.oppHelpMain}');
+                </script> 
+   
+     <apex:panelGrid columns="10" id="theGrid" styleClass="list" width="100%">
+        <apex:outputText styleClass="labelCol wid200" value="{!$Label.ASS_Search_by}" />
+        <apex:outputText styleClass="dataCell" value="{!$Label.CSS_First_Name}" />
+        <apex:outputText styleClass="dataCell" value="{!$Label.CSS_Last_Name}" />
+        <apex:outputText styleClass="dataCell" value="{!$Label.CSS_Email}" />
+        <apex:outputText styleClass="dataCell" value="{!$Label.ASS_Account_Name}" />
+        <apex:outputText styleClass="dataCell" value="{!$Label.ASS_Address_1}" />
+        <apex:outputText styleClass="dataCell" value="{!$Label.ASS_City}" />
+        <apex:outputText styleClass="dataCell" value="{!$Label.ASS_State_Province}" />
+        <apex:outputText styleClass="dataCell" value="{!$Label.ASS_Zip_Postal_Code}" />
+        <apex:outputText styleClass="dataCell" value="{!$Label.ASS_Country}" /> 
+        
+        
+        <apex:outputPanel id="fake001" >
+          <apex:outputText styleClass="labelCol wid200" value="{!$Label.ASS_Search_criteria}:" />              
+        </apex:outputPanel>
+        <apex:outputPanel id="op1" >
+        
+          <apex:inputText title="Minimum two characters are required" value="{!contactFirstNameToSearch}"  id="txtcontactFirstName" styleClass="txtcontactFirstName wid100" />
+        </apex:outputPanel>       
+        <apex:outputPanel id="op2">
+          <apex:inputText title="Minimum two characters are required" value="{!contactLastNameToSearch}"  id="txtcontactLastName" styleClass="txtcontactLastName wid100" />
+        </apex:outputPanel> 
+        <apex:outputPanel id="op3" styleClass="reqInput">
+          <apex:outputPanel styleClass="reqBlock" />
+          <apex:inputText title="Minimum two characters are required" value="{!contactEmailToSearch}"  id="txtcontactEmail" styleClass="txtcontactEmail wid100" />
+        </apex:outputPanel> 
+        <apex:outputPanel id="op4">
+          <apex:inputText title="Minimum two characters are required" value="{!accountNameToSearch}"  id="txtAccountName" styleClass="txtAccountName wid100" />
+        </apex:outputPanel> 
+        <apex:outputPanel id="op5">
+          <apex:inputText title="Minimum two characters are required" value="{!addressline1ToSearch}"  id="txtAddressLine1" styleClass="txtAddressLine1 wid100" />
+        </apex:outputPanel> 
+        <apex:outputPanel id="op10">
+          <apex:inputText title="Minimum two characters are required" value="{!addressCityToSearch}"  id="txtCity" styleClass="txtCity wid100" />
+        </apex:outputPanel> 
+        <apex:outputPanel id="op9">
+          <apex:inputText title="Minimum two characters are required" value="{!addressStateToSearch}"  id="txtState" styleClass="txtState wid100" />
+        </apex:outputPanel> 
+        <apex:outputPanel id="op11">
+          <apex:inputText title="Minimum two characters are required" value="{!addressPostalCodeToSearch}"  id="txtPostalCode" styleClass="txtPostalCode wid100" />
+        </apex:outputPanel> 
+        <apex:outputPanel id="op8">
+          <apex:inputText title="Minimum two characters are required" value="{!addressCountryToSearch}"  id="txtCountry" styleClass="txtAddressLine1 wid100" />
+        </apex:outputPanel> 
+         </apex:panelGrid>  
+       
+       <apex:panelGrid columns="3" width="100%">
+       <apex:outputPanel id="fake002" />
+       <apex:outputPanel id="actStatusSearch">
+           <center>
+             <apex:actionStatus id="statusSearch" styleClass="statusSearch">
+               <apex:facet name="start">
+               <span class="redcolor">{!$Label.ASS_Wait_searching}</span> <img src="/img/loading.gif" />
+               </apex:facet>
+                    
+               <apex:facet name="stop">
+                 <apex:outputpanel >
+                   <apex:panelGrid columns="4">
+                     <apex:outputPanel styleClass="labelCol" ><apex:commandButton value="{!$Label.ASS_Button_Search}" action="{!performSearch}" onclick="return validateMe();$('[id$=statusSearch.start]').show();$('[id$=statusSearch.stop]').hide();"/></apex:outputPanel>
+                     <apex:outputPanel styleClass="labelCol" ><apex:commandButton value="{!$Label.CSS_Button_New_Contact_Address}" onclick="return createNewContactNAddress('newConAddButton');" disabled="{!IF(showContactButton = true, false, true)}"/></apex:outputPanel>
+                     <apex:outputPanel styleClass="labelCol" ><apex:commandButton value="{!$Label.New_Contact}" onclick="return createNewContactNAddress('newButton');" disabled="{!IF(showContactButton = true, false, true)}" rendered="{!showNewContactButton}"/></apex:outputPanel>
+                     <apex:outputPanel styleClass="labelCol" ><apex:commandButton action="{!cancel}" value="{!$Label.ASS_Button_Cancel}"  onclick="return goToBack();"/></apex:outputPanel>
+                   </apex:panelGrid>
+                 </apex:outputpanel>
+               </apex:facet>
+               
+             </apex:actionStatus>
+           </center>  
+       </apex:outputPanel>
+        <apex:outputPanel id="fake003" />
+       </apex:panelGrid>        
+        
+       <apex:outputPanel id="pnlDisplayMsg">
+         <apex:pageMessages />
+       </apex:outputPanel>
+
+<!--##################### ACCOUNT TABLE BEGIN ##########################-->
+
+<apex:actionFunction name="nextContactPage" action="{!nextContactPage}" status="status" />
+<apex:actionFunction name="previousContactPage" action="{!previousContactPage}" status="status" />
+
+
+
+<!--<apex:pageBlock id="resultBlock" title="{!$Label.ASS_Account} {!IF((searchCount==0), '', ' [' + TEXT(searchCount) + ']')}">-->
+<apex:pageBlock id="resultBlock"  >
+
+<script> 
+    document.getElementById('{!$Component.resultBlock}').style.padding='6px 0px 0px 16px'; 
+</script>
+
+    <apex:facet name="header">
+      <h1>{!$Label.CSS_Contact}&nbsp;</h1>
+      <img src="/img/msg_icons/info16.png" onmouseover="varoppHelpContact.style.display='block';" onmouseout="varoppHelpContact.style.display='none';"/>
+   </apex:facet>
+
+
+
+<apex:outputPanel styleclass="hidden" id="oppHelpContact">
+    <apex:pageMessage summary="{!$Label.CSS_Help_Contact_Section}"  severity="Info" escape="false" strength="2"  />
+</apex:outputPanel>  
+ 
+<script>
+    var varoppHelpContact=document.getElementById('{!$Component.oppHelpContact}');
+</script> 
+
+
+<center>
+<input type='submit' value="{!$Label.ASS_Button_Add_Address}" onclick="return callAddAddress();" class="{!IF(showAddAddressButton = true, 'btn', 'btnDisabled')}" />
+<!-- <input type='submit' value="{!$Label.ASS_Button_Join}" onclick="return validateAndLinkRecords();" class="{!IF(showJoinButton = true, 'btn', 'btnDisabled')}" /> -->
+
+</center>
+
+    <apex:pageBlockButtons location="top" >
+        <!--<apex:commandButton value="{!$Label.ASS_Button_Add_Address}" onclick="return creatAddAddress();" disabled="{!IF(showAddAddressButton = true, false, true)}"/>-->
+        <input type='submit' value="{!$Label.ASS_Button_Add_Address}" onclick="return callAddAddress();" class="{!IF(showAddAddressButton = true, 'btn', 'btnDisabled')}" />
+        
+        <apex:actionStatus id="status">
+                <apex:facet name="start">
+                  <span class="redcolor">{!$Label.Loading}</span> <img src="/img/loading.gif" />
+                </apex:facet>
+            </apex:actionStatus>
+            
+    </apex:pageBlockButtons>
+
+    
+    <apex:pageBlockTable value="{!contacts}" var="con">
+       
+       <apex:column headerValue="">
+           <apex:outputpanel rendered="{!IF(CONTAINS(accessibleContactIds,con.Contact__r.Id),true,false)}">
+                <input type="radio" name='conRadio' id="{!con.Contact__r.Id}"  onchange="saveConSelection(this);"/>
+            </apex:outputpanel>
+        </apex:column>
+
+       
+       <apex:column >
+               <apex:outputLink value="/{!IF(CONTAINS(accessibleContactIds,con.Contact__r.Id),con.Contact__r.Id,'apex/ASS_RequestAccess?id='+con.Contact__r.Id)}" >{!con.Contact__r.FirstName}</apex:outputLink>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.FirstName');">{!$Label.CSS_First_Name}<img
+                             src="{!IF(sortField = 'Contact__r.FirstName',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>
+        
+        
+          
+        
+        <apex:column >
+               <apex:outputText value="{!con.Contact__r.LastName}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.LastName');">{!$Label.CSS_Last_Name}<img
+                             src="{!IF(sortField = 'Contact__r.LastName',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>  
+        
+        <apex:column >
+               <apex:outputText value="{!con.Contact__r.Email}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.Email');">{!$Label.CSS_Email}<img
+                             src="{!IF(sortField = 'Contact__r.Email',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>  
+        
+        <apex:column >
+               <apex:outputText value="{!con.Contact__r.Account.Name}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Contact__r.Id');">{!$Label.ASS_Account_Name}<img
+                             src="{!IF(sortField = 'Contact__r.Id',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>  
+        
+         
+        <apex:column >
+         <apex:outputText value="{!con.address__r.Address_1__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Address_1__c');">{!$Label.ASS_Address_1}<img
+                             src="{!IF(sortField = 'address__r.Address_1__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>  
+      
+      <apex:column >
+         <apex:outputText value="{!con.address__r.City__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.City__c');">{!$Label.ASS_City}<img
+                             src="{!IF(sortField = 'address__r.City__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+         
+     <apex:column >
+         <apex:outputText value="{!IF(con.address__r.State__c=con.address__r.Province__c,con.address__r.State__c,con.address__r.State__c+con.address__r.Province__c)}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.State__c');">{!$Label.ASS_State_Province}<img
+                             src="{!IF(sortField = 'address__r.State__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+        <apex:column >
+         <apex:outputText value="{!IF(con.address__r.Postcode__c=con.address__r.Zip__c,con.address__r.Postcode__c,con.address__r.Postcode__c+con.address__r.Zip__c)}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Postal_Code__c');">{!$Label.ASS_Zip_Postal_Code}<img
+                             src="{!IF(sortField = 'address__r.Postal_Code__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+      <apex:column id="tdCountry">
+                        <apex:facet name="header">
+                        <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Country__c');">{!$Label.ASS_Country}<img
+                             src="{!IF(sortField = 'address__r.Country__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink> 
+                        </apex:facet> 
+                        {!con.address__r.Country__c}
+                         
+      </apex:column> 
+        
+              
+    </apex:pageBlockTable>
+    <apex:outputPanel id="errorBlock" rendered="{!(NOT(ISBlank(searchAddrStatus)) || searchCount==0)}"><span class="redcolor">{!searchStatus}</span></apex:outputPanel>
+     <apex:outputPanel rendered="{!NOT(searchCount==0)}">
+                 <hr/>
+         <apex:panelGrid columns="3" width="100%" >
+           <apex:outputPanel >
+             <div id="pagelinkblock" >
+               <div id="curstate"> {!showingFrom}-{!showingTo} {!$Label.ASS_Footer_Of} {!totalResults} </div>
+             </div>
+             </apex:outputPanel>
+             <apex:outputPanel >
+               <apex:outputLink value="javascript:void(0);"  rendered="{!hasPrevious}" onclick="previousContactPage();">&lt;&lt;{!$Label.ASS_Link_Previous}</apex:outputLink>
+               <span id="div_mid1" >&nbsp;<apex:outputLabel rendered="{!hasPrevious && hasNext}" value="|"  /> &nbsp;</span>
+               <apex:outputLink value="javascript:void(0);" rendered="{!hasNext}" onclick="nextContactPage();">{!$Label.ASS_Link_Next}&gt;&gt;</apex:outputLink>
+             </apex:outputPanel>
+             <apex:outputPanel >
+               <div style="float:right" id="pagenumber">{!$Label.ASS_Footer_Page} &nbsp;<apex:inputText value="{!requestedPage}" styleclass="wid40"/> {!$Label.ASS_Footer_Of} {!totalPage} <apex:commandButton value="{!$Label.ASS_Button_Go}" action="{!requestedContactPage}" reRender="resultBlock,pnlDisplayMsg" status="status" /></div>
+             </apex:outputPanel>
+         </apex:panelGrid>        
+
+     </apex:outputPanel>
+     
+     <apex:outputPanel id="contactSearchResult">
+         <!--<c:SmartContactSearchDisplay_new c="{!contactSearch}" OtherPageCalling="{!OtherPageCalling}"/>-->
+     </apex:outputPanel>
+  </apex:pageBlock>
+<!--###################### Contact TABLE END #########################-->
+
+<!--##################### ADDRESS TABLE BEGIN ##########################-->
+
+
+<apex:pageBlock id="resultAddressBlock" >
+
+<script> 
+document.getElementById('{!$Component.resultAddressBlock}').style.padding='6px 0px 0px 16px'; 
+</script>
+
+<apex:facet name="header">
+  <h1>{!$Label.ASS_Address} {!IF((searchAddrCount==0), '', ' [' + TEXT(searchAddrCount) + ']')}&nbsp;</h1>
+  <img src="/img/msg_icons/info16.png" onmouseover="varOppHelpAddress.style.display='block';" onmouseout="varOppHelpAddress.style.display='none';"/>
+</apex:facet>
+
+
+
+
+
+<apex:actionFunction name="nextAddressPage" action="{!nextAddressPage}" status="status" />
+<apex:actionFunction name="previousAddressPage" action="{!previousAddressPage}" status="status" />
+
+<apex:outputPanel styleclass="hidden" id="oppHelpAddress">
+    <apex:pageMessage summary="{!$Label.CSS_Help_Address_Section}"  severity="Info" escape="false" strength="2"  />
+</apex:outputPanel>  
+ 
+<script>
+var varOppHelpAddress=document.getElementById('{!$Component.oppHelpAddress}');
+</script> 
+
+
+<center>
+<input type='submit' value="{!$Label.CSS_Button_Add_Contact}" onclick="return callAddContact();" class="{!IF(showAddContactButton = true, 'btn', 'btnDisabled')}" />
+<!-- <input type='submit' value="{!$Label.ASS_Button_Join}" onclick="return validateAndLinkRecords();" class="{!IF(showJoinButton = true, 'btn', 'btnDisabled')}" />-->
+</center>
+    <apex:pageBlockButtons location="top" >
+        <input type='submit' value="{!$Label.CSS_Button_Add_Contact}" onclick="return callAddContact();" class="{!IF(showAddContactButton = true, 'btn', 'btnDisabled')}" />
+
+        <apex:actionStatus id="status2">
+                <apex:facet name="start">
+                  <span class="redcolor">{!$Label.Loading}</span> <img src="/img/loading.gif" />
+                </apex:facet>
+            </apex:actionStatus>
+            
+    </apex:pageBlockButtons>
+    
+    <apex:pageBlockTable value="{!addresses}" var="addr">
+        <apex:column headerValue="">
+            <!--Concatenate AccountAddress and Address record Ids, needed to required details from AccountAddress Record -->
+            <input type="radio" name='addrRadio' id="{!addr.Id+';'+addr.Address__r.Id}"  onchange="saveAddrSelection(this);"/>
+        </apex:column>         
+               <apex:column >
+               <apex:outputLink value="/{!addr.Address__r.Id}?retURL=/apex/CSS_ContactSmartSearch" title="{!$Label.CSS_Link_New_Contact_Tooltip}" >{!addr.Address__r.Name}</apex:outputLink>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('Address__r.Id');">{!$Label.ASS_Address_Id}<img
+                             src="{!IF(sortAddrField = 'Address__r.Id',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+        </apex:column>   
+       
+        
+        <apex:column >
+         <apex:outputText value="{!addr.address__r.Address_1__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Address_1__c');">{!$Label.ASS_Address_1}<img
+                             src="{!IF(sortAddrField = 'address__r.Address_1__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>  
+      <apex:column >
+         <apex:outputText value="{!addr.address__r.Address_2__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Address_2__c');">{!$Label.ASS_Address_2}<img
+                             src="{!IF(sortAddrField = 'address__r.Address_2__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>  
+     <apex:column >
+         <apex:outputText value="{!addr.address__r.Address_3__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Address_3__c');">{!$Label.ASS_Address_3}<img
+                             src="{!IF(sortAddrField = 'address__r.Address_3__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+        <apex:column >
+         <apex:outputText value="{!addr.address__r.City__c}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.City__c');">{!$Label.ASS_City}<img
+                             src="{!IF(sortAddrField = 'address__r.City__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+         
+     <apex:column >
+         <apex:outputText value="{!IF(addr.address__r.State__c=addr.address__r.Province__c,addr.address__r.State__c,addr.address__r.State__c+addr.address__r.Province__c)}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.State__c');">{!$Label.ASS_State_Province}<img
+                             src="{!IF(sortAddrField = 'address__r.State__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+        <apex:column >
+         <apex:outputText value="{!IF(addr.address__r.Postcode__c=addr.address__r.Zip__c,addr.address__r.Postcode__c,addr.address__r.Postcode__c+addr.address__r.Zip__c)}"/>
+                 <apex:facet name="header">
+                 <apex:outputPanel >
+                     <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Postal_Code__c');">{!$Label.ASS_Zip_Postal_Code}<img
+                             src="{!IF(sortAddrField = 'address__r.Postal_Code__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink>                                                              
+                 </apex:outputPanel>
+             </apex:facet>
+      </apex:column>
+      <apex:column id="tdCountry">
+                        <apex:facet name="header">
+                        <apex:outputLink value="javascript:void(0);"
+                         onclick="sortContactDataJS('address__r.Country__c');">{!$Label.ASS_Country}<img
+                             src="{!IF(sortAddrField = 'address__r.Country__c',IF(isAsc = true,'/img/sort_asc_arrow.gif','/img/sort_desc_arrow.gif'),'/s.gif')}" />
+                     </apex:outputLink> 
+                        </apex:facet> 
+                        {!addr.address__r.Country__c}
+                         
+      </apex:column> 
+              
+    </apex:pageBlockTable>
+    <apex:outputPanel id="errorBlock" rendered="{!(NOT(ISBlank(searchAddrStatus)) || searchAddrCount==0)}"><span class="redcolor">{!searchAddrStatus}</span></apex:outputPanel>
+     <apex:outputPanel rendered="{!NOT(searchAddrCount==0)}">
+                 <hr/>
+       <apex:panelGrid columns="3" width="100%" >
+         <apex:outputPanel >
+           <div id="pagelinkblock" >
+              <div id="curstate"> {!showingAddrFrom}-{!showingAddrTo} {!$Label.ASS_Footer_Of} {!totalAddrResults} </div>
+           </div>
+         </apex:outputPanel>
+         <apex:outputPanel >
+           <apex:outputLink value="javascript:void(0);"  rendered="{!hasAddrPrevious}" onclick="previousAddressPage();">&lt;&lt;{!$Label.ASS_Link_Previous}</apex:outputLink>
+             <span id="div_mid1" >&nbsp;<apex:outputLabel rendered="{!hasAddrPrevious && hasAddrNext}" value="|"  /> &nbsp;</span>
+           <apex:outputLink value="javascript:void(0);" rendered="{!hasAddrNext}" onclick="nextAddressPage();">{!$Label.ASS_Link_Next}&gt;&gt;</apex:outputLink>
+         </apex:outputPanel>
+         <apex:outputPanel >
+           <div style="float:right" id="pagenumber">Page &nbsp;<apex:inputText value="{!requestedAddrPage}" styleclass="wid40" /> {!$Label.ASS_Footer_Of} {!totalAddrPage} <apex:commandButton value="{!$Label.ASS_Button_Go}" action="{!requestedAddressPage}"  status="status" /></div>
+         </apex:outputPanel>
+       </apex:panelGrid>
+
+     </apex:outputPanel>
+     
+     <apex:outputPanel id="contactSearchResult">
+         <!--<c:SmartContactSearchDisplay_new c="{!contactSearch}" OtherPageCalling="{!OtherPageCalling}"/>-->
+     </apex:outputPanel>
+  </apex:pageBlock>
+<!--##################ADDRESS TABLE END###################################-->          
+<!-- <apex:actionfunction action="{!linkRecords}" name="linkRecords" rerender="resultBlock,resultAddressBlock,pnlDisplayMsg"> -->
+<!-- <apex:param id="cId" name="conId"  value=""/> -->    
+<!-- <apex:param id="adId" name="addrId" value=""/> -->      
+<!-- </apex:actionFunction> -->        
+    </apex:form>
+  <script>
+    function validateMe() {
+      var reqdElement = $('.txtcontactEmail');
+      if ($.trim(reqdElement.val()) == '') {
+        reqdElement.addClass('reqdField');
+        reqdElement.focus();
+        alert('{!$Label.REQUIRED_FIELD_MISSING}');
+        return false;
+      } else {
+        reqdElement.removeClass('reqdField');
+      }
+      return true;
+    }
+    function saveConSelection(chk)
+    {
+        varSelectedContId=(chk.checked)?chk.id:'';
+        
+    }
+    
+    function saveAddrSelection(chk)
+    {
+        varSelectedAddrId=(chk.checked)?chk.id:'';
+        
+    }
+    
+    
+    function callAddAddress()
+    {
+        if(varSelectedContId==null || varSelectedContId=='')
+        {
+            alert('{!$Label.CSS_Message_Select_Contact_to_Add_Address}'); 
+            return false;
+        }
+        //alert('{!URLFOR($Action.Address__c.New)}');
+        //modified by JG on 23 April' 2014 for I-113176
+        window.location.href='/apex/CSS_AddOrCreateNewContactAddress?conId='+varSelectedContId+'&accId={!accountId}&action={!$Label.CSS_Operation_AddAddress}&retURL=/apex/CSS_ContactSmartSearch';
+        //end of changes for I-113176
+        return false;
+    }
+    
+    
+    function callAddContact()
+    {
+      if (varSelectedAddrId == null || varSelectedAddrId == '') {
+          alert('{!$Label.CSS_Message_Select_Address_to_Add_Contact}'); 
+          return false;
+      }
+        var conFirstName = $('.txtcontactFirstName').val();
+        var conLastName = $('.txtcontactLastName').val();
+        var conEmail = $('.txtcontactEmail').val();
+        var accName = $('.txtAccountName').val();
+        var accId = '{!accountId}';    
+        window.location.href='/apex/CSS_AddOrCreateNewContactAddress?addrId='+varSelectedAddrId +'&conFName='+conFirstName+'&conLName='+conLastName+'&conEmail='+conEmail+'&accName='+accName +'&accId='+accId +'&action={!$Label.CSS_Operation_AddContact}&retURL=/apex/CSS_ContactSmartSearch';
+        return false;
+    }
+    
+   /* function validateAndLinkRecords()
+    {
+        if(varSelectedContId==null || varSelectedContId=='' || 
+            varSelectedAddrId==null || varSelectedAddrId=='')
+        {
+            alert('{!$Label.CSS_Message_Select_Contact_and_Address_to_Join}'); 
+            return false;
+        }
+
+        linkRecords(varSelectedContId,varSelectedAddrId);
+        return false;
+     } */
+    
+    function createNewContactNAddress( buttontype)
+    {
+        var conFirstName = $('.txtcontactFirstName').val(); 
+        var conLastName = $('.txtcontactLastName').val();
+        var conEmail = $('.txtcontactEmail').val();
+        var accName = $('.txtAccountName').val();
+        var accId = '{!accountId}';
+        if(buttontype == 'newButton') {
+          window.location.href='/apex/CSS_AddOrCreateNewContactAddress?action={!$Label.CSS_Operation_NewContactAddress}&conFName='+conFirstName+'&conLName='+conLastName+'&conEmail='+conEmail+'&accName='+accName +'&accId='+accId+'&isSaaS=1&retURL=/apex/CSS_ContactSmartSearch&bypassQAS=1';
+        }
+        else {
+          window.location.href='/apex/CSS_AddOrCreateNewContactAddress?action={!$Label.CSS_Operation_NewContactAddress}&conFName='+conFirstName+'&conLName='+conLastName+'&conEmail='+conEmail+'&accName='+accName +'&accId='+accId+'&isSaaS=0&retURL=/apex/CSS_ContactSmartSearch';
+        }
+        return false;
+    }
+    
+    </script>
+    
+</apex:page>

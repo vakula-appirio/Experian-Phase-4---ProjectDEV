@@ -1,0 +1,165 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ARIABillingAccount_ChooseParent.page
+ * Description: Displays list of ARIA Billing Accounts that are eligible as parents
+ * Created Date: Mar 31, 2014
+ * Created By: Jinesh Goyal (Appirio)
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Apr 11, 2014       Jinesh Goyal (Appirio)       T-267978: Added 'Account Name' to the table
+ * Apr 16, 2014       Nathalie Le Guay (Appirio)   Adding "Billing Account Name" column
+  =====================================================================*/
+-->
+<apex:page controller="ARIABillingAccount_ChooseParentCont" title="ARIA Billing Account - Parent Selection" 
+  deferLastCommandUntilReady="true" showHeader="true" id="pg"> 
+ 
+<!--CSS styling-->
+    <style>
+      .overlay{ 
+        background-color: #ffffff ; position: fixed; top: 0; right: 0; bottom: 0; left: 0; 
+        opacity:0.5; filter:Alpha(opacity=50); /* IE8 and earlier */
+        z-index: 9999!Important; 
+        background-image : url(/static/170/img/loading32.gif);
+        background-repeat: no-repeat;
+        background-position:center;
+       }
+    </style>
+<!--CSS styling ends-->
+      <apex:form rendered="{!IF(mapIdToEligibleParents ==null , false, true)}" id="frm">
+        <apex:pageMessages id="errMsg"/>
+        <apex:pageBlock mode="edit" id="pb">
+          <apex:sectionHeader subtitle="Select Parent ARIA Billing Account for {!currentARIABillingAccount.Name}"/>
+            <apex:pageBlockSection showHeader="true" columns="2" collapsible="false" id="pbs">
+                 <apex:outputField value="{!currentARIABillingAccount.Billing_Account_Name__c}" />
+                 <apex:outputField value="{!currentARIABillingAccount.Aria_Parent_Account_Number__c}" />
+                 <apex:outputField value="{!currentARIABillingAccount.Account__r.Name}" />
+                 <apex:inputField id="inputRespLevel" value="{!currentARIABillingAccount.Responsibility_Level__c}" />
+            </apex:pageBlockSection>
+            <br />
+            <apex:pageBlockTable value="{!mapIdToEligibleParents}" var="item" id="pbTable"> 
+                <apex:column >
+                    <input type="radio" name="radARIAOptions" class="radARIA" 
+                           onclick="enableRespLevelDropDown();" value="{!mapIdToEligibleParents[item].Id}" />
+                </apex:column>
+                <apex:column headerValue="Name">    
+                        <apex:outputLink value="/{!item}">{!mapIdToEligibleParents[item].Name}</apex:outputLink>
+                </apex:column>
+                <apex:column headerValue="CRM ID">
+                    <apex:outputField value="{!mapIdToEligibleParents[item].CRM_ID__c}" />
+                </apex:column>
+                <apex:column headerValue="Billing Account Name">    
+                    <apex:outputField value="{!mapIdToEligibleParents[item].Billing_Account_Name__c}" />
+                </apex:column>
+                <apex:column headerValue="Billing Account Number">    
+                    <apex:outputField value="{!mapIdToEligibleParents[item].Billing_Account_Number__c}" />
+                </apex:column>
+                <apex:column headerValue="Account Name">    
+                    <apex:outputField value="{!mapIdToEligibleParents[item].Account_Name__c}" />
+                </apex:column>
+                <apex:column headerValue="Parent Account Name">    
+                    <apex:outputField value="{!mapIdToEligibleParents[item].Parent_Accnt_Name__c}" />
+                </apex:column>
+                <apex:column headerValue="Aria Parent Account Number">    
+                    <apex:outputField value="{!mapIdToEligibleParents[item].Aria_Parent_Account_Number__c}" />
+                </apex:column>
+                <apex:column headerValue="Responsibility Level">    
+                    <apex:outputField value="{!mapIdToEligibleParents[item].Responsibility_Level__c}" />
+                </apex:column>
+             </apex:pageBlockTable>  
+             <!--save button-->
+            <br /> 
+                <div>
+                    <center>
+                    <apex:outputPanel onclick="clearInputs()" styleClass="btn" 
+                                      style="padding-bottom:4px, padding-top: 2px; font-weight:bold;">
+                        Clear
+                    </apex:outputPanel>
+                    <apex:outputPanel onclick="validateAndSave()" styleClass="btn" 
+                                      style="padding-bottom:4px, padding-top: 2px; font-weight:bold;">
+                        Save
+                    </apex:outputPanel>
+                    <!--<apex:commandButton value="Back" action="{!goBack}" 
+                        style="font-weight: bold; padding: 2px; margin-top: -2px;"/>-->
+                    
+                    <apex:outputPanel onclick="goBackJS()" styleClass="btn" 
+                                      style="padding-bottom:4px, padding-top: 2px; font-weight:bold;">
+                        Back
+                    </apex:outputPanel>
+                 </center>
+                </div>
+             <br />
+         </apex:pageBlock>
+         <!--action functions to support ajax requests-->                                 
+              <apex:actionFunction name="save" action="{!save}" immediate="true" rerender="errMsg" status="waitStatus"> 
+                <apex:param name="firstParam" assignTo="{!parentARIABillingAccountSelectedId}" value="" />
+                <apex:param name="secondParam" assignTo="{!responsibilityLevel}" value="" />
+              </apex:actionFunction>
+              <apex:actionFunction name="goBackJS" action="{!goBack}" immediate="true" />
+       </apex:form>
+       <apex:outputPanel rendered="{!IF(mapIdToEligibleParents ==null , true, false)}">
+         <center><apex:outputText ><strong style="color:red;">{!$Label.ARIABillingAccount_Ensure_Route_To_Choose_Parent}</strong></apex:outputText></center>
+       </apex:outputPanel>
+       <apex:actionStatus startText="(Retrieving data...)" id="waitStatus" layout="block">
+          <apex:facet name="start">
+          <div class="overlay">
+          </div>
+          </apex:facet>
+          <apex:facet name="stop">
+          </apex:facet>
+       </apex:actionStatus>
+<script>
+    window.onload = function() {
+      var arrRadioButtons =  document.getElementsByName("radARIAOptions");
+      for (index = 0; index < arrRadioButtons.length; ++index) {
+          if (arrRadioButtons[index].value == '{!parentARIABillingAccountSelectedId}') {
+            arrRadioButtons[index].checked = true;
+          }
+      }
+    }
+    
+    function validateAndSave() {
+           var inputSelected = false;
+           var idSelected = '';
+           //var arrRadioButtons =  document.getElementsByClassName("radARIA");
+           //below line added to support IE 8
+           var arrRadioButtons =  document.getElementsByName("radARIAOptions");
+           var respLevel = document.getElementById('{!$Component.pg.frm.pb.pbs.inputRespLevel}').value;
+           for (index = 0; index < arrRadioButtons.length; ++index) {
+               if (arrRadioButtons[index].checked == true) {
+                 inputSelected = true;
+                 idSelected = arrRadioButtons[index].value;
+               }
+           }
+           if (!inputSelected) {
+             if (respLevel != "") {
+               alert ('Please select Parent ARIA Billing Account if selecting Responsiblity Level');
+               return false;
+             }
+             save (null, null);
+             //alert ('Please select Parent ARIA Billing Account before saving');
+             //return false;
+           } /*else if (respLevel == null || respLevel == undefined || respLevel == "") {
+               alert ('Please select Responsibility Level before saving');
+             return false;
+           } */else {
+               save (idSelected, respLevel);
+           }
+      }
+      function clearInputs() {
+         var arrRadioButtons =  document.getElementsByName("radARIAOptions");
+           for (index = 0; index < arrRadioButtons.length; ++index) {
+               arrRadioButtons[index].checked = false;
+           }
+         var arrAllSelectOptions =  document.getElementById('{!$Component.pg.frm.pb.pbs.inputRespLevel}').childNodes;
+           for (index = 0; index < arrAllSelectOptions.length; ++index) {
+             if(arrAllSelectOptions[index].value != undefined) {
+               arrAllSelectOptions[index].removeAttribute("selected"); 
+               if (arrAllSelectOptions[index].value == "") {
+                 arrAllSelectOptions[index].selected = true;
+               }
+             }
+           }
+      }
+  </script>
+</apex:page>

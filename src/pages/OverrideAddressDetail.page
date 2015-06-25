@@ -1,0 +1,26 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OverrideAddressDetail
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Mar 27th, 2014     Arpita Bose(Appirio)         T-264459: Added Custom Labels in place of text
+ * July 30th, 2014    Naresh Kr Ojha(Appirio)      T-286035: Phase 2 Sprint 0 refactoring: Add titles to Apex Pages
+  =====================================================================*/
+-->
+<apex:page standardController="Address__c" extensions="OverrideAddressDetailExtension" tabStyle="Address__c" title="Address Details">
+    <apex:form >
+       <apex:messages />
+        <apex:sectionHeader subtitle="{!AddressName.name}" title="{!$Label.ASS_Address}">
+            <apex:pageBlock title="Address Detail" mode="maindetail" >
+                <apex:pageBlockButtons >
+                    <apex:commandButton action="{!edit}" value="{!$Label.Button_Edit}" id="editButton" rendered="{!ProfileEditPermission}"/>
+                </apex:pageBlockButtons>
+                <c:AddressFieldsByCountry addressRecId="{!Address__c.id}"  columns="1"/>
+            </apex:pageBlock> 
+        </apex:sectionHeader>  
+    </apex:form>
+</apex:page>

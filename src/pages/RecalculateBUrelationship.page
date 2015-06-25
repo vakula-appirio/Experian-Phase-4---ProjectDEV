@@ -1,0 +1,18 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: RecalculateBUrelationship
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ *
+  =====================================================================*/
+-->
+<apex:page standardController="BU_Relationship__c" extensions="RecalculateBUrelationshipController" action="{!recalculateBURelationship}">
+	<apex:sectionHeader title="BU Relationship"	subtitle="BU_Relationship__c.Name" />
+	<apex:pageBlock >
+		<apex:pagemessages ></apex:pagemessages>
+	</apex:pageBlock>
+</apex:page>

@@ -1,0 +1,157 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: AccountTeamMembersList.page
+ * Description:  T-366039: Account Team VF Page due to Confidential Information
+ * Created Date: Feb 27th, 2015
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By              Description of the update
+ * Mar 4th,2015       Noopur                   Added show more and go to list links.
+ * May 21st, 2015     Noopur                   I-163516 - Modified to add console related methods 
+ *                                             to resolve the issues related to EMS console
+*  =====================================================================*/
+-->
+<apex:page standardController="Account" extensions="AccountTeamMembersList" 
+showheader="true" sidebar="true">
+  <apex:includeScript value="/xdomain/xdomain.js"/>
+  <apex:includeScript value="/soap/ajax/26.0/connection.js"/>
+  <apex:includeScript value="/support/console/26.0/integration.js"/>
+  <apex:form id="frm">
+    <apex:outputPanel id="fullPage">
+    <apex:sectionHeader title="{!acc.Name}" subtitle="{!$Label.AccountTeamMembersList_New_Account_Team_Members}" rendered="{!showAddMemberSection}"/>
+    <apex:actionFunction name="deleteATM_AF" action="{!doDelete}" rerender="fullPage">
+      <apex:param name="delParam" assignTo="{!selectedId}" value=""/>
+    </apex:actionFunction>
+    <apex:pageBlock title="{!IF(showAddMemberSection,'',$Label.AccountTeamMembersList_Account_Team)}">
+    <apex:pageMessages id="msg"/>
+      <apex:pageBlockButtons location="top">
+        <apex:commandButton value="{!$Label.AccountTeamMembersList_Add}" rendered="{!!showAddMemberSection}" onClick="addMember('{!acc.Id}');"/>
+        <apex:commandButton rerender="frm" value="{!$Label.AccountTeamMembersList_Display_Access}" onClick="goToList('{!acc.Id}');" rendered="{!!showAddMemberSection}" disabled="{!displayAccess}"/>
+        <apex:commandButton value="{!$Label.AccountTeamMembersList_Save}" action="{!saveNewTeamMembers}" rendered="{!showAddMemberSection}" />
+        <apex:commandButton value="{!$Label.AccountTeamMembersList_Save_More}" action="{!saveAndMore}" rendered="{!showAddMemberSection}" />
+        <apex:commandButton value="{!$Label.AccountTeamMembersList_Cancel}" action="{!doCancel}" rendered="{!showAddMemberSection}" />
+      </apex:pageBlockButtons>
+      <apex:pageBlockSection columns="1">
+      <apex:outputPanel id="showMembersPanel" rendered="{!!showAddMemberSection}">
+        <apex:pageBlockTable value="{!accountTeamMembersToShow}" var="teamMember">
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Action}">
+            <a onClick="editMember('{!acc.Id}','{!teamMember.member.Id}');" style="cursor: pointer;text-decoration: underline;color: #015ba7;">{!$Label.AccountTeamMembersList_Edit}</a>&nbsp;|&nbsp;
+            <a onClick="deleteATM('{!teamMember.member.Id}');" style="cursor: pointer;text-decoration: underline;color: #015ba7;">{!$Label.AccountTeamMembersList_Del}</a>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Team_Member}">
+            <apex:outputLink value="/{!teamMember.member.userId}" target="_blank">
+              <apex:outputField value="{!teamMember.member.user.Name}" />
+            </apex:outputLink>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Account_Access}" rendered="{!displayAccess}">
+            <apex:outputField value="{!teamMember.member.AccountAccessLevel}"/>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Opportunity_Access}" rendered="{!displayAccess}">
+            <apex:outputText value="{!teamMember.opportunityAccess}"/>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Case_Access}" rendered="{!displayAccess}">
+            <apex:outputText value="{!teamMember.caseAccess}"/>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Team_Role}">
+            <apex:outputField value="{!teamMember.member.TeamMemberRole}"/>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Sales_Team}"> <!-- 11 Mar 15 GC - T-369312 -->
+            <apex:outputText value="{!teamMember.member.User.Sales_Team__c}"/>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Sales_Sub_Team}"> <!-- 11 Mar 15 GC - T-369312 -->
+            <apex:outputText value="{!teamMember.member.User.Sales_Sub_Team__c}"/>
+          </apex:column>
+        </apex:pageBlockTable>
+        <br/>
+        <apex:commandLink value="{!$Label.AccountTeamMembersList_Show_More}" action="{!showMoreRecords}" rerender="frm" rendered="{!!reachedMax}"/>
+<!--        <a onClick = "showMore();" style="cursor: pointer;text-decoration: underline;"></a> -->
+        <apex:outputText value=" | " rendered="{!!reachedMax}"/>
+        <a onClick = "goToList('{!acc.Id}');" style="cursor: pointer;text-decoration: underline;" >{!$Label.AccountTeamMembersList_Go_to_list}</a>
+      </apex:outputPanel>
+      <apex:outputPanel id="addMembersPanel" rendered="{!showAddMemberSection}">
+        <apex:pageBlockTable value="{!newAccountTeamMembers}" var="teamMember">
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Team_Member}">
+            <apex:inputField value="{!teamMember.member.userId}" required="false"/>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Account_Access}">
+            <apex:selectlist value="{!teamMember.accountAccess}" size="1">
+              <apex:selectoptions value="{!accountOppAccessLevels}"/>
+            </apex:selectlist>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Opportunity_Access}">
+            <apex:selectlist value="{!teamMember.opportunityAccess}" size="1">
+              <apex:selectoptions value="{!accountOppAccessLevels}"/>
+            </apex:selectlist>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Case_Access}">
+            <apex:selectlist value="{!teamMember.caseAccess}" size="1">
+              <apex:selectoptions value="{!caseAccessLevels}"/>
+            </apex:selectlist>
+          </apex:column>
+          <apex:column headerValue="{!$Label.AccountTeamMembersList_Team_Role}">
+            <apex:inputField value="{!teamMember.member.TeamMemberRole}"/>
+          </apex:column>
+        </apex:pageBlockTable>
+      </apex:outputPanel>
+      </apex:pageBlockSection>
+    </apex:pageBlock>
+    </apex:outputPanel>
+  </apex:form>
+
+<script>
+  function editMember ( accntId, memId) {
+
+    var editUrl = "/acc/salesteamedit.jsp?retURL=/"+accntId+"&id="+memId;
+    if (sforce.console.isInConsole()) {
+     
+     sforce.console.getEnclosingTabId(function(enclosingResult) {
+            sforce.console.getEnclosingPrimaryTabId(function(primaryResult) {
+                sforce.console.openSubtab(primaryResult.id, editUrl, true, '', null);
+            });
+        });
+    }
+    else {
+      window.parent.location.href = editUrl;
+      }
+    return false;
+  }
+  
+  function deleteATM ( atmId) {
+    if( confirm('{!$Label.AccountTeamMembersList_Record_Delete_Message}') ) {
+      deleteATM_AF(atmId);
+    }
+    return false;
+  }
+  function addMember (accntId) {
+    var addMemberUrl = "/apex/AccountTeamMembersList?Id="+accntId+"&showAddMemberSection=true";
+    if (sforce.console.isInConsole()) {
+     
+     sforce.console.getEnclosingTabId(function(enclosingResult) {
+            sforce.console.getEnclosingPrimaryTabId(function(primaryResult) {
+                sforce.console.openSubtab(primaryResult.id, addMemberUrl, true, '', null);
+            });
+        });
+    }
+    else {
+      window.parent.location.href = addMemberUrl;
+      } 
+    return false;
+  }
+  function goToList (accntId) {
+    var listUrl = "/acc/accteammemberlist.jsp?id="+accntId;
+    if (sforce.console.isInConsole()) {
+     
+     sforce.console.getEnclosingTabId(function(enclosingResult) {
+            sforce.console.getEnclosingPrimaryTabId(function(primaryResult) {
+                sforce.console.openSubtab(primaryResult.id, listUrl, true, '', null);
+            });
+        });
+    }
+    else {
+      window.parent.location.href = listUrl;
+      }
+  }
+  
+</script>
+</apex:page>

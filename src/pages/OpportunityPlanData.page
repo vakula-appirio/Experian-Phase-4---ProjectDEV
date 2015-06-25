@@ -1,0 +1,1395 @@
+<!--
+
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OpportunityPlanData
+
+ * Description: Page used for generating the Opportunity Plan data PDF
+
+ * Created Date: 
+ * Created By: Topcoder developer
+ * 
+
+ * Date Modified      Modified By                  Description of the update
+ * Jul 23rd, 2014     Arpita Bose(Appirio)         T-295628: Modified for Opp Plan- Download Plan
+ * Jul 24th, 2014     Arpita Bose                  I-123010: Modified the section for Opportunity Plan to align the text
+ * Jul 25th, 2014     Arpita Bose                  I-123016, I-123014 
+ * Dec 26th, 2014     Arpita Bose                  Updated as per the task T-343517
+ * Feb 11th, 2015     Paul Kissick                 Case # 12337, have swapped columns to match BuyingCentreAnalysis
+ * Feb 17th, 2015     Paul Kissick                 Case #554948, changed 'Match to Opportunity Plan Qualification Profile' to 'Qualification Profile'
+ * Feb 17th, 2015     Paul Kissick                 Case #554954, changed front page to have a more aligned layout.
+*  =====================================================================*/
+-->
+
+<apex:page standardController="Opportunity_Plan__c"
+    extensions="OpportunityPlanData,ScoringPlanController,JointActionPlanExt,SolutionAtAGlanceExtension,BuyingCenterAnalysisController"
+    renderas="{!$Request.mode}"
+    sidebar="false" showHeader="false"
+    applyHtmlTag="false"
+    applyBodyTag="false">
+    
+    <!--  Include Static resources -->
+   <link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+   <apex:stylesheet value="{!URLFOR($Resource.PDFGenerator, 'PDFDocumentStyle.css')}" />
+   <apex:stylesheet value="{!URLFOR($Resource.pdfCSS)}"/> 
+   <apex:stylesheet value="{!URLFOR($Resource.opptyStageIndicatorCSS, 'opptyStageIndicatorCSS/opptyStageIndicatorCSS.css')}"/>
+   <apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/opp_Plan_Data.css')}" />
+
+
+   <head>
+     <script type="text/javascript">
+        // Create an object to hold iframe checking variables
+        var iframesFinished = {};
+        iframesFinished.BuyingCentreAnalysisLoaded = false;
+        iframesFinished.ScoringPlanLoaded = false;
+        
+        // Callback function to listen and act on the posted messages from the iframes.
+        function listenMessage(msg) {
+            // if the posted message contains certain data, set the iframesFinished object property.
+            if (msg.data == 'BuyingCentreAnalysisLoaded') {
+              iframesFinished.BuyingCentreAnalysisLoaded = true;
+            }
+            if (msg.data == 'ScoringPlanLoaded') {
+              iframesFinished.ScoringPlanLoaded = true;
+            }
+            // Each time, run this.
+            checkAndEnableDownload();
+        }
+        // Function to check that both iframes have called back
+        function checkAndEnableDownload() {
+          if (iframesFinished.BuyingCentreAnalysisLoaded && iframesFinished.ScoringPlanLoaded) {
+            enableDownload();
+          }
+        }
+        function enableDownload() {
+          // remove the btnDisabled class from downloadPdfButton, change the value, and add the onclick event.
+          document.getElementById('downloadPdfButton').className = 'btn';
+          document.getElementById('downloadPdfButton').innerHTML = 'Download PDF';
+          document.getElementById('downloadPdfButton').onclick = function() { 
+            SaveAccPlan();
+          };
+        }
+        if (window.addEventListener) {
+            window.addEventListener("message", listenMessage, false);
+        } else {
+            window.attachEvent("onmessage", listenMessage);
+        }
+        
+        function checkBrowser() {
+          var browserUseragent = navigator.userAgent;
+          if (browserUseragent.indexOf("MSIE 8.0;") != -1) {
+            // looks to be IE8, which doesn't support the SVG elements to save the attachments.
+            alert('You appear to be using Internet Explorer 8. Please use Google Chrome to generate the PDF.');
+          }
+        }
+        
+        // Also, in case they don't finish for 15 seconds, enable the button anyway.
+        setTimeout(enableDownload, 15000);
+        setTimeout(checkBrowser, 1000);
+        </script>
+    </head>
+
+        <div style="display:{!If($Request.mode != 'pdf', '', 'none')}">
+      <img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/>
+   </div>
+    <apex:outputPanel rendered="{!$Request.mode != 'pdf'}" >
+      <apex:outputPanel id="blankPanel"/>
+      <apex:form >
+        <apex:actionFunction action="{!saveAttachment}" name="SaveAccPlan" rerender="blankPanel"/>
+      </apex:form>
+      <!-- <center><a class="btn" onclick="SaveAccPlan();" href="apex/OpportunityPlanData?id={!objOpportunityPlan.Id}&mode=pdf" style="text-decoration:none;font-size:.7em;" download="OpportunityPlan.pdf">{!$Label.ACCOUNTPLANNING_OppPlan_Button_Download_PDF}</a></center> -->
+      <center><a class="btn btnDisabled" id="downloadPdfButton" href="/apex/OpportunityPlanData?id={!objOpportunityPlan.Id}&mode=pdf" style="text-decoration:none;font-size:.7em;" download="OpportunityPlan.pdf">Please wait...</a></center>
+      <br/>
+    </apex:outputPanel>
+    
+        <apex:pagemessages rendered="{!$Request.mode != 'pdf'}"/>
+        
+        <!-- page 1 -->
+        
+        <table class="header-left bordered-table header-table">
+            <tr>
+                <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px; display:{!If($Request.mode != 'pdf', 'none', '')}"/></td>
+                <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Opportunity_Plan}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                          <apex:outputPanel >
+
+                            <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                            <apex:outputText value="{0,date,dd.MM.yyyy}" >
+                                <apex:param value="{!TODAY()}" />
+                            </apex:outputText>
+                          </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                           <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                               <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                               <span class="page-number"></span>
+                           </apex:outputPanel>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+                
+                <body>
+                
+        <div class="content" style="line-height:1.5;">
+            <div style="border:1px solid #000;min-height: 5.75in;">
+                <span class="section-header"> 
+                    <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_General_Information}</apex:outputLabel>
+                </span>
+                <table class="bordered-table contact-grid-1">
+
+                    <tr><!-- row 1 --> <!-- PK Case #554954 Added widths below... -->
+                        <td width="20%"><apex:outputLabel styleClass="text-label">{!$Label.ACCOUNTPLANNING_OppPlan_Client}</apex:outputLabel></td>
+                        <td width="30%"><apex:outputField value="{!Opportunity_Plan__c.Account_Name__r.Name}"/></td>
+                        <td width="20%"><apex:outputLabel styleClass="text-label">{!$Label.ACCOUNTPLANNING_OppPlan_Opportunity_Manager}</apex:outputLabel></td>
+                        <td width="30%"><apex:outputField value="{!Opportunity_Plan__c.Opportunity_Owner__r.Name}"/></td>
+                    </tr>
+                    <tr><!-- row 2 -->
+                        <td><apex:outputLabel styleClass="text-label">{!$Label.ACCOUNTPLANNING_OppPlan_Opportunity_History}</apex:outputLabel></td>
+                        <td colspan="3"><apex:outputField value="{!objOpportunityPlan.Opportunity_History__c}"/></td>
+                    </tr>    
+                    <tr><!-- row 3 -->
+                        <td ><apex:outputLabel styleClass="text-label">{!$Label.ACCOUNTPLANNING_OppPlan_Client_Goals}</apex:outputLabel></td>
+                        <td colspan="3">
+                            <ul class="unordered-list">
+                                <apex:repeat value="{!lstClientGoals}" var="clientGoals">
+                                <li style="margin-left: 0px">
+                                    <apex:outputField value="{!objOpportunityPlan[clientGoals]}"/>
+                                </li>
+                                </apex:repeat>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr><!-- row 4 -->
+                        <td><apex:outputLabel styleClass="text-label">{!$Label.ACCOUNTPLANNING_OppPlan_Sales_Objective_Solution}</apex:outputLabel></td>
+                        <td colspan="3">   
+                            <ul class="unordered-list">
+                                <apex:repeat value="{!lstSalesObjective}" var="salesObjective">
+                                <li style="margin-left: 0px">
+                                    <apex:outputField value="{!objOpportunityPlan[salesObjective]}"/>
+                                </li>
+                                </apex:repeat>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr><!-- row 5 -->
+                        <td rowspan="{!lstOpportunityDetails.size}"><apex:outputLabel styleClass="text-label">{!$Label.ACCOUNTPLANNING_OppPlan_Opportunity_Team}</apex:outputLabel></td>
+                        <td rowspan="{!lstOpportunityDetails.size}"><ul class="unordered-list">
+                                <apex:repeat value="{!lstOtm}" var="teamMember">
+                                <li style="margin-left: 0px">
+                                    <apex:outputText value="{!teamMember.User.Name}"/>
+                                </li>
+                                </apex:repeat>
+                            </ul>
+                        </td>
+                        <!-- PK Case #554954 Rows instead of list items below... -->
+                        <!-- Now we need to add 2 more td on the first iteration, then wrap in <tr> for every other iteration -->
+                        
+                        <apex:variable var="rowNum" value="{!1}" />
+                        <apex:repeat value="{!lstOpportunityDetails}" var="opportunityDetails">
+                            <apex:outputText value="<tr>" escape="false" rendered="{!IF(rowNum!=1,true,false)}" />
+                            <td style="padding: 1px 3px 1px 8px;"><apex:outputLabel styleClass="text-label" value="{!opportunityDetails.strText}"/></td>
+                            <td style="padding: 1px 3px 1px 8px;"><apex:outputField value="{!objOpportunityPlan[opportunityDetails.fieldApiName]}"/></td>
+                            <apex:outputText value="</tr>" escape="false" rendered="{!IF(rowNum!=lstOpportunityDetails.size,true,false)}" />
+                          <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:repeat>   
+
+
+                    </tr>
+
+              </table>
+            </div>
+
+            <div class="page-break" />
+            
+            <table class="header-left bordered-table header-table" >
+                <tr>
+                    <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                    <td> <table class="bordered-table header-table">
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td class="header-table-data">
+                              <apex:outputPanel >
+
+                                <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                                <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                    <apex:param value="{!TODAY()}"/>
+                                </apex:outputText>
+                              </apex:outputPanel>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td class="header-table-data">
+                               <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                                   <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                                   <span class="page-number"></span>
+                               </apex:outputPanel>
+                            </td>
+                        </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            <div class="content">
+            
+            <div style="border:1px solid #000;min-height: 5.75in;margin-top: 25px;">
+                <table class="bordered-table qualification-grid-1">
+                    <tr>
+                        <td colspan="6" style="padding: 0px !important;">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Qualification_Profile}</apex:outputLabel><!--  PK Case #554948 -->
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="index-row">
+                            <apex:outputLabel >&nbsp;</apex:outputLabel>
+                        </th>
+                        <th class="value-row">
+                            <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Mandatory_Criteria}</apex:outputLabel>
+                        </th>
+                        <th class="icon-row">
+                            <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Fulfilled}</apex:outputLabel>
+                        </th>
+                        <th class="index-row">
+                            <apex:outputLabel >&nbsp;</apex:outputLabel>
+                        </th>
+                        <th class="value-row">
+                            <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Discretionary_Criteria}</apex:outputLabel>
+                        </th>
+                        <th class="icon-row">
+                            <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Fulfilled}</apex:outputLabel>
+                        </th>
+                    </tr>
+                    <apex:variable var="index" value="{!1}"/>
+                    
+                    <apex:repeat value="{!lstProjectQualification}" var="projectProfile">
+                        <apex:variable var="mandatoryDataEmpty" 
+                            value="{!LEN(projectProfile.column2)}"/>
+                        <apex:variable var="discretionaryDataEmpty" 
+                            value="{!LEN(projectProfile.column4)}"/>
+                        <tr>
+                            <td class="index-row">
+                                <apex:outputLabel value="{!index}"
+                                    rendered="{!mandatoryDataEmpty != 0}"/>
+                            </td>
+                            <td class="value-row">
+                                <apex:outputText value="{!projectProfile.column1}"/>
+                            </td>
+                            <td class="icon-row">
+                                <c:OpportunityPlanDataIcon value="{!objOpportunityPlan[projectProfile.column2]}"
+                                    rendered="{!mandatoryDataEmpty != 0}"/>
+                            </td>
+                            <td class="index-row">
+                                <apex:outputLabel value="{!index}"
+                                    rendered="{!discretionaryDataEmpty != 0}"/>
+                                <apex:variable var="index" value="{!index + 1}"/>
+                            </td>
+                            <td class="value-row">
+                                <apex:outputText value="{!projectProfile.column3}"/>
+                            </td>
+                            <td class="icon-row">
+                                <c:OpportunityPlanDataIcon value="{!objOpportunityPlan[projectProfile.column4]}"
+                                    rendered="{!discretionaryDataEmpty != 0}"/>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </div>
+        </div>
+        </div>
+        
+        
+        <div class="page-break" />
+            
+            <table class="header-left bordered-table header-table" >
+                <tr>
+                    <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                    <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Relationship_Status}</span>
+                        </th>
+                    </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td class="header-table-data">
+                              <apex:outputPanel >
+
+                                <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                                <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                    <apex:param value="{!TODAY()}"/>
+                                </apex:outputText>
+                              </apex:outputPanel>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td class="header-table-data">
+                               <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                                   <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                                   <span class="page-number"></span>
+                               </apex:outputPanel>
+                            </td>
+                        </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            
+                   
+       <div class="content-intermediate" style="border:1px solid #000;">
+            <div class="section-content">
+                        <table class="bordered-table position-summary-grid-1">
+                    <tr>
+                        <td style="padding: 0px !important;" colspan="5">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Contacts}</apex:outputLabel>
+                            </span>
+                        </td>
+                    </tr>    
+
+                    <tr><td style="padding: 0px !important;" colspan="5">
+                        <apex:iframe src="apex/BuyingCentreAnalysis?id={!$Request.id}&mode=pdf"  rendered="{!$Request.mode != 'pdf'}" height="700px"/>        
+                        <apex:Image value="/servlet/servlet.FileDownload?file={!contactRelationImage.Id}" height="100%" width="100%" rendered="{!$Request.mode == 'pdf'}"/>    
+                    </td>
+                   </tr>
+            </table> 
+            </div>
+       </div>
+       
+        
+        <div class="page-break" />
+            
+            <table class="header-left bordered-table header-table" >
+                <tr>
+                    <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                    <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Relationship_Status}</span>
+                        </th>
+                    </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td class="header-table-data">
+                              <apex:outputPanel >
+
+                                <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                                <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                    <apex:param value="{!TODAY()}"/>
+                                </apex:outputText>
+                              </apex:outputPanel>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td class="header-table-data">
+                               <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                                   <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                                   <span class="page-number"></span>
+                               </apex:outputPanel>
+                            </td>
+                        </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            
+                   
+       <div class="content-intermediate" style="border:1px solid #000;min-height: 5.75in;margin-top: 25px;">
+            <div class="section-content">
+                        <table class="bordered-table position-summary-grid-1">
+                    <tr>
+                        <td style="padding: 0px !important;" colspan="5">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Contacts}</apex:outputLabel>
+                            </span>
+                        </td>
+                    </tr>                    
+                    <tr><td style="padding: 0px !important;" colspan="5">
+                        <div class="table-wrapper">
+                        <table class="custom-table" cellpadding="0" cellspacing="0" width="94%">
+                            <thead>
+                                <tr>
+
+                                    <th>{!$Label.ACCOUNTPLANNING_OppPlan_Contact_Name}</th>
+
+                                    <th class="positive"><img src="{!URLFOR($Resource.OppRelationship,'i/icon-positive-right.png')}" class="picon"/>{!$Label.ACCOUNTPLANNING_OppPlan_Feels_Positive_About}</th>
+                                    <th class="negative"><img src="{!URLFOR($Resource.OppRelationship,'i/icon-negative-right.png')}" class="picon"/>{!$Label.ACCOUNTPLANNING_OppPlan_Feels_Negative_About}</th>
+                                    <th class="positive"><img src="{!URLFOR($Resource.OppRelationship,'i/icon-positive-left.png')}" class="picon"/>{!$Label.ACCOUNTPLANNING_OppPlan_Feels_Positive_About}<br /> {!$Label.ACCOUNTPLANNING_OppPlan_This_Contact}</th>
+                                    <th class="negative"><img src="{!URLFOR($Resource.OppRelationship,'i/icon-negative-left.png')}" class="picon"/>{!$Label.ACCOUNTPLANNING_OppPlan_Feels_Negative_About}<br /> {!$Label.ACCOUNTPLANNING_OppPlan_This_Contact}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!OppPlanContacts}" var="opCon">
+                                <tr>
+                                   <td >
+                                      {!opCon.currentContact.Contact__r.Name}
+                                      {!opCon.currentContact.Role__c}
+                                   </td>
+                                   
+                                    <td class="positive">
+                                      <!-- PK Case # 12337, swapped columns to be the same as BuyingCentreAnalysis -->
+                                        <apex:repeat value="{!opCon.positiveForSomeone}" var="pos">
+
+                                          <p>
+
+                                             <img src="{!URLFOR($Resource.OppRelationship,'i/sm-user.png')}" class="user" alt="User Information"/>
+                                            <strong>{!pos.currentContact.Contact__r.Name}</strong>
+                                         </p>
+
+                                        </apex:repeat>                                   
+
+                                    </td>
+                                    
+                                    <td class="negative">
+                                         <apex:repeat value="{!opCon.NegativeForSomeone}" var="pos">
+
+                                          <p>
+
+                                             <img src="{!URLFOR($Resource.OppRelationship,'i/sm-user.png')}" class="user" alt="User Information"/>
+                                            <strong>{!pos.currentContact.Contact__r.Name}</strong>
+
+
+                                         </p>                                     
+                                         </apex:repeat>
+
+
+                                    </td>
+                                    <td class="positive">
+
+
+                                        <apex:repeat value="{!opCon.positiveAboutMyself}" var="pos">
+
+                                        <p>
+
+                                             <img src="{!URLFOR($Resource.OppRelationship,'i/sm-user.png')}" class="user" alt="User Information"/>
+                                            <strong>{!pos.currentContact.Contact__r.Name}</strong>
+                                         </p>
+
+
+                                        </apex:repeat>                      
+
+
+                                    </td>
+                                    <td class="negative">
+                                        <apex:repeat value="{!opCon.negativeAboutMyself}" var="neg">
+
+                                        <p>
+
+                                             <img src="{!URLFOR($Resource.OppRelationship,'i/sm-user.png')}" class="user" alt="User Information"/>
+                                            <strong>{!neg.currentContact.Contact__r.Name}</strong>
+
+
+
+                                         </p>
+                                         </apex:repeat>                       
+
+
+
+                                    </td>
+                                </tr>
+                               </apex:repeat>
+                            </tbody>
+                        </table>
+                    </div>
+                    </td>
+                   </tr>
+            </table> 
+            </div>
+       </div>
+       
+        
+        <!-- page 2 -->
+        <div class="page-break"> <apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /></apex:outputPanel></div>
+        <apex:repeat value="{!lstParentOpContact}" var="item">
+        <table class="header-left bordered-table header-table">
+            <tr>
+                <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Value_Propositions}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                          <apex:outputPanel >
+
+                            <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                            <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                <apex:param value="{!TODAY()}"/>
+                            </apex:outputText>
+                          </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                           <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                               <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                               <span class="page-number"></span>
+                           </apex:outputPanel>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>            
+            
+        <div class="content-intermediate" style="border:1px solid #000;min-height: 5.75in;margin-top: 25px;">
+            <div class="section-content">
+              
+                <apex:variable var="eachTdWidth"
+                    value="{!IF(item.size == 0, '75', ROUND(75/(item.size), 0))}"/>
+                <table class="bordered-table contact-grid-1">
+                    <tr>
+                        <th class="label-row">
+
+                            {!$Label.ACCOUNTPLANNING_OppPlan_Contact}
+
+                        </th>
+                        <apex:repeat value="{!item}" var="opContact">  
+                            <th class="value-row" width="{!eachTdWidth}%">
+
+                                {!$Label.ACCOUNTPLANNING_OppPlan_For}
+
+                                <div class="sub-header">
+                                    {!opContact.Contact__r.Name}
+                                </div>
+                                
+                            </th>
+                        </apex:repeat>
+                    </tr>
+                    <apex:variable var="rowNum" value="{!0}"/> 
+                    <apex:repeat value="{!lstContactWrapper}" var="config">
+                        <tr class="{!IF(MOD(rowNum,2) == 0, 'oddTr', '')}" style="height:90px;">
+                            <th class="label-row">
+                                {!config.strLabel}
+                            </th>
+                            <apex:variable var="index" value="{!0}"/>
+                            <apex:repeat value="{!item}" var="opContact">
+                                <td>
+                                    <ul class="unordered-list">
+                                        <apex:variable var="allFields" 
+                                            value="{!config.lstEachRecordFields[index]}"/>
+                                        <apex:repeat value="{!allFields}"
+                                            var="eachField">
+                                            <li>
+                                                <apex:outputField value="{!opContact[eachField]}"/> 
+                                            </li>
+                                        </apex:repeat>
+                                    </ul>
+                                   <apex:variable var="index" value="{!index + 1}"/>
+                                </td>
+                            </apex:repeat>
+                         </tr>
+                     <apex:variable var="rowNum" value="{!rowNum + 1}"/> 
+                    </apex:repeat>
+                </table>           
+            </div>   
+          </div>
+          
+          <div class="page-break"> <apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /><br /></apex:outputPanel></div> 
+         </apex:repeat>
+        
+        <div class="page-break"> <apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /></apex:outputPanel></div>
+        
+        <!-- page 3 -->
+        <div class="page-break"><apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /></apex:outputPanel></div>
+        <apex:repeat value="{!lstParentOpComp}" var="item">
+        <table class="header-left bordered-table header-table">
+            <tr>
+                <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Competition}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                          <apex:outputPanel >
+
+                            <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                            <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                <apex:param value="{!TODAY()}"/>
+                            </apex:outputText>
+                          </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                           <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                               <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                               <span class="page-number"></span>
+                           </apex:outputPanel>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <div class="content-intermediate" style="border:1px solid #000;min-height: 5.75in;margin-top: 25px;">
+            <div class="section-content">
+               
+                <apex:variable var="eachTdWidth" 
+                    value="{!IF(item.size == 0, '75', ROUND(75/(item.size), 0))}"/>
+                <table class="bordered-table competitor-grid-1">
+                    <tr>
+                        <th class="label-row">
+
+                            {!$Label.ACCOUNTPLANNING_OppPlan_Competitor}
+
+                        </th>
+                        <apex:repeat value="{!item}" var="opCompetitor">
+                            <th class="value-row" width="{!eachTdWidth}%">
+                                {!opCompetitor.Competitor__r.Account__r.Name}
+                            </th>
+                        </apex:repeat>
+                    </tr>
+                    
+                    <apex:variable var="rowNum" value="{!0}"/>
+                    <apex:repeat value="{!lstCompetitorWrapper}" var="config">
+                        <tr class="{!IF(MOD(rowNum,2) == 0, 'oddTr', '')}" style="height:100px;">
+                            <th class="label-row">
+                                {!config.strLabel}
+                            </th>
+                            <apex:variable var="index" value="{!0}"/>
+                            <apex:repeat value="{!item}" var="opCompetitor">
+                                <td>
+                                    <ul class="unordered-list">
+                                        <apex:variable var="allFields" 
+                                            value="{!config.lstEachRecordFields[index]}"/>
+                                        <apex:repeat value="{!allFields}"
+                                            var="eachField">
+                                            <li>
+                                                <apex:outputField value="{!opCompetitor[eachField]}"/>
+                                            </li>
+                                        </apex:repeat>
+                                    </ul>
+                                    <apex:variable var="index" value="{!index + 1}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    </apex:repeat>
+                </table>
+            </div>
+        </div>
+        <div class="page-break"> <apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /><br /></apex:outputPanel></div> 
+        </apex:repeat>
+        
+        <div class="page-break"> <apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /></apex:outputPanel></div>        
+        
+        <!-- page 4 -->
+        <div class="page-break"><apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /></apex:outputPanel></div>
+        <table class="header-left bordered-table header-table">
+            <tr>
+                <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Summary_and_Action_Plan}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                          <apex:outputPanel >
+
+                            <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                            <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                <apex:param value="{!TODAY()}"/>
+                            </apex:outputText>
+                          </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                           <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                               <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                               <span class="page-number"></span>
+                           </apex:outputPanel>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <div class="content" style="line-height: 1.5;border:1px solid #000;min-height: 5.75in;margin-top: 25px;" >
+            <div >
+                <table class="bordered-table position-summary-grid-1">
+                    <tr>
+                        <td style="padding: 0px !important;" colspan="4">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Summary_of_our_Position_Today}</apex:outputLabel>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="label-row">
+                            <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Strengths}</apex:outputLabel>
+                        </th>
+                        <th class="value-row">
+                            <div>
+                                <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Rating}</apex:outputLabel>
+                            </div>
+                            <div>
+                                <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Rating_positive_range}</apex:outputLabel>
+
+                            </div>
+                        </th>
+                        <th class="label-row">
+                            <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Risks}</apex:outputLabel>
+                        </th>
+                        <th class="value-row">
+                            <div>
+                                <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Rating}</apex:outputLabel>
+                            </div>
+                            <div>
+                                <apex:outputLabel >{!$Label.ACCOUNTPLANNING_OppPlan_Rating_negative_range}</apex:outputLabel>
+
+                            </div>
+                        </th>
+                    </tr>
+                    <apex:repeat value="{!lstPositionSummary}" var="positionSummary">
+                        <tr>
+                            <td>&nbsp;
+                                <apex:outputField value="{!objOpportunityPlan[positionSummary.column1]}"
+                                    rendered="{!LEN(positionSummary.column1) > 0}"/>
+                            </td>
+                            <td class="data-column">&nbsp;
+                                <apex:outputText value="+"
+                                    rendered="{!LEN(positionSummary.column2) > 0}"/>
+                                <apex:outputField value="{!objOpportunityPlan[positionSummary.column2]}"
+                                    rendered="{!LEN(positionSummary.column2) > 0}"/>
+                            </td>
+                            <td>&nbsp;
+                                <apex:outputField value="{!objOpportunityPlan[positionSummary.column3]}"
+                                    rendered="{!LEN(positionSummary.column3) > 0}"/>
+                            </td>
+                            <td class="data-column">&nbsp;
+                                <apex:outputText value="-"
+                                    rendered="{!LEN(positionSummary.column4) > 0}"/>
+                                <apex:outputField value="{!objOpportunityPlan[positionSummary.column4]}"
+                                    rendered="{!LEN(positionSummary.column4) > 0}"/>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </div>
+
+            <div >
+                <table class="bordered-table action-plan-grid-1" width="100%">
+                    <tr>
+                        <td style="padding: 0px !important;" colspan="5">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Action_Plan}</apex:outputLabel>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="subject-row">
+                            <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_OppPlan_Subject}"/>
+
+                        </th>
+                        <th class="owner-row">
+                            <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_OppPlan_Owner_Name}"/>
+
+                        </th>
+                        <th class="dueDate-row">
+                            <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_OppPlan_Due_Date}"/>
+
+                        </th>
+                        <th class="completedDate-row">
+                            <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_OppPlan_Completed_Date}"/>
+                        </th>
+                        <th class="result-row">
+                            <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_OppPlan_Result}"/>
+
+                        </th>
+                    </tr>
+                    <apex:repeat value="{!lstTask}" var="task">
+                        <tr>
+                            <td>
+                                <apex:outputField value="{!task.Subject}"/>
+                            </td>
+                            <td class="owner-row">
+                                <apex:outputField value="{!task.Owner.Name}"/>
+                            </td>
+                            <td class="dueDate-row">
+                                <apex:outputField value="{!task.ActivityDate}"/>
+                            </td>
+                            <td class="completedDate-row">
+                                <apex:outputField value="{!task.Completed_Date__c}"/>
+                            </td>
+                            <td>
+                                <apex:outputField value="{!task.Result__c}"/>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Section for Joint Action Plan -->
+        <div class="page-break"><apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /></apex:outputPanel></div>
+        <table class="header-left bordered-table header-table">
+            <tr>
+                <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Joint_Action_Plan}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                          <apex:outputPanel >
+
+                            <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                            <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                <apex:param value="{!TODAY()}"/>
+                            </apex:outputText>
+                          </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                           <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                               <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                               <span class="page-number"></span>
+                           </apex:outputPanel>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        
+         <div class="content" style="line-height: 1.5;border:1px solid #000;min-height: 5.75in;margin-top: 25px;" >
+            <div >
+                <table class="bordered-table position-summary-grid-1">
+                    <tr>
+                        <td style="padding: 0px !important;" colspan="4">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Joint_Action_Plan}</apex:outputLabel>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>                    
+                       <td>
+                            <apex:outputPanel id="theContainerPanel" rendered="{!NOT(isError)}" >
+    
+                            <!-- MAIN CONTAINER -->
+                            <div class="container">
+                                <!-- MAIN HEADERS -->
+                                
+                               <table><tr><td>
+                                    <table cell-padding="10" class="oppStages" style="margin-right:100px !important;" width="100%">
+                                        <tbody>
+                                            <tr>
+                                                <td class="headerComplete icon-navigation" style="font-weight:none;line-height:1;height:100px;width:150px;colour:#FFFFFF !important;">
+                                                    {!$Label.ACCOUNTPLANNING_OppPlan_Understand} <br/>{!$Label.ACCOUNTPLANNING_OppPlan_Value} <br/>{!$Label.ACCOUNTPLANNING_OppPlan_Propositions}
+
+                                                </td>
+                                                <td class="headerComplete icon-navigation" style="font-weight:none;line-height:1;height:100px;width:150px;colour:#FFFFFF !important;">
+
+                                                    {!$Label.ACCOUNTPLANNING_OppPlan_Request} <br/>{!$Label.ACCOUNTPLANNING_OppPlan_For} <br/>{!$Label.ACCOUNTPLANNING_OppPlan_Proposal}
+
+                                                </td>
+                                                <td class="headerComplete icon-navigation" style="font-weight:none;line-height:1;height:100px;width:150px;colour:#FFFFFF !important;">
+
+                                                    {!$Label.ACCOUNTPLANNING_OppPlan_Make} <br/>{!$Label.ACCOUNTPLANNING_OppPlan_Decision}
+
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                               </td></tr>
+                                <!-- END MAIN HEADERS -->
+                                <tr><td>
+                                <!-- TABLE BEGINS -->
+                                <table class="table table-bordered" >                                
+                                    <thead class="title">
+                                        <th style="width:90px;"></th>
+                                        <th class="titletext" style="width:200px;height:20px;vertical-align: middle;">{!$Label.ACCOUNTPLANNING_OppPlan_Initial_Discussion}</th>
+                                        <th class="titletext" style="width:200px;height:20px;vertical-align: middle;">{!$Label.ACCOUNTPLANNING_OppPlan_Needs_Analysis}</th>
+                                        <th class="titletext" style="width:200px;height:20px;vertical-align: middle;">{!$Label.ACCOUNTPLANNING_OppPlan_Solution} </th>
+                                        <th class="titletext" style="width:200px;height:20px;vertical-align: middle;">{!$Label.ACCOUNTPLANNING_OppPlan_Fulfillment}</th>
+                                    </thead>
+                                    <tbody>
+                                      <apex:repeat value="{!jActionPlan.aPlans}" var="a">
+                                        <tr>
+                                            <td class="title titletext" style="width:200px;height:60px;font-weight:bold;vertical-align: middle;">
+                                                    <apex:outputPanel rendered="{!a.cType == 'Customer'}">
+                                                        {!oPlan.Account_Name__r.Name}
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!a.cType != 'Customer'}">
+                                                        {!a.cType}
+                                                    </apex:outputPanel>
+                                            </td>
+                                            <td style="vertical-align:top;border: 1px solid #C0C0C0;"><apex:outputText value="{!a.initialdiscussion}"></apex:outputText></td>
+                                            <td style="vertical-align:top;border: 1px solid #C0C0C0;"><apex:outputText value="{!a.needsAnalysis}"></apex:outputText></td>
+                                            <td style="vertical-align:top;border: 1px solid #C0C0C0;"><apex:outputText value="{!a.solution}"></apex:outputText></td>
+                                            <td style="vertical-align:top;border: 1px solid #C0C0C0;"><apex:outputText value="{!a.fulfillment}"></apex:outputText></td>
+                                        </tr>
+                                      </apex:repeat>
+                                       <tr>
+                                           <td class="title titletext" style="font-weight:bold;width:90px;height:20px;vertical-align: middle;">{!$Label.ACCOUNTPLANNING_OppPlan_Deadline}</td>
+                        
+                                           <td style="border: 1px solid #C0C0C0;vertical-align: middle;">
+                                             <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                                                <apex:param value="{!jActionPlan.oPlan.Action_Item_Initial_Discussions_Deadline__c}" /> 
+                                             </apex:outputText>
+                                           </td>
+                        
+                                           <td style="border: 1px solid #C0C0C0;vertical-align: middle;">
+                                             <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                                               <apex:param value="{!jActionPlan.oPlan.Action_Item_Needs_Analysis_Deadline__c}" /> 
+                                             </apex:outputText>
+                                           </td>
+                        
+                                           <td style="border: 1px solid #C0C0C0;vertical-align: middle;">
+                                             <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                                               <apex:param value="{!jActionPlan.oPlan.Action_Item_Solution_Deadline__c}" /> 
+                                             </apex:outputText>
+                                           </td>
+                                           <td style="border: 1px solid #C0C0C0;vertical-align: middle;">
+                                             <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                                               <apex:param value="{!jActionPlan.oPlan.Action_Item_Fulfillment_Deadline__c}" /> 
+                                             </apex:outputText>
+                                           </td>
+                                       </tr>
+                                        <tr>
+                                            <td class="title titletext" style="font-weight:bold;width:90px;height:20px;vertical-align: middle;">{!$Label.ACCOUNTPLANNING_OppPlan_Complete}</td>
+                                            <td style="border: 1px solid #C0C0C0;vertical-align: middle;">
+                                              <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                                                <apex:param value="{!jActionPlan.oPlan.Action_Item_Initial_Discussions_Complete__c}" /> 
+                                              </apex:outputText>
+                                            </td>
+                                            <td style="border: 1px solid #C0C0C0;vertical-align: middle;">
+                                              <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                                                <apex:param value="{!jActionPlan.oPlan.Action_Item_Needs_Analysis_Completed__c}" /> 
+                                              </apex:outputText>
+                                            </td>
+                                            <td style="border: 1px solid #C0C0C0;vertical-align: middle;">
+                                              <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                                                <apex:param value="{!jActionPlan.oPlan.Action_Item_Solution_Completed__c}" /> 
+                                              </apex:outputText>
+                                            </td>
+                                            <td style="border: 1px solid #C0C0C0;vertical-align: middle;">
+                                              <apex:outputText value="{0,date,yyyy'-'MM'-'dd}">
+                                                <apex:param value="{!jActionPlan.oPlan.Action_Item_Fulfillment_Completed__c}" /> 
+                                              </apex:outputText>
+                                            </td>
+                                        </tr>   
+                        
+                                    </tbody>
+                                </table>
+                                </td></tr><tr><td>
+                                <!-- TABLE ENDS -->
+                                
+                           <!--      <div class="page-break"><apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /></apex:outputPanel></div>
+                                <!-- MAIN FOOTER -->
+                            
+                                    <table cell-padding="10" class="oppStages" style="margin-right:100px !important;" width="100%">
+                                        <tbody>
+                                            <tr>
+                                                <td class="headerComplete icon-navigation" style="font-weight:none;line-height:1;height:100px;width:150px;colour:#FFFFFF !important;">
+
+                                                    {!$Label.ACCOUNTPLANNING_OppPlan_Draft} <br/>{!$Label.ACCOUNTPLANNING_OppPlan_Project} <br/>{!$Label.ACCOUNTPLANNING_OppPlan_Plan}
+
+                                                </td>
+                                                <td class="headerComplete icon-navigation" style="font-weight:none;line-height:1;height:100px;width:150px;colour:#FFFFFF !important;">
+
+                                                    {!$Label.ACCOUNTPLANNING_OppPlan_Requirements} <br/>{!$Label.ACCOUNTPLANNING_OppPlan_Understood}
+
+                                                </td>
+                                                <td class="headerComplete icon-navigation" style="font-weight:none;line-height:1;height:100px;width:150px;colour:#FFFFFF !important;">
+
+                                                    {!$Label.ACCOUNTPLANNING_OppPlan_Solution} <br/>{!$Label.ACCOUNTPLANNING_OppPlan_Proposal}
+
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                 </td></tr></table>
+                                <!-- END MAIN FOOTER -->
+                            </div>
+                        </apex:outputPanel>
+                    </td>  
+                 </tr>
+              </table>
+            </div> 
+        </div> 
+        
+                
+        <div class="page-break"><apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /></apex:outputPanel></div> 
+        
+        <!-- Section for Solution at a Glance -->
+        <!-- Section for Joint Action Plan -->
+        <div class="page-break"><apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /></apex:outputPanel></div>
+        <table class="header-left bordered-table header-table">
+            <tr>
+                <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Solution_At_A_Glance}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                          <apex:outputPanel >
+
+                            <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                            <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                <apex:param value="{!TODAY()}"/>
+                            </apex:outputText>
+                          </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                           <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                               <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                               <span class="page-number"></span>
+                           </apex:outputPanel>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        
+         <div class="content" style="line-height: 1.5;border:1px solid #000;min-height: 5.75in;margin-top: 25px;" >
+            <div >
+                <table class="bordered-table position-summary-grid-1">
+                    <tr>
+                        <td style="padding: 0px !important;" colspan="4">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Solution_At_A_Glance}</apex:outputLabel>
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                       <td>
+                         <br />
+                            <table style="width:100%" cellpadding="0" cellspacing="0">
+                                 <tr>
+                                     <td colspan="2" class="title titletext" style="margin: 2px;"><h3>{!$Label.ACCOUNTPLANNING_OppPlan_General_Information}</h3></td>
+                                 </tr>
+                                 <tr>
+                                     <td style="font-size:11pt; font-weight:bold;width:50%;padding-left: 17px;">{!$Label.ACCOUNTPLANNING_OppPlan_Account} </td>
+                                     <td style="font-size:11pt;padding-left: 5px;"> {!oppPlan.Account_Name__r.Name} </td>
+                                 </tr>
+                                 <tr>
+                                     <td style="font-size:11pt; font-weight:bold;width:50%;padding-left: 17px;">{!$Label.ACCOUNTPLANNING_OppPlan_Created_By} </td>
+                                     <td style="font-size:11pt;padding-left: 5px;"> {!oppPlan.CreatedBy.Name} </td>
+                                 </tr>
+                                 <tr>
+                                     <td style="font-size:11pt; font-weight:bold;width:50%;padding-left: 17px;">{!$Label.ACCOUNTPLANNING_OppPlan_Created_Date} </td>
+                                     <td style="font-size:11pt;padding-left: 5px;"> 
+                                         <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                            <apex:param value="{!oppPlan.CreatedDate}"/>
+                                         </apex:outputText> 
+                                     </td>
+                                 </tr>
+                             </table>
+     
+                             <br /><br />
+                              
+                             <table style="width:100%" cellpadding="0" cellspacing="0">
+                                 <tr>
+                                 <td width="40%" class="title titletext"> 
+                                    <div><h3>{!$Label.ACCOUNTPLANNING_OppPlan_Objectives_and_Requirements}</h3></div>
+                                 </td>
+                                 <td width="40%" class="title titletext"  >
+                                    <div><h3>{!$Label.ACCOUNTPLANNING_OppPlan_Solution}</h3></div> 
+
+                                 </td>
+                                </tr>
+                                <tr>
+                                 <td width="40%"  class="dataCell"> 
+                                    <apex:outputText value="{!oppPlan.Objectives_and_Requirements__c}" id="oplan_objectives_in" />
+                                 </td>
+                                 <td width="40%" class="dataCell">
+                                    <apex:outputText value="{!oppPlan.Solution__c}" id="oplan_solution_in" />
+                                 </td>
+                                </tr>
+                                <tr>
+                                 <td width="40%" class="title titletext" > 
+                                    <div><h3>{!$Label.ACCOUNTPLANNING_OppPlan_Benefits}</h3></div>
+
+                                 </td>  
+                                 <td width="40%" class="title titletext" >
+                                    <div><h3>{!$Label.ACCOUNTPLANNING_OppPlan_Strengths}</h3></div>
+
+                                 </td>
+                                </tr>
+                                <tr>
+                                 <td width="40%" class="dataCell"> 
+                                    <apex:outputText value="{!oppPlan.Benefits__c}" id="oplan_benefits_in" />
+                                 </td>
+                                 <td width="40%" class="dataCell">
+                                    <apex:outputText value="{!oppPlan.Strengths__c}" id="oplan_strengths_in" /> 
+                                 </td>
+                                </tr>
+                             </table>
+                    </td>  
+                 </tr>
+              </table>
+            </div> 
+        </div> 
+        
+                
+        <div class="page-break"><apex:outputPanel rendered="{!$Request.mode != 'pdf'}"><br /><br /><br /></apex:outputPanel></div> 
+    
+        
+        
+        <!-- Section for Scoring Plan -->
+<!--        Part One-->
+
+  <apex:outputPanel rendered="{!$Request.mode != 'pdf'}">
+     
+       <div class="page-break"></div>
+    
+        <table class="header-left bordered-table header-table">
+            <tr>
+                <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Scoring_Plan}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                          <apex:outputPanel >
+
+                            <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                            <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                <apex:param value="{!TODAY()}"/>
+                            </apex:outputText>
+                          </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                           <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                               <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                               <span class="page-number"></span>
+                           </apex:outputPanel>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        
+        <div class="content" style="line-height: 1.5;border:1px solid #000;margin-top: 25px;" >
+            <div >
+                <table class="bordered-table position-summary-grid-1">
+                    <tr>
+                        <td style="padding: 0px !important;" colspan="4">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Scoring_Plan_Dashboard}</apex:outputLabel>
+                            </span>
+                        </td>
+                   </tr>
+                   <tr>
+                     <td>
+                       <apex:iframe src="apex/ScoringPlan?id={!$Request.id}&mode=pdf" rendered="{!IF($Request.mode != 'pdf', true, false)}" height="1500px"/>                     
+                     </td>
+                   </tr>   
+                </table>
+            </div> 
+        </div>
+     </apex:outputPanel>
+     
+     
+     <apex:outputPanel rendered="{!$Request.mode == 'pdf'}">
+     
+       <div class="page-break"><br /><br /><br /></div>
+    
+        <table class="header-left bordered-table header-table">
+            <tr>
+                <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Scoring_Plan}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                          <apex:outputPanel >
+
+                            <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                            <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                <apex:param value="{!TODAY()}"/>
+                            </apex:outputText>
+                          </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                           <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                               <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                               <span class="page-number"></span>
+                           </apex:outputPanel>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        
+        <div class="content" style="line-height: 1.5;border:1px solid #000;min-height: 5.75in;margin-top: 25px;" >
+            <div >
+                <table class="bordered-table position-summary-grid-1">
+                    <tr>
+                        <td style="padding: 0px !important;" colspan="4">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Scoring_Plan_Dashboard}</apex:outputLabel>
+                            </span>
+                        </td>
+                   </tr>
+                   <tr>
+                     <td>
+                       <apex:Image value="/servlet/servlet.FileDownload?file={!radarChartImageFirstId}" height="100%" width="100%" />                     
+                     </td>
+                   </tr>   
+                </table>
+            </div> 
+        </div>
+       
+        
+<!--        Second part-->
+        <div class="page-break"><br /><br /><br /></div> 
+       
+        <table class="header-left bordered-table header-table" >
+            <tr>
+                <td><img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/></td>
+                <td> <table class="bordered-table header-table">
+                    <tr>
+                        <th colspan="2" style="text-align:right;">
+                            <span class="header-table-title">{!$Label.ACCOUNTPLANNING_OppPlan_Scoring_Plan}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                          <apex:outputPanel >
+
+                            <span>{!$Label.ACCOUNTPLANNING_OppPlan_Date}</span>
+
+                            <apex:outputText value="{0,date,dd.MM.yyyy}">
+                                <apex:param value="{!TODAY()}"/>
+                            </apex:outputText>
+                          </apex:outputPanel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td class="header-table-data">
+                           <apex:outputPanel rendered="{!$Request.mode == 'pdf'}"> 
+
+                               <span>{!$Label.ACCOUNTPLANNING_OppPlan_Page}</span> 
+
+                               <span class="page-number"></span>
+                           </apex:outputPanel>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>       
+        
+        
+        <div class="content" style="line-height: 1.5;border:1px solid #000;min-height: 5.75in;margin-top: 25px;" >
+            <div >
+                <table class="bordered-table position-summary-grid-1">
+                   <tr>
+                        <td style="padding: 0px !important;" colspan="4">
+                            <span class="section-header">
+                                <apex:outputLabel styleClass="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_OppPlan_Scoring_Plan_Dashboard}</apex:outputLabel>
+                            </span>
+                        </td>
+                   </tr>
+                   <tr>
+                     <td>                      
+                     <apex:image value="/servlet/servlet.FileDownload?file={!radarChartImageSecondId}" height="100%" width="100%" rendered="{!IF($Request.mode == 'pdf', true, false)}"/> 
+                     </td>
+                   </tr> 
+                </table>
+            </div> 
+        </div>      
+     </apex:outputPanel>
+        <div class="footer">
+            
+        </div>
+    </body>
+</apex:page>

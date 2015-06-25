@@ -1,0 +1,182 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc;
+ * Name: AccountPlanPenetration.page
+ * Description: 
+ * Created Date: Nov 12th, 2014
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Dec 30th, 2014     Naresh Kr Ojha               T-343511: Refactoring CSS/Labels
+*  =====================================================================*/
+-->
+<apex:page controller="AccountPlanPenetration" tabStyle="Account_Plan__c">
+<link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+<style>
+  .mainTable {margin:10px;}
+  .t-align-center {text-align:center;}
+  .CBTableCls {background: #f2f3f3; border-collapse:collapse; 
+               border:1px solid #e0e3e5; font-size: .9em;
+               font-weight: bold; padding: 5px 2px 4px 5px; width:100% !important;}
+   .tr-height {height:30px;}
+   .td-cls {padding-top:5px; padding-left:5px; border:1px solid #e0e3e5; width:10% !important;}
+   .td-cls05 {padding-top:5px; border:1px solid #e0e3e5; width:4.5% !important;}
+   .td-cls06 {padding-left:5px; border:1px solid #e0e3e5; width:12% !important;}
+   .td-cls07 {padding:5px; border:1px solid #e0e3e5; width:14%; }
+
+</style>
+<apex:form >
+  
+  <apex:pageMessages />
+    <apex:sectionHeader title="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_ACCPENETRATION}" subtitle="{!ap.Name}"/>
+    
+<!-- T-280182 -->
+<br />
+<apex:pageBlock title="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_CURRBUSINESS}" id="currentBlock">
+  <apex:pageBlockButtons >
+     <apex:commandButton action="{!Save}" value="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_SAVE}" rerender="currentBlock" oncomplete="window.location.reload();"/>
+     <apex:commandButton value="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_SAVE_N_RETURN}" action="{!backToPlan}" />
+  </apex:pageBlockButtons>
+ 
+  <table width="100%" class="mainTable"><tr><td class="t-align-center;">
+  <span>Account plan currency:&nbsp;<b>{!currencySymbolFromIso}</b></span>
+  </td></tr></table>
+   <table class="CBTableCls" id="CBTable">
+     <tr class="tr-height">
+       <td class="td-cls"><b>{!$Label.ACCOUNTPLANNING_ACCPENETRATION_CAPABILITY}</b></td>
+       <apex:repeat value="{!listAPPTemp}" var="keyHeader">
+         <td colspan="2" class="td-cls">
+           <b><apex:inputField value="{!keyHeader.FirstName}"/></b>
+         </td>
+       </apex:repeat>
+       <td class="td-cls"><b>{!$Label.ACCOUNTPLANNING_ACCPENETRATION_TOTALREVENUE}</b></td>
+     </tr>
+     <apex:repeat value="{!mapApp}" var="key">
+     <tr style="height:30px">
+       <td class="td-cls">
+         <apex:outputText value="{!key}" />
+       </td>
+         <apex:repeat value="{!mapApp[key]}" var="item">         
+         <apex:variable var="colIndex" value="{!0}"/>
+<!---->
+           <td class="td-cls">
+
+            <apex:inputField value="{!item.accountPlanPenet.Annual_Revenue__c}" style="width:92%" styleClass="accRev{!colIndex}" onchange="updateTotal({!colIndex});"/>
+
+<!--             <input type="text" style="width:100% !important;" value="{!item.accountPlanPenet.Annual_Revenue__c}" />  -->
+           </td>
+
+           <td class="td-cls05">
+             <apex:inputField value="{!item.accountPlanPenet.Penetration__c}" style="width:98%"/>
+           </td>
+           <apex:variable var="colIndex" value="{!colIndex + 1}"/>
+         </apex:repeat>
+         <td class="td-cls06">
+           <br />
+<!--             {!currencySymbolFromIso}  -->
+             <apex:outputText value="{!mapCapToTotal[key]}" />
+         </td>
+     </tr>
+     </apex:repeat>
+     <tr style="height:30px">
+       <td align="right" class="td-cls07">{!$Label.ACCOUNTPLANNING_ACCPENETRATION_TOTALS}</td>
+        <apex:variable var="colIndex" value="{!0}"/>
+       <apex:repeat value="{!listAccBuTotal}" var="item">
+       <td class="td-cls" colspan="2">
+<!--          {!currencySymbolFromIso}           -->
+       <apex:outputText value="{!item}"  />  <!--    styleClass="accRevTotal{!colIndex}"    I-136589 -->
+       </td>
+        <apex:variable var="colIndex" value="{!colIndex + 1}"/>
+       </apex:repeat>
+     </tr>
+</table>
+</apex:pageBlock>
+<!-- end of changes for T-280182 -->
+    <apex:pageBlock title="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_OPENOPPTIES}">
+        <apex:pageblocktable value="{!openOpps}" var="Opp">
+            <apex:column headervalue="Name">
+                <apex:outputLink value="/{!Opp.opp.Id}" target="_blank">
+                    <apex:outputField value="{!Opp.opp.Name}"/>
+                </apex:outputLink>
+            </apex:column>
+            <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_BU}">
+                <apex:repeat value="{!Opp.oppGBL}" var="gbl">
+                      <apex:outputText value="{!gbl}" /><br />
+                    </apex:repeat>
+            </apex:column>
+            <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_TCV}">
+                <apex:outputText value="{0, number, 0,000.00}">
+                    <apex:param value="{!Opp.opp.Amount}" />
+                </apex:outputText>
+                &nbsp; <apex:outputText value="{!Opp.opp.CurrencyISOCode}"/>
+            </apex:column>
+            <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_ANNUALCONTRACTVAL}">
+                <apex:outputText value="{0, number, 0,000.00}">
+                    <apex:param value="{!Opp.opp.Amount_Corp__c}" />
+                </apex:outputText>
+                &nbsp; <apex:outputText value="{!Opp.opp.CurrencyISOCode}"/>
+            </apex:column>
+            <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_STAGE}">
+                <apex:outputField value="{!Opp.opp.StageName}"/>
+            </apex:column>
+            <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_CLOSEDATE}">
+                <apex:outputField value="{!Opp.opp.CloseDate}"/>
+            </apex:column>
+            <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_PROBABILITY}">
+                <apex:outputField value="{!Opp.opp.Probability}"/>
+            </apex:column>
+        </apex:pageblocktable>
+    </apex:pageBlock>
+    <apex:pageBlock title="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_WONOPPTIES}">
+            <apex:pageblocktable value="{!wonOpps}" var="Opp">
+                <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_NAME}">
+                    <apex:outputLink value="/{!Opp.opp.Id}" target="_blank">
+                        <apex:outputField value="{!Opp.opp.Name}"/>
+                    </apex:outputLink>
+                </apex:column>
+                <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_OWNER}">
+                    <apex:outputField value="{!Opp.opp.Owner.Name}"/>
+                </apex:column>
+                <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_PRIMCAPABILITY}">
+                    <apex:outputField value="{!Opp.opp.Capability__c}"/>
+                </apex:column>
+                <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_BU}">
+                     <apex:repeat value="{!Opp.oppGBL}" var="gbl">
+                      <apex:outputText value="{!gbl}" /><br />
+                    </apex:repeat>
+                </apex:column>
+                <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_TCV}">
+                    <apex:outputText value="{0, number, 0,000.00}">
+                        <apex:param value="{!Opp.opp.Amount}" />
+                    </apex:outputText>
+                    &nbsp; <apex:outputText value="{!Opp.opp.CurrencyISOCode}"/>
+                </apex:column>
+                <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_ANNUALCONTRACTVAL}">
+                    <apex:outputText value="{0, number, 0,000.00}">
+                        <apex:param value="{!Opp.opp.Amount_Corp__c}" />
+                    </apex:outputText>
+                    &nbsp; <apex:outputText value="{!Opp.opp.CurrencyISOCode}"/>
+                </apex:column>
+                <apex:column headervalue="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_CLOSEDATE}">
+                    <apex:outputField value="{!Opp.opp.CloseDate}"/>
+                </apex:column>
+            </apex:pageblocktable>
+        <!--  </apex:outputPanel>   -->
+        <apex:outputPanel rendered="{!WonOpps.size == 0}">
+            <apex:outputText value="{!$Label.ACCOUNTPLANNING_ACCPENETRATION_MSG_ACCWITHNOWONOPPTY}"/>
+        </apex:outputPanel>
+    </apex:pageBlock>
+</apex:form>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script>
+ function updateTotal(index){
+    var total = 0;
+    $( ".accRev" + index).each(function(){
+      total += $(this).val() != null ? parseInt($(this).val().replace(/,/g,'')) : 0;
+    });
+    $(".accRevTotal" + index).html((total + '').split( /(?=(?:\d{3})+(?:\.|$))/g ).join( "," ));
+ }
+
+</script>
+
+</apex:page>

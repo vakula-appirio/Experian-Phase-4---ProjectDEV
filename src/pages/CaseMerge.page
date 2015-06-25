@@ -1,0 +1,141 @@
+<!--
+/**=====================================================================
+ * Experian
+ * Name: CaseMerge
+ * Description: Merges a child case to a parent case, moving email messages, attachments and
+ *              tasks to the original case. Then closes the child case.
+ *              Case #556253
+ * Created Date: Mar 19th, 2015
+ * Created By: Paul Kissick
+ *
+ * Date Modified      Modified By                  Description of the update
+ * Mar 19th, 2015     Paul Kissick                 Created 
+  =====================================================================*/
+-->
+<apex:page standardController="Case" title="Merge Case" extensions="CaseMergeController" action="{!prepareSearch}">
+  <script type="text/javascript">
+    var prepareToSearch = function(o,e) {
+      if (e.keyCode == 13) {
+        // Enter key is pressed
+        searchCasesOnEnter();
+      }
+    };
+  </script>
+  <apex:sectionHeader title="Merge Case" subtitle="{!Case.CaseNumber} - {!Case.Subject}" />
+  <apex:form onkeypress="return event.keyCode != 13">
+    <apex:actionFunction action="{!searchCases}" name="searchCasesOnEnter" rerender="wholePage" status="searchingCases" />
+    <apex:pageBlock rendered="{!NOT($Permission.Case_Merge_Allowed)}" mode="maindetail">
+      <apex:outputPanel >
+        <h1>{!$Label.Case_Merge_Denied}</h1>
+        <p><a href="javascript:history.back();">Back to Previous Page</a></p>
+      </apex:outputPanel>
+    </apex:pageBlock>
+    <apex:pageBlock mode="edit" id="wholePage" rendered="{!$Permission.Case_Merge_Allowed}">
+      <apex:pageBlockButtons >
+        <apex:commandButton value="Cancel" action="{!cancel}" />
+      </apex:pageBlockButtons>
+      <apex:pageMessages />
+      <apex:pageBlockSection columns="2" title="Duplicated Case">
+        <apex:outputField label="Case Number" value="{!Case.CaseNumber}" />
+        <apex:outputField label="Case Record Type" value="{!Case.RecordType.Name}" />
+        <apex:outputField value="{!Case.Status}" />
+        <apex:outputField label="Case Owner" value="{!Case.Owner.Name}"  />
+      </apex:pageBlockSection>
+      <apex:pageBlockSection columns="1" >
+        <apex:outputField value="{!Case.Subject}" />
+        <apex:pageMessage severity="info" strength="2" summary="This will close the current case, and copy all Emails, Comments, Tasks and Attachments to the case you select below." />
+      </apex:pageBlockSection>
+      <apex:outputPanel id="searchCases">
+        <apex:pageBlockSection columns="1" title="1) Search Existing Cases" rendered="{!NOT(showWinner)}">
+          <apex:pageBlockSectionItem helptext="Enter the specific case number and click search.">
+            <apex:outputLabel value="Search by Case Number" />
+            <apex:inputText value="{!caseNumber}" html-placeholder="e.g. 52001" onkeyup="prepareToSearch(this,event);" />
+          </apex:pageBlockSectionItem>
+          <apex:pageBlockSectionItem helptext="This should be the original subject, excluding RE: or FW: at the start.">
+            <apex:outputLabel value="Search by Case Subject" />
+            <apex:inputText value="{!caseSubject}" style="width:300px;" onkeyup="prepareToSearch(this,event);" />
+          </apex:pageBlockSectionItem>
+          <apex:pageBlockSectionItem helptext="The default is to search Open cases. Tick this to also include Closed cases.">
+            <apex:outputLabel value="Include Closed Cases?" />
+            <apex:inputCheckbox value="{!includeClosed}" />
+          </apex:pageBlockSectionItem>
+          <apex:pageBlockSectionItem >
+            <apex:outputLabel />
+            <apex:outputPanel >
+              <apex:commandButton value="  Search for Cases  " action="{!searchCases}" rerender="wholePage" status="searchingCases" />
+              <apex:actionStatus id="searchingCases">
+                <apex:facet name="start"><img src="/img/loading32.gif" width="16" height="16" alt="Searching" /></apex:facet>
+                <apex:facet name="stop">
+                  <apex:outputPanel >
+                    <apex:pageMessage severity="error" strength="2" summary="Please provide either a Case Number or Subject to search with." rendered="{!showSearchMissing}" />
+                  </apex:outputPanel>
+                </apex:facet>
+              </apex:actionStatus>
+              
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          
+        </apex:pageBlockSection>
+      </apex:outputPanel>
+      <apex:outputPanel id="parentCases">
+        <apex:pageBlockSection columns="1" title="2) List of Cases Found"  rendered="{!showSearchGrid}" >
+          <apex:pageBlockTable value="{!foundParents}" var="p" >
+            <apex:column headerValue="Case to Merge Into" width="10%">
+              <apex:commandButton action="{!selectCase}" value="SELECT" rerender="wholePage" status="selectingCase" title="Merge Into This Case">
+                <apex:param name="selectedCase" value="{!p.Id}" assignTo="{!selectedCase}" />
+              </apex:commandButton>
+              <apex:actionStatus id="selectingCase">
+                <apex:facet name="start"><img src="/img/loading32.gif" width="16" height="16" alt="Searching" /></apex:facet>
+              </apex:actionStatus>
+            </apex:column>
+            <apex:column headerValue="Case Number" width="10%">
+              <apex:outputText value="{!p.CaseNumber}"/>&nbsp;
+              <apex:outputLink value="/{!p.Id}" target="_blank" title="Opens new window">(View)</apex:outputLink>
+            </apex:column>
+            <apex:column headerValue="Subject" value="{!p.Subject}" width="20%"/>
+            <apex:column headerValue="Status" value="{!p.Status}" width="5%"/>
+            <apex:column headerValue="Contact Name" value="{!p.Contact.Name}" width="10%" />
+            <apex:column headerValue="Case Owner" value="{!p.Owner.Name}" width="15%" />
+            <apex:column headerValue="Created" value="{!p.CreatedDate}" width="10%" />
+            <apex:column headerValue="Case Record Type" value="{!p.RecordType.Name}" width="10%" />
+          </apex:pageBlockTable>
+          <apex:outputPanel layout="block" style="text-align: center;">
+            <apex:commandLink action="{!gotoStart}" value="<<" rerender="wholePage" status="changingPage" rendered="{!hasPrevious}" /><apex:outputText value="<<" rendered="{!NOT(hasPrevious)}" />&nbsp;
+            <apex:commandLink action="{!gotoPrevious}" value="<" rerender="wholePage" status="changingPage" rendered="{!hasPrevious}" /><apex:outputText value="<" rendered="{!NOT(hasPrevious)}" />&nbsp;
+            Page {!PageNumber} of {!TotalPages}&nbsp;
+            <apex:commandLink action="{!gotoNext}" value=">" rerender="wholePage" status="changingPage" rendered="{!hasNext}" /><apex:outputText value=">" rendered="{!NOT(hasNext)}" />&nbsp;
+            <apex:commandLink action="{!gotoLast}" value=">>" rerender="wholePage" status="changingPage" rendered="{!hasNext}" /><apex:outputText value=">>" rendered="{!NOT(hasNext)}" />
+            <apex:actionStatus id="changingPage">
+              <apex:facet name="start"><img src="/img/loading32.gif" width="16" height="16" alt="Searching" /></apex:facet>
+              <apex:facet name="stop"><img src="/img/spacer.gif" width="16" height="16" alt="" /></apex:facet>
+            </apex:actionStatus>
+            ({!ResultSize} Found)
+          </apex:outputPanel>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection title="3) Confirm Merge Into Case" rendered="{!showWinner}" columns="1">
+          <apex:pageBlockSectionItem >
+            <apex:outputLabel value="Is this the correct Case?" />
+            <apex:outputPanel >
+              <apex:commandButton value="Yes, Merge" action="{!performMerge}" id="mergeButton" onclick="setTimeout('document.getElementById(\''+this.id+'\').className=\'btnDisabled\';', 1);  setTimeout('document.getElementById(\''+this.id+'\').disabled=true;', 50);"/>&nbsp;
+              <apex:commandButton value="No, Back to List" action="{!backToList}" rerender="wholePage" status="backToListStatus" />
+              <apex:actionStatus id="backToListStatus">
+                <apex:facet name="start"><img src="/img/loading32.gif" width="16" height="16" alt="Searching" /></apex:facet>
+              </apex:actionStatus>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <apex:pageBlockSectionItem />
+          <apex:outputField value="{!winnerCase.CaseNumber}" />
+          <apex:outputField value="{!winnerCase.Status}" />
+          <apex:outputField label="Case Owner" value="{!winnerCase.Owner.Name}" />
+          <apex:outputField value="{!winnerCase.Subject}" />
+          <apex:pageBlockSectionItem >
+            <apex:outputLabel value="Description" />
+            <apex:outputPanel style="border: 1px solid #000; background-color: #fff; padding: 5px;" layout="block">
+              <apex:outputField value="{!winnerCase.Description}"  />
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+      </apex:outputPanel>
+    </apex:pageBlock>
+  </apex:form>
+</apex:page>

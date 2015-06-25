@@ -1,0 +1,6 @@
+<apex:component controller="SaaSlastCaseComment" access="global">
+    <apex:attribute name="caseIdValue" description="Salesforce Id of the Case" type="Id" assignTo="{!caseId}" />
+     <apex:outputText value="{!NewLine}" />
+     <apex:outputText value="{!NewLine}" />
+    <apex:outputtext value="{!lastCaseComment}" escape="false"/>
+</apex:component>

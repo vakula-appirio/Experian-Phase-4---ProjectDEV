@@ -1,0 +1,168 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OpportunityPlanIndicatorPage
+ * Description: T-279231
+ * Created Date: May 16th, 2014
+ * Created By: Arpita Bose (Appirio)
+ *
+ * Date Modified      Modified By                  Description of the update
+ * May 29th, 2014     Arpita Bose                  T-283410: Updated td.headerActive of CSS stylesheet
+ * Jun 24th, 2014     Sonal Shrivastava            T-288930: Updated Process Button Hover Text
+ * Jul 23rd, 2014     Arpita Bose                  T-295628: Updated the text and padding for display
+ * Oct 14th, 2014     James Weatherall             Case #8690 Removed the padding style on the <td class="headerActive"> tags. 
+ *                                                 Moved style to td.headerActive 
+ * Dec 23rd, 2014     Arpita Bose                  Updated as per the Task T-343518
+ =====================================================================*/
+-->
+<apex:page standardController="Opportunity_Plan__c" standardStylesheets="true" sidebar="false">
+
+<link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+<apex:stylesheet value="{!URLFOR($Resource.opptyStageIndicatorCSS, 'opptyStageIndicatorCSS/opptyStageIndicatorCSS.css')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/oppty-plan-indicator.css')}"/>
+<!--<apex:stylesheet value="{!URLFOR($Resource.OppPlanIndicatorCSS, 'OppPlanIndicatorCSS/OPPPlanIndicatorCSS.css')}"/>-->
+
+
+<apex:form id="theForm"  >
+     <!-- Opportunity Plan Indicator -->
+<body>
+        <div class="oppIndicator main-oppIndicator" >
+            <apex:pagemessages ></apex:pagemessages>
+            <table class="oppStages" cell-padding="1" style="width:80%;">
+              <tbody>
+                <tr>
+                   <td class="headerActive">
+                      <span class="vfHelpText" >
+                        <apex:outputLink styleClass="tabTextAnchor" value="javascript:return false;" >
+                         <h2 class="active" >{!$Label.ACCOUNTPLANNING_OppPlanIndicator_Information}</h2>
+                         <br>
+                          <apex:outputPanel layout="inline" styleClass="tooltip oppStage_indicator opacity: 0.87" >
+                          <apex:outputPanel >
+                              <apex:image url="{!$Resource.bullet_info}" />
+                              <apex:outputText escape="false" value="{!$Label.OppPlan_Info_Hover}" styleClass="missingCriteria"/><br/>
+                          </apex:outputPanel>
+                          </apex:outputPanel></br>
+                        </apex:outputLink>
+                      </span>
+                    </td>
+                    <td class="headerActive">
+                      <span class="vfHelpText" >
+                        <apex:outputLink value="javascript:return false;" >
+                         <h2 class="active" >{!$Label.ACCOUNTPLANNING_OppPlanIndicator_Opportunity_Qualification_Profile}</h2>
+                         <br>
+                          <apex:outputPanel layout="inline" styleClass="tooltip oppStage_indicator opacity: 0.87">
+                          <apex:outputPanel >
+                              <apex:image url="{!$Resource.bullet_info}" />
+                              <apex:outputText escape="false" value="{!$Label.OppPlan_OppQualProf_Hover}" styleClass="missingCriteria"/><br/>
+                          </apex:outputPanel>
+                          </apex:outputPanel></br>
+                        </apex:outputLink>
+                      </span>
+                    </td>
+                    <td class="headerActive">
+                      <span class="vfHelpText" >
+                        <apex:outputLink value="javascript:return false;" >
+                         <h2 class="active" >{!$Label.ACCOUNTPLANNING_OppPlanIndicator_Buying_Centre_Analysis}</h2> 
+                         <br>
+                          <apex:outputPanel layout="inline" styleClass="tooltip oppStage_indicator opacity: 0.87">
+                          <apex:outputPanel >
+                              <apex:image url="{!$Resource.bullet_info}" />
+                              <apex:outputText escape="false" value="{!$Label.OppPlan_BuyCentre_Hover}" styleClass="missingCriteria"/><br/>
+                          </apex:outputPanel>
+                          </apex:outputPanel></br>
+                        </apex:outputLink>
+                      </span>
+                    </td>
+                    <td class="headerActive">
+                      <span class="vfHelpText" >
+                        <apex:outputLink value="javascript:return false;" >
+                         <h2 class="active" >{!$Label.ACCOUNTPLANNING_OppPlanIndicator_Value_Propositions}</h2>
+                         <br>
+                          <apex:outputPanel layout="inline" styleClass="tooltip oppStage_indicator opacity: 0.87">
+                          <apex:outputPanel >
+                              <apex:image url="{!$Resource.bullet_info}" />
+                              <apex:outputText escape="false" value="{!$Label.OppPlan_ValProp_Hover}" styleClass="missingCriteria"/><br/>
+                          </apex:outputPanel>
+                          </apex:outputPanel></br>
+                        </apex:outputLink>
+                      </span>
+                    </td>
+                    <td class="headerActive">
+                      <span class="vfHelpText" >
+                        <apex:outputLink value="javascript:return false;" >
+                         <h2 class="active" ><br/>{!$Label.ACCOUNTPLANNING_OppPlanIndicator_Competition}<br/></h2>
+                         <br>
+                          <apex:outputPanel layout="inline" styleClass="tooltip oppStage_competition">
+                          <apex:outputPanel >
+                              <apex:image url="{!$Resource.bullet_info}" />
+                              <apex:outputText escape="false" value="{!$Label.OppPlan_Comp_Hover}" styleClass="missingCriteria"/><br/>
+                          </apex:outputPanel>
+                          </apex:outputPanel></br>
+                        </apex:outputLink>
+                      </span>
+                    </td>
+                    <td class="headerActive">
+                      <span class="vfHelpText" >
+                        <apex:outputLink value="javascript:return false;" >
+                         <h2 class="active" >{!$Label.ACCOUNTPLANNING_OppPlanIndicator_Summary_Position_Today}</h2>
+                         <br>
+                          <apex:outputPanel layout="inline" styleClass="tooltip oppStage_competition">
+                          <apex:outputPanel >
+                              <apex:image url="{!$Resource.bullet_info}" />
+                              <apex:outputText escape="false" value="{!$Label.OppPlan_SumPosToday_Hover}" styleClass="missingCriteria"/><br/>
+                          </apex:outputPanel>
+                          </apex:outputPanel></br>
+                        </apex:outputLink>
+                      </span>
+                    </td>
+                    <td class="headerActive">
+                      <span class="vfHelpText" >
+                        <apex:outputLink value="javascript:return false;" >
+                         <h2 class="active" >{!$Label.ACCOUNTPLANNING_OppPlanIndicator_Action_Plan}</h2>
+                         <br>
+                          <apex:outputPanel layout="inline" styleClass="tooltip oppStage_competition">
+                          <apex:outputPanel >
+                              <apex:image url="{!$Resource.bullet_info}" />
+                              <apex:outputText escape="false" value="{!$Label.OppPlan_ActPlan_Hover}" styleClass="missingCriteria"/><br/>
+                          </apex:outputPanel>
+                          </apex:outputPanel></br>
+                        </apex:outputLink>
+                      </span>
+                    </td>
+                    <td class="headerActive">
+                      <span class="vfHelpText" >
+                        <apex:outputLink value="javascript:return false;" >
+                         <h2 class="active" >{!$Label.ACCOUNTPLANNING_OppPlanIndicator_Joint_Action_Plan}</h2>
+                         <br>
+                          <apex:outputPanel layout="inline" styleClass="tooltip oppStage_competition">
+                          <apex:outputPanel >
+                              <apex:image url="{!$Resource.bullet_info}" />
+                              <apex:outputText escape="false" value="{!$Label.OppPlan_JntActPlan_Hover}" styleClass="missingCriteria"/><br/>
+                          </apex:outputPanel>
+                          </apex:outputPanel></br>
+                        </apex:outputLink>
+                      </span>
+                    </td>
+                    <td class="headerActive">
+                      <span class="vfHelpText" >
+                        <apex:outputLink value="javascript:return false;" >
+                         <h2 class="active" >{!$Label.ACCOUNTPLANNING_OppPlanIndicator_Solution_at_a_Glance}</h2>
+                         <br>
+                          <apex:outputPanel layout="inline" styleClass="tooltip oppStage_competition">
+                          <apex:outputPanel >
+                              <apex:image url="{!$Resource.bullet_info}" />
+                              <apex:outputText escape="false" value="{!$Label.OppPlan_SolAtGlance_Hover}" styleClass="missingCriteria"/><br/>
+                          </apex:outputPanel>
+                          </apex:outputPanel></br>
+                        </apex:outputLink>
+                      </span>
+                    </td>
+                </tr>
+              </tbody>
+            </table>
+        </div>
+
+        <!-- *************** CONTENT RENDER END *************** -->
+</body>
+</apex:form>
+</apex:page>

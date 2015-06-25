@@ -1,0 +1,94 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: EDQSaaS_ClosedLostOpp_EmailComponent
+ * Description: T-358314:
+ * Created Date: March 03st, 2015
+ * Created By: Naresh Kr Ojha(Appirio)
+ *
+ * Date Modified      Modified By                Description of the update
+ * Apr 4th, 2015      Terri Kellough             T-373132 modify to user asset list from
+ *                                               OpportunityWrapper as Assets are on an
+ *                                               account instead of on the opportunity
+ *                                               Note: Close Lost Opportunities should not
+ *                                               have associated assets.
+ * Apr 15, 2015      Terri Kellough              add line items 
+  =====================================================================*/
+-->
+<apex:component controller="EDQSaaS_ClosedLostOpp_EmailController" access="global">
+
+    <apex:attribute name="OpptyID" type="Id" description="{!$Label.EDQ_SAAS_LOST_EMAIL_COMP_PGDESC}" assignTo="{!opportunityId}"/>
+
+    {!$Label.EDQ_SAAS_EMAIL_COMP_OPPTYNAME} <strong><apex:outputLink value="{!externalURL}/{!SaaSOpportunity.oppty.Id}" target="_blank">{!SaaSOpportunity.oppty.Name}</apex:outputLink></strong>
+    {!$Label.EDQ_SAAS_EMAIL_COMP_FORACC} <strong><apex:outputLink value="{!externalURL}/{!SaaSOpportunity.oppty.AccountId}" target="_blank">{!SaaSOpportunity.oppty.Account.Name}</apex:outputLink></strong>
+    {!$Label.EDQ_SAAS_EMAIL_COMP_OPPTYLOSTBYOWNER}:  <strong><apex:outputLink value="{!externalURL}/{!SaaSOpportunity.oppty.OwnerId}" target="_blank">{!SaaSOpportunity.oppty.Owner.Name}</apex:outputLink></strong>
+    <br />
+
+    <apex:outputPanel rendered="{!SaaSOpportunity.oppSaaSLines.size >0}">
+     <br />{!$Label.EDQ_SAAS_EMAIL_COMP_OPPTY_LOST_CONT_DESC}:<br/>
+     <table width="80%" border="0">
+        <tr>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_OPPLINENAME}</strong></td>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_SAASPRODCODE}</strong></td>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_QTY}</strong></td>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_ENDDATE}</strong></td>
+        </tr>
+
+      <apex:repeat value="{!SaaSOpportunity.oppSaaSLines}" var="opportunityLine">
+        <tr>
+          <td><apex:outputLink target="_blank" value="{!externalURL}/{!opportunityLine.Id}">{!opportunityLine.Name}</apex:outputLink></td>
+          <td><apex:outputText >{!opportunityLine.SaaS_Product_Code__c}</apex:outputText></td>
+          <td><apex:outputText >{!opportunityLine.CPQ_Quantity__c}</apex:outputText></td>
+          <td><apex:outputText value="{0, date, MM/dd/yyyy}">
+            <apex:param value="{!opportunityLine.End_Date__c}" />
+          </apex:outputText></td>
+        </tr>
+      </apex:repeat>
+        </table>
+    </apex:outputPanel>
+
+    <apex:outputPanel rendered="{!SaaSOpportunity.opptyAccountSaaSContacts.size > 0}">
+      <br />{!$Label.EDQ_SAAS_EMAIL_COMP_OPPTY_DEACTIVATECONTACTS}:<br/>
+      <table width="80%" border="0">
+        <tr>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_CONT_NAME}</strong></td>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_CONT_EMAIL}</strong></td>
+
+        </tr>
+
+      <apex:repeat value="{!SaaSOpportunity.opptyAccountSaaSContacts}" var="contact">
+        <tr>
+          <td><apex:outputLink target="_blank" value="{!externalURL}/{!contact.Id}">{!contact.Name}</apex:outputLink></td>
+          <td><apex:outputText >{!contact.Email}</apex:outputText></td>
+        </tr>
+      </apex:repeat>
+        </table>
+    </apex:outputPanel>
+
+    <apex:outputPanel rendered="{!SaaSOpportunity.opptyAccSaaSAssets.size > 0}">
+      <br /><br />{!$Label.EDQ_SAAS_EMAIL_COMP_LOSTOPPTY_ASST_DESC}&nbsp;<apex:outputLink value="{!externalURL}/{!SaaSOpportunity.oppty.AccountId}" target="_blank">{!SaaSOpportunity.oppty.Account.Name}</apex:outputLink>:<br />
+      <table width="80%" border="0">
+        <tr>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_ASSTNAME}</strong></td>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_SAASPRODCODE}</strong></td>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_QTY}</strong></td>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_DEPLOYMENT}</strong></td>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_DEPLOYMENT_STATUS}</strong></td>
+          <td><strong>{!$Label.EDQ_SAAS_EMAIL_COMP_ENDDATE}</strong></td>
+        </tr>
+
+      <apex:repeat value="{!SaaSOpportunity.opptyAccSaaSAssets}" var="asset">
+        <tr>
+          <td><apex:outputLink target="_blank" value="{!externalURL}/{!asset.Id}">{!asset.Name}</apex:outputLink></td>
+          <td><apex:outputText >{!asset.SaaS_Product_Code__c}</apex:outputText></td>
+          <td><apex:outputText >{!asset.Quantity}</apex:outputText></td>
+          <td><apex:outputText >{!asset.Deployment__c}</apex:outputText></td>
+          <td><apex:outputText >{!asset.Deployment_Status__c}</apex:outputText></td>
+          <td><apex:outputText value="{0, date, MM/dd/yyyy}">
+            <apex:param value="{!asset.UsageEndDate}" />
+          </apex:outputText></td>
+        </tr>
+      </apex:repeat>
+        </table>
+    </apex:outputPanel>
+</apex:component>

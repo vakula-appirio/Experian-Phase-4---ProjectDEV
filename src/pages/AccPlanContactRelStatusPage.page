@@ -1,0 +1,321 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: AccPlanContactRelStatusPage
+ * Description: 
+ * Created Date: Aug 20th, 2014 
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Dec 30th, 2014     Naresh Kr Ojha               T-343513: Refactoring CSS/Labels
+ * Apr 29th, 2015     GCS (merged by Nathalie)     Added section "nonSVGPanel" div
+ * =====================================================================*/
+-->
+<apex:page showheader="false" sideBar="false" controller="AccPlanContactRelStatusController" standardStylesheets="false">
+  
+  <meta charset="utf-8"/> 
+  <!--style sheets--> 
+  <link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+  <link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/custom-style.css')}" type="text/css"/>
+  
+  <link rel="stylesheet" href="{!URLFOR($Resource.Stylefile, 'style.css')}" type="text/css"/>
+  <link rel="stylesheet" href="{!URLFOR($Resource.AccountRelationship, 'css/jquery.selectbox.css')}" type="text/css"/>
+  <link rel="stylesheet" href="{!$Resource.AllResource}/stylefile.css" type="text/css" />
+  
+  <style>    
+  
+    
+    br {
+        clear: both;
+    }
+    connection {
+        z-index: -1;
+        border: 1.5px solid #656565;
+        border-radius: .1em;
+        color: rgb(128, 128, 128);
+        color: rgba(0, 0, 0, 0.5);
+    }
+  
+  </style>
+
+  <!-- javascript libs--> 
+  <apex:includeScript value="{!URLFOR($Resource.AccountRelationship,'js/jquery-1.7.2.min.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.AccountRelationship,'js/jquery-ui-1.9.2.min.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.AccountRelationship,'js/jquery.selectbox-0.2.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.AccountRelationship,'js/jquery.knob.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.AccountRelationship,'js/script.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.JqueryConnection)}"/>
+  
+    <apex:includeScript value="{!URLFOR($Resource.AccountRelationship,'js/jquery.jsPlumb-1.6.0.js')}"/>
+      
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/jspdf.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/html2canvas.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/canvas2image.js')}" />
+    <apex:includeScript value="/soap/ajax/28.0/connection.js"/>
+    <apex:includeScript value="/soap/ajax/28.0/apex.js"/>
+
+  
+  <script type="text/javascript"> 
+     //variable to hold resource path, this will be used in script.js
+     var globalStaticResourcePath = '{!URLFOR($Resource.AccountRelationship)}';           
+     
+     $(document).ready(function(){
+       setTimeout(addRemoveConnections, 1000);       
+     });
+
+     $( window ).resize( debouncer( function ( e ) {
+        addRemoveConnections('remove');
+        addRemoveConnections();
+     } ) );
+        
+    function debouncer( func , timeout ) {
+       var timeoutID , timeout = timeout || 200;
+     return function () {
+         var scope = this , args = arguments;
+         clearTimeout( timeoutID );
+         timeoutID = setTimeout( function () {
+             func.apply( scope , Array.prototype.slice.call( args ) );
+         } , timeout );
+       }
+    }
+
+
+     function addRemoveConnections(option){
+       <apex:repeat var="currentLevel" value="{!lstLevels}" >
+        <apex:repeat value="{!mapLevel_LstContact[currentLevel]}" var="con">
+           if('{!con.Contact__r.ReportsToId}' != ''){
+              $('#{!con.Contact__r.ReportsToId}, #connector_{!con.Contact__c}').connections(option);
+              $('#connector_{!con.Contact__c}, #{!con.Contact__c}').connections(option);  
+           }       
+        </apex:repeat>  
+       </apex:repeat> 
+       
+       if('{!$Request.mode}' == 'pdf'){
+         $('connection').each(function(){
+             $('#connectionHolder').append($(this).clone()); 
+             $(this).remove();    
+         });
+         
+         setTimeout(function(){createPDF('nonSVGPanel',false);}, 1000); 
+       }
+     }
+     
+          
+      var mainContainer;     
+      
+      sforce.connection.sessionId = "{!$Api.Session_ID}";      
+    // Create Base64 Object to convert svc in base64 String
+        var base64encodedSVG;
+        var svgId;
+        
+        /*    Method create PDF file for Salesforce standard charts  */
+        function createPDF(chart,isSVG) {
+            clearTemp();
+            // get svg element Id
+            
+            // Create temporary Div to hold image file that are created during the
+            // process            
+            var svgDiv = document.createElement("div");
+            svgDiv.id = 'imageDiv';
+            svgDiv.style='display: none;';
+            document.getElementById(chart).appendChild(svgDiv);
+            
+            var cnvs = document.createElement("canvas");
+            cnvs.width = $('#'+chart).attr('width') != null ? $('#'+chart).attr('width'):900;
+            cnvs.width = String(parseInt(cnvs.width)+10);
+            cnvs.height = $('#'+chart).attr('width') != null ? $('#'+chart).attr('height'):450;
+            cnvs.height = String(parseInt(cnvs.height)+10);
+            cnvs.id = 'cvs';
+            document.getElementById('imageDiv').appendChild(cnvs);
+            
+            
+            if(isSVG){ 
+                $('text').each(function(){           
+                    $(this).css("font-size","12px");       
+                    $(this).css("font-family","Helvetica"); 
+                });
+                
+                // Get Id of the SVG component form apex chart id
+                $("svg").each(function () {
+                     svgId = this.id;
+                });
+                if(svgId == null) {
+                    alert('Error : Invalid chart Id');
+                }
+                
+                console.log('1. ================= Process Started =====================');
+                // Get the base64 string code of the chart and parse that base64 string to
+                // image format
+                generateBase64OfGraphicImage(function() {
+                    // callback methods when base64 code of graph is generated continue process
+                    getSVGImage(svgId);
+                });
+            }else{getNonSVGImage(chart);}
+        }
+        
+        // Generate the base64 string of chart 
+        // Charts generated by apex are based on HTML5 SVG tags
+        function generateBase64OfGraphicImage(callback) {
+            console.log('2. ================= Generate graphic image ==============');
+            var svg = document.getElementById(svgId); // or whatever you call it
+            var serializer = new XMLSerializer();
+            var svgstr = serializer.serializeToString(svg);
+            base64encodedSVG = btoa(svgstr);
+        callback();
+        }
+        
+        // Create image file from the chart's base64 string and create canvas objtect
+        // to do final merging of files (text image and graphic image)
+        function getSVGImage() {
+            console.log('3. ================= Process graphic image ===============');
+            var imgsrc = 'data:image/svg+xml;base64,'+ base64encodedSVG;
+            // add canvas
+            //<canvas width="900" height="450" id="cvs"></canvas>
+            
+            // Add graphics Image
+            var imageSVG = document.createElement("img");
+            imageSVG.src = imgsrc;
+            imageSVG.style = "display:none";
+            imageSVG.id = 'generatedImage';
+            document.getElementById('imageDiv').appendChild(imageSVG);
+            storePDFANDImage();
+        }
+        
+        // Charts base64 string image contains only graphics , below methods will 
+        // retrieve a image that contains all text of chart
+        function getNonSVGImage(chart) {
+            console.log('4. ================= Process text image ==================');
+
+            html2canvas($('#'+chart), {
+              onrendered: function(canvas) {
+                theCanvas = canvas;
+                //var cnt = Canvas2Image.saveAsPNG(canvas);
+                var cnt = Canvas2Image.convertToPNG(canvas);
+                cnt.id = 'generatedImage';
+                document.getElementById('imageDiv').appendChild(cnt);
+                
+                storePDFANDImage();
+              }
+            });
+            
+        }
+        
+        // Merge generated graphic and text image and create pdf
+        function storePDFANDImage() {
+          console.log('5. ================= Merge text and graphic images =======');
+            var generatedImage = document.getElementById('generatedImage');
+        
+            var canvas = document.getElementById("cvs");
+            var context = canvas.getContext("2d");
+            var width = generatedImage.width;
+            var height = generatedImage.height;
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Set canvas background to white color
+            context.fillStyle = "#FFFFFF";
+            context.fillRect(0,0,width,height);
+            
+            context.drawImage(generatedImage, 0, 0);
+            var image1 = context.getImageData(0, 0, width, height);
+            var imageData1 = image1.data;
+            context.putImageData(image1, 0, 0);
+            var finalImage = canvas.toDataURL("image/jpeg");
+            
+            /*pdf code*/
+            console.log('6. ================= Create PDF ==========================');
+            var doc = new jsPDF();
+            doc.setFontSize(10);
+            doc.text(40, 30, "Generated PDF", 1);
+            // adjust the Widht and Height parameter to set aspect ratio of image
+            doc.addImage(finalImage, 10, 40, 180, 100);
+            console.log('7. ================= Save PDF ============================');
+            //doc.save('GenerateImage.pdf');
+            
+            
+            var Atch = new sforce.SObject("Attachment");
+            if('{!ContactRelationImage}' != null){ 
+            Atch.Id = '{!contactRelationImage.Id}';
+            }
+            Atch.ParentId = '{!accPlanId}';
+            Atch.Name = 'ContactRelationImage';
+            Atch.ContentType = 'image/jpeg';
+            Atch.Body = finalImage.replace('data:image/jpeg;base64,','');
+            try{
+            var result = sforce.connection.upsert("Id",[Atch]);
+            }catch(e){
+            alert(e);
+            }
+            
+                        
+            clearTemp();
+        }
+        
+        // Clear the temp div that contains the chart images
+        // Note : to see the generated images comment text of this 
+        // method and set the visibilt of div 'imageDiv' to display=""
+        function clearTemp() {
+            if(document.getElementById('imageDiv') != null) {
+                document.getElementById('imageDiv').remove()
+            }
+            base64encodedSVG = null;
+        }
+       
+  </script>
+  
+  
+  <apex:outputpanel rendered="{!$Request.mode != 'pdf'}">
+  <header>
+    <div class="inner">
+      <a href="#" class="logo"></a>
+    </div>
+  </header>
+  
+  <nav>
+    <div class="inner">
+      <ul>
+        <li class="first zero-margin-left" ><apex:outputLink value="/{!accPlanId}"><span class="icon icon-home"></span>{!$Label.ACCOUNTPLANNING_ACCPLANCONT_BACKTOPLAN}</apex:outputLink></li>
+        <li class="active zero-margin-left" ><apex:outputLink value="/apex/AccPlanContactRelStatusPage?accPlanId={!accPlanId}"><span class="icon icon-navigation"></span>{!$Label.ACCOUNTPLANNING_ACCPLANCONT_ACCPLNCONTREL}</apex:outputLink><span class="icon icon-arrow"></span></li>
+      </ul>
+      <div class="clear"></div>
+    </div>
+  </nav> 
+  <br/>
+  </apex:outputpanel>
+   
+  <div Id="nonSVGPanel"  class="nonSVGPanelCls" > 
+  <table style="position:relative">
+  <tr><td>
+     <div class="caption Positive"></div></td><td><span class="color-green" >{!$Label.ACCOUNTPLANNING_ACCPLANCONT_POSITIVE}</span></td></tr><tr><td>
+     <div class="caption Negative"></div></td><td><span class="color-red"  >{!$Label.ACCOUNTPLANNING_ACCPLANCONT_NEGATIVE}</span></td></tr><tr><td>
+     <div class="caption Neutral"></div></td><td><span  class="color-blue"  >{!$Label.ACCOUNTPLANNING_ACCPLANCONT_NEUTRAL}</span></td></tr><tr><td>
+     <div class="borderedCaption Unspecified"></div></td><td><span  class="color-black" >{!$Label.ACCOUNTPLANNING_ACCPLANCONT_UNSPECIFIED}</span></td>
+   </tr></table> 
+    <div id="connectionHolder"></div>
+          <div class="content">
+              <div class="relationship-box">
+                  <div class="inner" style="border:none">   
+                  <div class="relationship-section">
+                          <table align="center" border="0" cellspacing="5px" class="connectionHolderTable" >
+                              <apex:repeat var="currentLevel" value="{!lstLevels}" >
+                                <tr align="center"> 
+                                  <apex:repeat value="{!mapLevel_LstContact[currentLevel]}" var="con">
+                                    <td colspan="{!mapConName_NoOfCol[con.Contact__c]}" rowspan="{!mapConName_NoOfRow[con.Contact__c]}" class="valign-top">
+                                        <div Id="connector_{!con.Contact__c}" class="connector" ></div>
+                                    <div Id="{!con.Contact__c}" class="employee-window {!con.Experian_Relationship__c}" >
+                                      <img src="{!URLFOR($Resource.AccountRelationship,'i/user.png')}" class="user" alt="User Information"/>
+                                      <p class="strong"> {!con.Contact_Name__c} </p> 
+                                      <p class="nowrap-p"> {!con.Contact_Job_Title__c} </p>
+                                    </div>  
+                                    </td>
+                                  </apex:repeat>
+                                </tr>               
+                              </apex:repeat>
+                          </table>                                            
+                      </div>
+                  </div>
+              </div>
+          </div>       
+     </div>               
+  
+ </apex:page>

@@ -1,0 +1,5 @@
+<apex:page standardController="ARIA_Billing_Account__c" >
+  <div style="height: 100%" class="bodyDiv" onclick="resizeFrame();">
+        <c:ARIASupplementalPlanTree crntId="{!ARIA_Billing_Account__c.Id}" />
+  </div>
+</apex:page>

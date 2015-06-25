@@ -1,0 +1,179 @@
+<!-- 
+ /**=====================================================================
+ * Appirio, Inc
+ * Name: OrderSplit
+ * Description: T-269133: To manage order splits
+ * Created Date: Apr 4th, 2014
+ * Created By: Naresh Kr Ojha (Appirio)
+ * 
+ * Date Modified                Modified By                  Description of the update
+ * May 16th, 2014               Nathalie Le Guay             I-115230 - User Merge field should be Order_Split__c.OwnerId instead of Credited_To__c
+ * July 30th, 2014              Naresh Kr Ojha(Appirio)      T-286035: Phase 2 Sprint 0 refactoring: Add titles to Apex Pages
+ * Jul 31, 2014                 Naresh Ojha                  T-286036: moved Javascript from top of class to bottom of class
+ =====================================================================*/
+ -->
+
+<apex:page standardController="Order__c" extensions="OrderSplitExtension" tabStyle="Order__c" id="page" title="Manage Order Splits">
+   <apex:includeScript value="{!$Resource.jquery1_8}"/>
+
+  <apex:sectionHeader title="Add order splits to" subtitle="{!currentOrder.Name}"/>
+
+  <apex:form id="mainForm">
+     <apex:actionFunction name="addNewRowJS" action="{!addNewRow}" status="loadstatus" reRender="mainForm" />
+     <apex:actionFunction name="resetSplitJS" action="{!resetSplits}" reRender="mainForm" />
+     <apex:actionFunction name="deleteOrderSplitMethod" action="{!deleteOrderSplit}" reRender="mainForm">
+        <apex:param name="firstParam" value="" assignTo="{!toDeleteOrderSplitId}"/>
+        <apex:param name="secondParam" value="" assignTo="{!toDeleteOrderSplitRowId}"/>
+     </apex:actionFunction> 
+    <apex:actionFunction name="deleteDefaultOrderSplitMethod" action="{!deleteDefaultOrderSplitRow}" reRender="mainForm">
+        <apex:param name="firstParam" value="" assignTo="{!toDeleteOrderSplitRow}"/>
+     </apex:actionFunction>
+     
+    <apex:pageBlock id="mainPB" >
+      <apex:pageMessages /><br/>
+
+      <apex:outputPanel rendered="{!haveAccess}">
+      <div class="sectionTitle" style="font-size:1.5em;">
+        <h2>Revenue</h2>
+      </div><br/>
+      <div><span style="font-size:1.2em;font-weight:bold;">Order </span><i>(Must Total 100%)</i></div>
+       
+       <apex:variable var="count" value="{!0}" >
+       <apex:outputPanel rendered="{!IF(orderSplitList != null && orderSplitList.size < 1, false, true)}">
+       <apex:pageBlockTable value="{!mapIndexToOrderSplitWrapper}" var="line" id="dataSplitTable">
+        
+        <apex:column headerValue="Action">
+        <apex:variable var="count" value="{!count+1}"></apex:variable>
+           <apex:commandLink onClick="deleteOrderSplit('{!mapIndexToOrderSplitWrapper[line].orderSplit}', '{!count}'); return false;">Del</apex:commandLink>    
+         </apex:column>
+
+         <apex:column headerValue="Team Member">
+           <apex:inputField value="{!mapIndexToOrderSplitWrapper[line].orderSplit.OwnerId}"  onchange="calculateSplitPer('editSplitPercent');" styleClass="readOnly"/>
+         </apex:column>
+         <apex:column headerValue="Percent(%)">
+           <apex:inputField value="{!mapIndexToOrderSplitWrapper[line].orderSplit.Split_Percentage__c}" styleClass="percent_{!count} onlyNumerics editSplitPercent" onblur="calculateAmount('{!count}');"/>
+         </apex:column>
+         <apex:column headerValue="Amount">
+           <input type="text" disabled="disabled" value="{!mapIndexToOrderSplitWrapper[line].orderSplit.Split_Total__c}" class="amount_{!count}" />
+           <apex:inputHidden value="{!mapIndexToOrderSplitWrapper[line].orderSplit.Split_Total__c}" />
+         </apex:column>
+         
+         <apex:column headerValue="Note">
+           <apex:inputField value="{!mapIndexToOrderSplitWrapper[line].orderSplit.Split_Note__c}"/>
+         </apex:column>
+       </apex:pageBlockTable>
+        </apex:outputPanel>
+        </apex:variable>
+       
+     <!--</apex:form> -->
+     <!-- If existing splits are not there -->
+     <apex:actionStatus startText="Loading" id="loadstatus" ></apex:actionStatus>
+    <apex:variable var="cntVar" value="{!0}" >
+     <apex:outputPanel rendered="{!IF(orderSplitList != null && orderSplitList.size < 1, true, false)}">
+       
+       <apex:pageBlockTable value="{!mapIndexToDefaultOrderSplitWrapper}" var="line" id="blankSplitTable">
+       
+        <apex:column headerValue="Action">
+            <apex:variable var="cntVar" value="{!cntVar+1}"></apex:variable>
+           <apex:commandLink onClick="deleteDefaultOrderSplit('{!cntVar}'); return false;" >Del</apex:commandLink> 
+         </apex:column>
+        
+         <apex:column headerValue="Team Member">
+           <apex:inputField value="{!mapIndexToDefaultOrderSplitWrapper[line].orderSplit.OwnerId}" onchange="calculateSplitPer('editSplitPercent');"
+                            />
+         </apex:column>
+         
+         <apex:column headerValue="Percent(%)">
+           <apex:inputField value="{!mapIndexToDefaultOrderSplitWrapper[line].orderSplit.Split_Percentage__c}" styleClass="percent_{!cntVar} onlyNumerics newSplitPercent" onblur="calculateAmount('{!cntVar}');"/>
+         </apex:column>
+         <apex:column headerValue="Amount">
+           <apex:inputText disabled="true" value="{!mapIndexToDefaultOrderSplitWrapper[line].orderSplit.Split_Total__c}" styleClass="amount_{!cntVar}"/>
+         </apex:column>
+         <apex:column headerValue="Note">
+           <apex:inputField value="{!mapIndexToDefaultOrderSplitWrapper[line].orderSplit.Split_Note__c}"/>
+         </apex:column>
+       </apex:pageBlockTable>
+      </apex:outputPanel>
+        
+       <br />
+             <apex:outputPanel onclick="addNewRowJS()" styleClass="btn"> 
+            Add New Row 
+        </apex:outputPanel>
+
+       <br />
+        <div style="text-align:center">
+          <apex:commandButton action="{!calculateSplits}" value="Submit" rerender="mainPB" onComplete="updateAmountOnLoad();"/>
+                    <apex:commandButton onClick="resetSplitJS();" styleClass="btn" value="Reset"/>
+                    <apex:commandButton action="{!Cancel}" styleClass="btn" value="Cancel"/>
+        </div> 
+        </apex:variable>  
+       </apex:outputPanel>
+     </apex:pageBlock>
+   </apex:form>
+ 
+    <script>
+   
+    function calculateAmount(eleClass) {
+           var thisVal = $('.percent_'+eleClass).val();
+           //alert('test thisVal' + thisVal);
+           if (thisVal > 0 ) {
+             $('.amount_'+eleClass).val(parseFloat(((('{!currentOrder.Total__c}'/100.0).toFixed(2))*thisVal)).toFixed(2)); 
+              //alert('amount==' + $('.amount_'+eleClass).val());
+           }
+     }
+     
+     function deleteOrderSplit(toDeleteId, toDeleteRow){
+        deleteOrderSplitMethod(toDeleteId, toDeleteRow);
+     }
+     
+     function deleteDefaultOrderSplit(toDeleteRow){
+      //alert('===' + toDeleteRow);
+        deleteDefaultOrderSplitMethod(toDeleteRow);
+     }
+     
+     function calculateSplitPer(elementClass) {
+       /*$('.'+elementClass).
+       var totalPerOfSplits = 0;
+       $('.'+elementClass).each(function(){
+         if ($.trim($(this).val()) != '') {
+           totalPerOfSplits += parseInt($(this).val());
+         }
+       });
+      */
+     }
+     
+     $(document).ready(function(){ 
+        var totalOrderAmount = '{!currentOrder.Total__c}';
+       //alert('-->'+totalOrderAmount);
+        $(".onlyNumerics").keydown(function (event) {
+            var num = event.keyCode;
+     
+            if ((num > 95 && num < 106) || (num > 36 && num < 41) || num == 9 || num == 190) {
+                return;
+            }
+            if (event.shiftKey || event.ctrlKey || event.altKey) {
+                event.preventDefault();
+            } else if (num != 46 && num != 8) {
+                if (isNaN(parseInt(String.fromCharCode(event.which)))) {
+                    event.preventDefault();
+                }
+            }
+        });
+        //$('.readOnly').attr('readonly', 'readonly').css('border', '1px solid #CCC'); 
+     });
+     
+     
+     
+    function updateAmountOnLoad(){
+          var count = 1;
+      while(count <= {!orderSplitList.size}){
+            var thisVal = parseInt($('.percent_'+count).val());
+              if (thisVal > 0 ) {
+                $('.amount_'+count).val(('{!currentOrder.Total__c}'/100)*thisVal); 
+              }
+              count++;
+      }
+    }
+   </script>
+ 
+</apex:page>

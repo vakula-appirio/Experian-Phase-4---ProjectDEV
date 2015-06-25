@@ -1,0 +1,15 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: DragDropFileUploadProject
+ * Description: Allow users to drag files into this area (T-358314)
+ * Created Date: Feb 03rd, 2015
+ * Created By: Arpita Bose(Appirio)
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * 
+  =====================================================================*/
+-->
+<apex:page standardController="Project__c">
+  <c:DragnDropFileUploader parentId="{!Project__c.Id}" multiple="true" retUrl="/{!Project__c.Id}"/>
+</apex:page>

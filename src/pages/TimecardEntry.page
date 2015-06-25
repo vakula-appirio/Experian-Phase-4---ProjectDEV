@@ -1,0 +1,631 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: TimecardEntry
+ * Description: Page to Enter and Save the timecard entry records.
+ * Created Date: Aug 8th, 2014
+ * Created By: Naresh Ojha (Appirio)
+ *
+ * Date Modified      Modified By                  Description of the update
+ *                    Noopur                       Modifed the page for removing the autocomplete
+                                                   made the project, delivery line and method picklists,
+                                                   added "copy from previous week" button, removed add more link
+                                                   and added a button to save and add row. Also added timecard setup 
+                                                   link. Added validation for the time being entered.
+                                                   Added the rows and columns sum, changed the column header to show 
+                                                   dates in user locale. 
+ * 15 Oct'2014        Noopur                       Added labels for all the hard coded text to make the page
+                                                   Translation workbench ready.
+  =====================================================================*/
+-->
+<apex:page sidebar="false" tabStyle="Timecard__c" extensions="TimecardEntryExtension" standardController="Timecard__c"
+id="tcPage" title="{!$Label.TimecardEntry_Timecard_Entry}">
+  <apex:includeScript value="{!URLFOR($Resource.datepicker, 'jquery.js')}"/>
+  <apex:includeScript value="{!URLFOR($Resource.datepicker, 'jquery-ui.min.js')}"/>
+  <apex:stylesheet value="{!URLFOR($Resource.datepicker, 'jquery-ui.css')}"/>
+  
+
+  <style>
+    .tblHdr {background-color: #F3F3F3; padding:9px;}
+    .tcHrs {width:40px !important}
+    .tdCenter {text-align:center;}
+    .addMoreLine {cursor: pointer;}
+    .overlay {
+      opacity:    0.5; 
+      background: #000; 
+      width:      100%;
+      height:     100%; 
+      z-index:    10;
+      top:        0; 
+      left:       0;
+      position:   fixed;
+      display: none; 
+    }
+    .td0 {
+      background-color: #f2f3f3;
+    }
+    .td6 {
+      background-color: #f2f3f3;
+    }
+    img.loading_circle {position: relative; top:50%; left:50%;}
+  </style>
+  <script> 
+        function populateProjectJS(lookupId){
+          resId = document.getElementById('tcPage:tcForm:tcPageBlock:tcPBS:tcResLookup:resLookup_lkid').value;
+          
+          populateProjectAF(resId);
+        }
+
+        function sumHourRows(rowCounter){
+          var sumOfHours = 0.00;
+          var rowWiseTotal = 0.00;
+          var daysList = getElementsByClassName('row'+rowCounter);
+          var labelToShow = document.getElementById('rowSum'+rowCounter);
+          var grandTotal = document.getElementById('sum7');
+          for(var i=0;i<daysList.length;i++){
+            if(daysList[i].value !=null && daysList[i].value !=''){
+             sumOfHours = sumOfHours + parseFloat(daysList[i].value);
+           }
+          }
+          if(labelToShow != null){
+            labelToShow.innerHTML = parseFloat(sumOfHours).toFixed(2);
+          }
+        }
+
+        function askCopyFromPrevious() {
+          copyFromPreviousWeek_AF();
+          return ;
+        }
+
+  </script>
+  <apex:sectionHeader subtitle="{!$Label.TimecardEntry_Timecard_Entry}" />
+  <apex:form id="tcForm">
+    
+    <apex:actionFunction name="generateTimecardJS" action="{!generateTimecard}" id="genTC" reRender="tcTable,hrsSection"  
+          oncomplete="javascript:$('.overlay').hide();" >
+      <apex:param assignTo="{!selectedWeek}" id="selWeek" name="selectedWeekJS" value="" />
+    </apex:actionFunction>
+
+    <apex:actionFunction name="updateMapInfoJS" action="{!updateMapInfo}" id="updateTC" reRender="hrsSection">
+      <apex:param value="" assignTo="{!updatedHr}" name="updatedHrParam" id="updatedHrID" />
+      <apex:param value="" assignTo="{!currentProjId}" name="currentProjIdParam" id="currentProjIdParam" />
+      <apex:param value="" assignTo="{!currentDateSel}" name="currentDateSelParam" id="currentDateSelParam" />
+    </apex:actionFunction>    
+    
+    <apex:actionFunction name="addNewTimecardLineJS" action="{!addNewTimecardLine}" id="addNew" reRender="tcTable,hrsSection"  immediate="true"/>   
+    <apex:actionFunction name="removeTimecardLineJS" action="{!removeTimecardLine}" id="delLine" reRender="tcTable" 
+    oncomplete="$('.overlay').hide();" immediate="true">
+       <apex:param name="currentLine" assignTo="{!currentLineToDel}" value="" />
+    </apex:actionFunction>
+    <apex:actionFunction name="populateProjectAF" action="{!populateProjectList}" rerender="tcTable"  >
+      <apex:param value="" assignTo="{!selectedResourceId}" name="resIdParam"/>
+    </apex:actionFunction>
+    <apex:actionFunction name="populateDeliveryLineAF" action="{!populateRelatedDeliveryLines}" reRender="tcTable" oncomplete="javascript:$('.overlay').hide();">
+      <apex:param assignTo="{!projectId}" name="deliveryParam" value=""/>
+      <apex:param assignTo="{!selectedIndex}" name="indexParam" value=""/>
+      <apex:param assignTo="{!selectedMethod}" name="methodParam" value=""/>
+    </apex:actionFunction>
+
+    <apex:actionFunction name="populateMethodAF" action="{!populateMethodList}" reRender="tcTable" oncomplete="javascript:$('.overlay').hide();">
+      <apex:param assignTo="{!selectedDeliveryLineId}" value="" name="delLineParam"/>
+    </apex:actionFunction>
+
+    <apex:actionFunction name="copyFromPreviousWeek_AF" action="{!copyFromPreviousWeek}" reRender="hrsSection, tcTable" />
+
+    <div class="overlay"><img src="{!$Resource.QAS_NA__loading}" class="loading_circle" alt="loading" /></div>
+        
+    <apex:pageBlock id="tcPageBlock">
+      <strong><apex:outputLabel >{!$Label.TimecardEntry_Time_Entry_Sheet}</apex:outputLabel></strong>
+      <div style="float:right;margin-right: 5%;">
+      <strong><apex:outputLink value="/apex/Timecard_Setup" rendered="{!isManager}">{!$Label.TimecardEntry_Timecard_Setup}</apex:outputLink><br/></strong>
+      </div>
+      <hr />
+      <apex:pageBlockSection id="tcPBS" columns="1">
+        <apex:pageBlockSectionItem id="tcResLookup">
+         <apex:outputLabel >{!$Label.TimecardEntry_Project_Resource_Name}</apex:outputLabel>
+          <apex:inputField label="Project Resource Name" value="{!resourceInfo.tc.Resource__c}" onchange="populateProjectJS('{!$Component.resLookup_lkid}');" id="resLookup"/> 
+        </apex:pageBlockSectionItem>
+      </apex:pageBlockSection>
+      <apex:pageBlockSection columns="1">
+        <!--apex:pageBlockSectionItem -->
+        <apex:outputPanel >
+          <apex:outputLabel styleClass="labelCol" style="margin-left: 9%;">{!$Label.TimecardEntry_Time_Entry_Week}
+          </apex:outputLabel>
+              <label onClick="openCal();" style="cursor: pointer;margin-left: 1%;">{!$Label.TimecardEntry_Week}</label> 
+              <span id="startDate" style="cursor: pointer;text-decoration: underline;" onClick="openCal();" >
+                <apex:outputText value="{0,date, dd MMM YYYY - }">
+                   <apex:param value="{!firstDt}" />
+                </apex:outputText>
+              </span>
+              <span id="endDate" style="cursor: pointer;text-decoration: underline;" onClick="openCal();">
+                <apex:outputText value="{0,date, dd MMM YYYY}">
+                   <apex:param value="{!endDate}" />
+                </apex:outputText>
+              </span>
+              &nbsp;<apex:image value="/img/msg_icons/info16.png" styleClass="infoIcon" /> 
+              <br/>
+              <div id="helpDiv" style="display:none;background-color: #fefdb9;width: 29%;font-weight: bold;border: 1px solid orange;text-align: center;padding: 2px 5px;margin-left: 15%;z-index: 12;position: absolute;">{!$Label.TimecardEntry_DatePicker_Help_Text}</div>
+              <br/>
+          <div class="week-picker" style="margin-left: 18%;"></div>
+          
+        </apex:outputPanel>
+        <!--/apex:pageBlockSectionItem-->
+      </apex:pageBlockSection>
+      <apex:pageBlockSection id="hrsSection" columns="1">
+        <apex:pageBlockSectionItem >
+          <apex:outputLabel >
+          
+          {!$Label.TimecardEntry_Current_Week_Total}</apex:outputLabel>
+          <apex:outputText styleClass="tcHours" value="{!totalHours}"  /> 
+        </apex:pageBlockSectionItem>
+      </apex:pageBlockSection>
+
+    </apex:pageBlock>
+    
+    <apex:pageBlock id="tcTable" >
+      <apex:pageBlockButtons location="top" >
+        <apex:commandButton value="{!$Label.TimecardEntry_Save}" onCLick="$('.overlay').show();" action="{!saveTimecards}" 
+        reRender="tcTable,hrsSection" onComplete="$('.overlay').hide();" disabled="{!isCompleteWeekLocked}"/>
+        <apex:commandButton value="{!$Label.TimecardEntry_Save_Add_Row}" onCLick="$('.overlay').show();" action="{!saveAndAddTimecards}" 
+        reRender="tcTable,hrsSection" onComplete="$('.overlay').hide();" disabled="{!isCompleteWeekLocked}"/>
+        <apex:commandButton value="{!$Label.TimecardEntry_Copy_From_Previous_Week}" onCLick="$('.overlay').show();askCopyFromPrevious();" 
+        oncomplete="$('.overlay').hide();" disabled="{!isTimesheetLocked}" reRender="tcTable"/>
+        <apex:commandButton value="{!$Label.Cancel}" action="{!doCancel}"/>
+      </apex:pageBlockButtons>
+      <apex:pageMessages id="msg"/>
+      <table width="100%" border="0" class="list" style="border:1px solid #e0e3e5;border-collapse: collapse;">
+        <tr class="headerRow" style="border-color: gray;">
+          <td class="tblHdr"><strong>&nbsp;</strong></td>
+          <td class="tblHdr"><strong>{!$Label.TimecardEntry_Project_Name}</strong></td>
+          <td class="tblHdr"><strong>{!$Label.TimecardEntry_Delivery_Line}</strong></td>
+          <td class="tblHdr"><strong>{!$Label.TimecardEntry_Method}</strong></td>
+          <td class="tblHdr"><strong>
+            {!$Label.TimecardEntry_Sun} &nbsp;
+            <apex:outputField value="{!dummyListForTimecardDates[0].Date__c}" id="dateHdr0"/>
+          </strong></td>
+          <td class="tblHdr"><strong>
+            {!$Label.TimecardEntry_Mon} &nbsp;
+            <apex:outputField value="{!dummyListForTimecardDates[1].Date__c}" id="dateHdr1"/>
+          </strong></td>
+          <td class="tblHdr"><strong>
+            {!$Label.TimecardEntry_Tue} &nbsp;
+            <apex:outputField value="{!dummyListForTimecardDates[2].Date__c}" id="dateHdr2"/>
+          </strong></td>
+          <td class="tblHdr"><strong>
+            {!$Label.TimecardEntry_Wed} &nbsp;
+            <apex:outputField value="{!dummyListForTimecardDates[3].Date__c}" id="dateHdr3"/>
+          </strong></td>
+          <td class="tblHdr"><strong>
+            {!$Label.TimecardEntry_Thu} &nbsp;
+            <apex:outputField value="{!dummyListForTimecardDates[4].Date__c}" id="dateHdr4"/>
+          </strong></td>
+          <td class="tblHdr"><strong>
+            {!$Label.TimecardEntry_Fri} &nbsp;
+            <apex:outputField value="{!dummyListForTimecardDates[5].Date__c}" id="dateHdr5"/>
+          </strong></td>
+          <td class="tblHdr"><strong>
+            {!$Label.TimecardEntry_Sat} &nbsp;
+            <apex:outputField value="{!dummyListForTimecardDates[6].Date__c}" id="dateHdr6"/>
+          </strong></td>
+          <!--apex:repeat value="{!dummyListForTimecardDates}" var="dt">
+            <td class="tblHdr tdCenter"><strong>
+            <!apex:outputText value="{!dt}"/> 
+            <!apex:outputText value="{0,date, EEE MM/dd}">
+               <apex:param value="{!dt}" />
+            </apex:outputText-->
+            <!--apex:outputField value="{!dt.Date__c}" />
+
+            </strong></td>          
+          </apex:repeat-->
+          <td class="tblHdr"><strong>{!$Label.TimecardEntry_Sum}</strong></td>
+          <td class="tblHdr"><strong>{!$Label.TimecardEntry_Notes}</strong></td>
+        </tr>
+        <apex:variable value="{!0}" var="rowIndex"/>
+
+      
+      <apex:repeat value="{!project_TimecardWrapperMap}" var="proj" id="outerRepeat"  >
+      
+          <tr id="{!proj}" class="dataRow">
+            <td> 
+              <a href="javascript:void(0);" onClick="delWrapLine('{!proj}');">
+              <apex:image value="/img/func_icons/remove12.gif" rendered="{!!isTimesheetLocked}"/></a>
+            </td>
+            <td>
+            <apex:outputField value="{!projectMap[proj].Project__c}"/></td>
+            <td>
+              <apex:outputField value="{!projectMap[proj].Delivery_Line__c}" />
+            </td>
+            <td>
+              <apex:outputField value="{!projectMap[proj].Type__c}"/>
+            </td>
+            <apex:variable value="{!0}" var="dateIndex1"/>
+           <apex:repeat value="{!currentWeek}" var="dt" id="hourRepeat">
+               <td class="tdCenter td{!dateIndex1}">
+               
+                 <apex:inputText onchange="updateInfo(this, '{!proj}', '{!dt}');sumHourCols('{!dateIndex1}');sumHourRows('{!rowIndex}');return false;" styleClass="tcHrs dt{!dateIndex1} row{!rowIndex}" value="{!project_DateHrsMap[proj][dt]}" id="hourText" />
+                
+                 <!--input type="text" value="{!project_DateHrsMap[proj][dt]}" size="2" onchange="updateInfo(this, '{!proj}', '{!dt}');sumHourCols('{!dateIndex1}' , {!isTimesheetLocked});sumHourRows('{!rowIndex}');return false;" class="tcHrs dt{!dateIndex1} row{!rowIndex}" id="hourText" /-->
+                 
+                 <br/>
+                 <apex:outputPanel id="descriptionPanel" style=" display:none;" layout="block">
+                  <DIV>
+                  <apex:inputTextarea value="{!project_DateDescriptionMap[proj][dt]}" id="descInput"/></DIV>
+                 </apex:outputPanel>
+               </td>
+               <apex:variable value="{!dateIndex1+1}" var="dateIndex1"/>
+           </apex:repeat>
+           
+           <td style="font-weight: bold;text-align: center;">
+           
+           <label id="rowSum{!rowIndex}" class="dt7">0.00</label></td>
+           <td>
+             <apex:image value="/img/google/google_document_icon.gif" onClick="showDescriptionRow(this.id , 'map');" id="noteImg"
+             style="cursor: pointer;" rendered="{!!isCompleteWeekLocked}"/>
+             <apex:image value="/img/google/google_document_icon.gif" onClick="hideDescriptionRow(this.id);" id="hideNoteImg"
+             style="cursor: pointer;display:none;"/>
+           </td>
+
+          </tr> 
+          
+          <apex:variable value="{!rowIndex+1}" var="rowIndex"/>
+      </apex:repeat>
+
+      <apex:repeat value="{!timecardWrapperList}" var="newTC" id="outerRepeat2" rendered="{!!isCompleteWeekLocked}">
+        <tr class="dataRow">
+          <td>
+            <a href="javascript:void(0);" onClick="delWrapLine('');">
+            <apex:image value="/img/func_icons/remove12.gif"/></a>
+          </td>
+          <td>
+              <apex:selectList value="{!newTC.timeCardObj.Project__c}" id="ProjectListId" size="1" onChange="$('.overlay').show();populateDeliveryLineAF(this.value,{!newTC.index},'{!newTC.timeCardObj.Type__c}');" 
+              styleClass="projSelList">
+                <apex:selectOptions value="{!projectSelectList}"/>
+              </apex:selectList>
+          </td>
+          <td>
+            <apex:selectList value="{!newTC.timeCardObj.Delivery_Line__c}" id="DeliveryLineId" size="1" onChange="$('.overlay').show();populateMethodAF(this.value);">
+              <apex:selectOptions value="{!newTC.deliveryLines}"/>
+            </apex:selectList>
+            
+          </td>
+
+          <td>
+            <apex:selectList value="{!newTC.timeCardObj.Type__c}" id="ProjectMethodId" size="1" >
+              <apex:selectOptions value="{!newTC.methodTypes}"/>
+            </apex:selectList>
+          </td> 
+
+          <apex:variable value="{!0}" var="dateIndex"/>
+         <apex:repeat value="{!currentWeek}" var="dt" id="hourRepeat">
+             <td class="tdCenter td{!dateIndex}">
+             
+               <apex:inputText onchange="updateInfo(this, '', '{!dt}');sumHourCols('{!dateIndex}', {!isTimesheetLocked});sumHourRows('{!rowIndex}');" styleClass="tcHrs dt{!dateIndex} row{!rowIndex}" value="{!newTC.dateHour[dt]}" /> 
+               <br/>
+               <apex:outputPanel id="descriptionPanel" style=" display:none;" layout="block">
+                <DIV><apex:inputtextArea value="{!newTC.dateDescription[dt]}" id="descInput2"/></DIV>
+               </apex:outputPanel>
+             </td>
+             <apex:variable value="{!dateIndex+1}" var="dateIndex"/>
+         </apex:repeat>
+         <td style="font-weight: bold;text-align: center;">
+         <label id="rowSum{!rowIndex}" class="dt7">0.00</label></td>
+         <td>
+             <apex:image value="/img/google/google_document_icon.gif" onClick="showDescriptionRow(this.id , 'list');" id="noteImg" 
+             style="cursor: pointer;"/>
+             <apex:image value="/img/google/google_document_icon.gif" onClick="hideDescriptionRow(this.id);" id="hideNoteImg"
+             style="cursor: pointer;display:none;"/>
+           </td>
+        </tr> 
+        
+        <apex:variable value="{!rowIndex+1}" var="rowIndex"/>
+      </apex:repeat>
+      <tfoot>
+        <tr class="headerRow">
+          <th>&nbsp;</th>
+          <th colspan="3">Total</th>
+          <th class="tblHdr tdCenter" style="padding-right: 2%;">
+          <label id="sum0">0.00</label></th>
+          <th class="tblHdr tdCenter sum1" style="padding-right: 2%;">
+          <label id="sum1">0.00</label></th>
+          <th class="tblHdr tdCenter sum2" style="padding-right: 2%;">
+          <label id="sum2">0.00</label></th>
+          <th class="tblHdr tdCenter sum3" style="padding-right: 2%;">
+          <label id="sum3">0.00</label></th>
+          <th class="tblHdr tdCenter sum4" style="padding-right: 2%;">
+          <label id="sum4">0.00</label></th>
+          <th class="tblHdr tdCenter sum5" style="padding-right: 2%;">
+          <label id="sum5">0.00</label></th>
+          <th class="tblHdr tdCenter sum6" style="padding-right: 2%;">
+          <label id="sum6">0.00</label></th>
+          <th class="tblHdr tdCenter">
+          <label id="sum7">0.00</label></th>
+          <th>&nbsp;</th>
+        </tr>
+      </tfoot>
+      </table>
+      <script type="text/javascript"> 
+
+      var maxDisabledCounter = -1;
+
+      sumHourCols(0 , {!isTimesheetLocked});   
+          sumHourCols(1 , {!isTimesheetLocked});         
+          sumHourCols(2 , {!isTimesheetLocked}); 
+          sumHourCols(3 , {!isTimesheetLocked}); 
+          sumHourCols(4 , {!isTimesheetLocked}); 
+          sumHourCols(5 , {!isTimesheetLocked}); 
+          sumHourCols(6 , {!isTimesheetLocked}); 
+          sumHourCols(7 , {!isTimesheetLocked});
+          if({!rowIndex} > 0){
+            for(var i= 0; i <= {!rowIndex}; i++){
+              sumHourRows(i); 
+            }
+          }
+
+
+      function sumHourCols(colCounter , isLocked){
+          var lockDate = '{!lockingDate}';
+          
+          var lockDt = new Date(lockDate);
+          var dtHdrVal;
+
+          if (colCounter == 0) {
+            dtHdrVal = new Date('{!dummyListForTimecardDates[0].Date__c}');
+          }
+          else if (colCounter == 1) {
+            dtHdrVal = new Date('{!dummyListForTimecardDates[1].Date__c}');
+          }
+          else if (colCounter == 2) {
+            dtHdrVal = new Date('{!dummyListForTimecardDates[2].Date__c}');
+          }
+          else if (colCounter == 3) {
+            dtHdrVal = new Date('{!dummyListForTimecardDates[3].Date__c}');
+          }
+          else if (colCounter == 4) {
+            dtHdrVal = new Date('{!dummyListForTimecardDates[4].Date__c}');
+          }
+          else if (colCounter == 5) {
+            dtHdrVal = new Date('{!dummyListForTimecardDates[5].Date__c}');
+          }
+          else if (colCounter == 6) {
+            dtHdrVal = new Date('{!dummyListForTimecardDates[6].Date__c}');
+          }
+          else if (colCounter == 7) {
+            return;
+          }
+          
+          var sumOfHours = 0.00;
+          var grandTotal = document.getElementById('sum7');
+          var daysList = getElementsByClassName('dt'+colCounter);
+          var labelToShow = document.getElementById('sum'+colCounter);
+          for (var i=0;i<daysList.length;i++) {
+            if (daysList[i].value !=null && daysList[i].value !='') {
+             sumOfHours = sumOfHours + parseFloat(daysList[i].value);
+           }
+           if (document.getElementById('tcPage:tcForm:tcTable:dateHdr'+colCounter) != null && 
+           lockDate != null && lockDate != '') {
+           if ( lockDt.getFullYear() > dtHdrVal.getFullYear() ) {
+              daysList[i].disabled = true;
+              maxDisabledCounter = colCounter;
+            }
+            else if (lockDt.getFullYear() == dtHdrVal.getFullYear() && lockDt.getMonth() > dtHdrVal.getMonth() ) {
+              daysList[i].disabled = true;
+              maxDisabledCounter = colCounter;
+            }
+            else if (lockDt.getFullYear() == dtHdrVal.getFullYear() && lockDt.getMonth() == dtHdrVal.getMonth()
+            && lockDt.getDate() >= dtHdrVal.getDate() ) {
+              daysList[i].disabled = true;
+              maxDisabledCounter = colCounter;
+            }
+           }
+          }
+          labelToShow.innerHTML = parseFloat(sumOfHours).toFixed(2);
+          var sum0 = parseFloat(document.getElementById('sum0').innerHTML);
+          var sum1 = parseFloat(document.getElementById('sum1').innerHTML);
+          var sum2 = parseFloat(document.getElementById('sum2').innerHTML);
+          var sum3 = parseFloat(document.getElementById('sum3').innerHTML);
+          var sum4 = parseFloat(document.getElementById('sum4').innerHTML);
+          var sum5 = parseFloat(document.getElementById('sum5').innerHTML);
+          var sum6 = parseFloat(document.getElementById('sum6').innerHTML);
+          var rowWiseTotal = sum0+sum1+sum2+sum3+sum4+sum5+sum6;
+          grandTotal.innerHTML = parseFloat(rowWiseTotal).toFixed(2);
+        }
+      </script>
+    </apex:pageBlock>
+    
+  </apex:form>
+  <!--apex:outputPanel >
+    <apex:outputText value="+ Add More" styleClass="addMoreLine" />
+  </apex:outputPanel-->
+
+<script type="text/javascript">
+  
+  $(document).ready(function(){
+    $('.addMoreLine').click(function(){ 
+      addNewTimecardLineJS();
+    });
+  });
+
+  $(function() {
+    var startDate;
+    var endDate;
+    
+    var selectCurrentWeek = function() {
+        window.setTimeout(function () {
+            $('.week-picker').find('.ui-datepicker-current-day a').addClass('ui-state-active')
+        }, 1);
+    }
+    
+    $('.infoIcon').hover( 
+      function () {
+        $('#helpDiv').show();
+      } , 
+      function () {
+        $('#helpDiv').hide();
+      }
+    );
+
+    $('.week-picker').datepicker( {
+        showOtherMonths: true,
+        selectOtherMonths: true,
+        onSelect: function(dateText, inst) { 
+            var date = $(this).datepicker('getDate');
+            startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+            endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay() + 6);
+            var dateFormat = inst.settings.dateFormat || $.datepicker._defaults.dateFormat;
+            $('#startDate').text($.datepicker.formatDate( 'd M yy - ', startDate, inst.settings ));
+            $('#endDate').text($.datepicker.formatDate( 'd M yy', endDate, inst.settings ));
+            selectCurrentWeek();
+            $('.week-picker').hide();
+            //Calling page render to display selected weeks' timecard.
+            generateTC($.datepicker.formatDate( dateFormat, startDate, inst.settings ), $.datepicker.formatDate( dateFormat, endDate, inst.settings ));
+        },
+        beforeShowDay: function(date) {
+            var cssClass = '';
+            if(date >= startDate && date <= endDate)
+                cssClass = 'ui-datepicker-current-day';
+            return [true, cssClass];
+        },
+        onChangeMonthYear: function(year, month, inst) {
+            selectCurrentWeek();
+        }
+    });
+
+    $('.week-picker .ui-datepicker-calendar tr').live('mousemove', function() { $(this).find('td a').addClass('ui-state-hover'); });
+    $('.week-picker .ui-datepicker-calendar tr').live('mouseleave', function() { $(this).find('td a').removeClass('ui-state-hover'); });
+    $('.week-picker').hide();
+    
+    $('.tcHours').attr('readonly', true);
+    //$('#startDate').text('<apex:outputText value="{0,date, EEE MM/dd}"><apex:param value="{!resourceInfo.startDate}" /></apex:outputText>');
+});
+
+  function openCal() {
+    $('.week-picker').show();
+  }
+  //Generates Timecard
+  function generateTC (stDate, enDate) {
+    $('.overlay').show();
+    generateTimecardJS(stDate);
+  }
+  
+  function updateInfo (obj, projId, dte) {
+    if(obj.value % 0.25 != 0){
+      alert('{!$Label.TimecardEntry_Hour_Validation_Error}');
+      obj.style.background = "red";
+      return false;
+    }
+   // $('.overlay').show();
+    updateMapInfoJS($(obj).val(), projId, dte);
+    return false;
+  }
+  function delWrapLine(lineKey) {
+    $('.overlay').show();
+    removeTimecardLineJS(lineKey);
+  }
+
+  function showDescriptionRow(rowId , type){
+    var descId_0 = rowId.replace("noteImg","hourRepeat:0:descriptionPanel");
+    var descId_1 = rowId.replace("noteImg","hourRepeat:1:descriptionPanel");
+    var descId_2 = rowId.replace("noteImg","hourRepeat:2:descriptionPanel");
+    var descId_3 = rowId.replace("noteImg","hourRepeat:3:descriptionPanel");
+    var descId_4 = rowId.replace("noteImg","hourRepeat:4:descriptionPanel");
+    var descId_5 = rowId.replace("noteImg","hourRepeat:5:descriptionPanel");
+    var descId_6 = rowId.replace("noteImg","hourRepeat:6:descriptionPanel");
+    var hideIconId = rowId.replace("noteImg","hideNoteImg");
+   // alert(jQuery(getJQUERYID(descId_0)).prev().prop('disabled'));
+    var stringToReplace;
+
+    if ( type == 'list') {
+      stringToReplace = 'descInput2';
+    }
+    else {
+      stringToReplace = 'descInput' ;
+    }
+
+    jQuery(getJQUERYID(descId_0)).show();
+    jQuery(getJQUERYID(descId_1)).show();
+    jQuery(getJQUERYID(descId_2)).show();
+    jQuery(getJQUERYID(descId_3)).show();
+    jQuery(getJQUERYID(descId_4)).show();
+    jQuery(getJQUERYID(descId_5)).show();
+    jQuery(getJQUERYID(descId_6)).show();
+    jQuery(getJQUERYID(descId_6)).show();
+    console.log('>>maxDisabledCounter>>>'+maxDisabledCounter);
+
+    if ( maxDisabledCounter >= 0) {
+      var descId_0_Desc = descId_0.replace("descriptionPanel",stringToReplace);
+      jQuery(getJQUERYID(descId_0_Desc)).attr("disabled","disabled"); 
+    }
+    if ( maxDisabledCounter >= 1) {
+      var descId_1_Desc = descId_1.replace("descriptionPanel",stringToReplace);
+      jQuery(getJQUERYID(descId_1_Desc)).attr("disabled","disabled"); 
+    }
+    if ( maxDisabledCounter >= 2) {
+      var descId_2_Desc = descId_2.replace("descriptionPanel",stringToReplace);
+      jQuery(getJQUERYID(descId_2_Desc)).attr("disabled","disabled"); 
+    }
+    if ( maxDisabledCounter >= 3) {
+      var descId_3_Desc = descId_3.replace("descriptionPanel",stringToReplace);
+      jQuery(getJQUERYID(descId_3_Desc)).attr("disabled","disabled"); 
+    }
+    if ( maxDisabledCounter >= 4) {
+      var descId_4_Desc = descId_4.replace("descriptionPanel",stringToReplace);
+      jQuery(getJQUERYID(descId_4_Desc)).attr("disabled","disabled"); 
+    }
+    if ( maxDisabledCounter >= 5) {
+      var descId_5_Desc = descId_5.replace("descriptionPanel",stringToReplace);
+      jQuery(getJQUERYID(descId_5_Desc)).attr("disabled","disabled"); 
+    }
+    if ( maxDisabledCounter >= 6) {
+      var descId_6_Desc = descId_6.replace("descriptionPanel",stringToReplace);
+      jQuery(getJQUERYID(descId_6_Desc)).attr("disabled","disabled"); 
+    }
+
+    jQuery(getJQUERYID(rowId)).hide();
+    jQuery(getJQUERYID(hideIconId)).show();
+  }
+
+  function hideDescriptionRow(rowId){
+    var descId_0 = rowId.replace("hideNoteImg","hourRepeat:0:descriptionPanel");
+    var descId_1 = rowId.replace("hideNoteImg","hourRepeat:1:descriptionPanel");
+    var descId_2 = rowId.replace("hideNoteImg","hourRepeat:2:descriptionPanel");
+    var descId_3 = rowId.replace("hideNoteImg","hourRepeat:3:descriptionPanel");
+    var descId_4 = rowId.replace("hideNoteImg","hourRepeat:4:descriptionPanel");
+    var descId_5 = rowId.replace("hideNoteImg","hourRepeat:5:descriptionPanel");
+    var descId_6 = rowId.replace("hideNoteImg","hourRepeat:6:descriptionPanel");
+    var showIconId = rowId.replace("hideNoteImg","noteImg");
+    jQuery(getJQUERYID(descId_0)).hide();
+    jQuery(getJQUERYID(descId_1)).hide();
+    jQuery(getJQUERYID(descId_2)).hide();
+    jQuery(getJQUERYID(descId_3)).hide();
+    jQuery(getJQUERYID(descId_4)).hide();
+    jQuery(getJQUERYID(descId_5)).hide();
+    jQuery(getJQUERYID(descId_6)).hide();
+    jQuery(getJQUERYID(rowId)).hide();
+    jQuery(getJQUERYID(showIconId)).show();
+  }
+
+  var getJQUERYID = function(id, type) {
+   // This function is used to convert the salesforce components ids to jquery id to support jquery
+   // id - client id of any html element
+   // type - if it is salesforce id or not (0/1)
+   if(typeof type != 'undefined' && type == 0){       
+     return '[id$=' + id + ']';
+   }    
+   return '#' + id.replace(/(:|\.)/g,'\\\\$1');
+ 
+}// end of getJQUERYID
+ </script>
+    <script type="text/javascript">
+        //on Document ready
+        $(document).ready(function(){
+          sumHourCols(0 , {!isTimesheetLocked});   
+          sumHourCols(1 , {!isTimesheetLocked});         
+          sumHourCols(2 , {!isTimesheetLocked}); 
+          sumHourCols(3 , {!isTimesheetLocked}); 
+          sumHourCols(4 , {!isTimesheetLocked}); 
+          sumHourCols(5 , {!isTimesheetLocked}); 
+          sumHourCols(6 , {!isTimesheetLocked}); 
+          sumHourCols(7 , {!isTimesheetLocked}); 
+        });
+    </script> 
+</apex:page>

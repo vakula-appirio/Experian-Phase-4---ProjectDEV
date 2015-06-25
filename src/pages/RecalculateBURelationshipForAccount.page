@@ -1,0 +1,21 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: RecalculateBURelationshipForAccount
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ *
+  =====================================================================*/
+-->
+<apex:page standardController="Account" extensions="RecalculateBURelationshipForAccount" action="{!recalculateBURelationship}">
+	<apex:sectionHeader title="Account"	subtitle="{!Account.Name}" />
+	<apex:pageBlock >
+		<apex:pagemessages ></apex:pagemessages>
+		<apex:pageBlockSection rendered="{!!hasError}">
+			<img src="/img/loading.gif" /> {!$Label.RecalculateBURelationshipForAccountMsg} <br />
+		</apex:pageBlockSection>
+	</apex:pageBlock>
+</apex:page>

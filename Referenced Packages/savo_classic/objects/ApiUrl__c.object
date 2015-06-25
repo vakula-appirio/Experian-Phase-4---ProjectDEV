@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>Hierarchy</customSettingsType>
+    <customSettingsVisibility>Protected</customSettingsVisibility>
+    <description>SAVO REST API environment URL</description>
+    <enableEnhancedLookup>false</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>ApiUrl__c</fullName>
+        <defaultValue>&quot;https://api.gosavo.com/2.0/&quot;</defaultValue>
+        <deprecated>false</deprecated>
+        <description>ApiUrl</description>
+        <externalId>false</externalId>
+        <label>ApiUrl</label>
+        <length>254</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>ApiUrl</label>
+</CustomObject>

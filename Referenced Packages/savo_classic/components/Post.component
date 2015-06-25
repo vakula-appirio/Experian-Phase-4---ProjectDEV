@@ -1,0 +1,28 @@
+<apex:component access="global">
+    <apex:attribute access="global" name="postId" type="String"
+        description="Id of Post to display on page" />
+    <apex:attribute access="global" name="title" type="String"
+        description="Title of the component" />
+
+
+    <div data-post="true" data-id="{!postId}"
+        data-title="{!title}" class="panel">
+        <div width="100%" class="widgetheader">
+        <span align="right" data-bind="visible : !isPostLoading()"> <a
+                href="#" data-bind=" click: GetPost"><span class="refresh_Image operationIcon"></span></a> </span>
+            <h1 class="label" align="left" style="width: 100%;"
+                data-bind="text:widgetHeader"></h1>     
+        </div>
+        <div id="PostResultPanel" data-bind="visible : isPostLoading()"
+            align="center">
+            <img src="{!$Resource.AjaxLoaderGif}" width="20" height="20"
+                style="padding-top: 50px; padding-bottom: 50px;"></img>
+        </div>
+        <div  style="overflow: auto; padding: 0px; width: 320px" data-bind="visible : !isPostLoading()">
+            <div data-bind="visible: postTitle().length > 0">
+                <h2 class="postTitle" data-bind="text:postTitle"></h2>
+            </div>
+            <div class="postContent" data-bind="html:postContent"> </div>
+        </div>
+    </div>
+</apex:component>

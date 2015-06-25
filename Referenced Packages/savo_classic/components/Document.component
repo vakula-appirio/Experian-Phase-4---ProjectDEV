@@ -1,0 +1,94 @@
+<apex:component >
+    <div id="documentloadingPanel" data-bind="visible : isListLoading"
+        align="center">
+        <img src="{!$Resource.AjaxLoaderGif}" width="20" height="20"
+            style="padding-top: 50px; padding-bottom: 50px;"></img>
+    </div>
+    <div data-bind="visible: !isListLoading()" style="display: none">
+        <div data-bind="visible: viewStatus().length > 0">
+            <p class="panelCenter">
+                <span data-bind="text:viewStatus"></span>
+            </p>
+        </div>
+        <div id="blankSearch" data-bind="visible: totalAssets() <= 0 && APIError().length <= 0"
+            style="padding: 0px; height: 200px;">
+            <br />
+            <h2>No documents found</h2>
+        </div>
+
+        <div id="errorInAPI" data-bind="visible: APIError().length > 0"
+            style="padding: 0px; height: 200px;">
+            <br />
+            <h2>Error retrieving assets; please try again later</h2>
+            <br/>
+            <h1 data-bind="text: APIError"></h1>
+        </div>
+        <div data-bind="foreach: assets">
+            <dl data-bind="if:isAsset">
+                <dt data-bind="attr: {'class': 'icon ' + type + ' txt'}"></dt>
+                <dt class="title">
+                    <a id="triggerTitle"
+                        data-bind="text:title, attr:  {href : 'javascript:Savo.Classic.GetUrl(\''+ UrlToView + '\',' + $parent.openInTab() +');'}  ">
+                        <span data-bind="text:title"></span> </a> <a id="trigger"
+                        data-popUp-link="true" class="download"
+                        data-bind="attr: {'data-id':Id, 'data-record-history':$parent.recordDownloads()}"> <span style="text-decoration:underline"
+                        data-bind="visible: isDownloadable">Preview</span> </a>
+                </dt>
+                <dd>
+                    <span>by </span><span data-bind="text: owner"></span> 
+                     <span
+                        data-bind="visible: isAsset">Modified </span><span
+                        data-bind="text: modifiedDate.split(' ')[0]"></span>
+                </dd>
+            </dl>
+            <span data-bind="ifnot:isAsset">
+                <dl data-bind="if:isComment">
+                    <dt data-bind="attr: {'class': 'icon ' + type +' '}"></dt>
+                    <dt class="">
+                        <span data-bind="html:title"></span>
+                    </dt>
+                    <dd>
+                        <span>by </span><span data-bind="text: owner"></span><span
+                            data-bind="visible: isComment">Modified </span><span
+                            data-bind="text: modifiedDate.split(' ')[0]"></span>
+                    </dd>
+                </dl>
+                <dl data-bind="ifnot:isComment">
+                    <dt data-bind="attr: {'class': 'icon ' + type}">
+                        <img class='user' data-bind="attr: {Id:Id ,src : userUrl }"
+                            onerror="Savo.Classic.SetDefaultUser(this)" alt=""></img>
+                    </dt>
+                    <dt class="title">
+                        <a id="trigger1" data-popUp-link="true"
+                            data-bind="text:title, attr: {href :'javascript:Savo.Classic.GetUrl(\''+ UrlToView + '\',' + $parent.openInTab() +');'}">
+                            <span data-bind="text:title"></span> </a> <a class="download"
+                            data-bind="attr: {href: 'javascript:Download(' + Id +');'}">
+                            <span data-bind="visible: isDownloadable"></span> </a>
+                    </dt>
+                    <dd>
+                        <span data-bind="visible: isAsset">by </span><span data-bind="text: owner"></span><br/><span
+                            data-bind="visible: isAsset">Modified </span><span
+                            data-bind="text: modifiedDate.split(' ')[0]"></span>
+                    </dd>
+                </dl> </span>
+        </div>
+        <div class="pagination" data-bind="visible: allPages().length > 1"
+            align="center">
+            <span> <span class="previous_page"
+                data-bind="css: { disabled: pageIndex() <= 1}"> <a href="#"
+                    data-bind="click: PreviousPage"> <span class="arrow-left"></span>Prev
+                </a> </span> </span> <span class="all_pages" data-bind="foreach: allPages"> <span
+                class="index_page"
+                data-bind="css: { active:pageNumber === ($root.pageIndex()) }">
+                    <a href="#"
+                    data-bind="text: pageNumber, click: function() { $root.MoveToPage(pageNumber); }"></a>
+            </span> </span> <span> <span class="next_page"
+                data-bind="css: { disabled: pageIndex() == maxPageIndex()}">
+                    <a href="#" data-bind="click: NextPage">Next
+                        <div class="arrow-right"></div> </a> </span> </span>
+        </div>
+
+    </div>
+    <dd data-popUp="true" id="pop-up"
+        style="display: none; top: 228px; left: 454px;"></dd>
+</apex:component>

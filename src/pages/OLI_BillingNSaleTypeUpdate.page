@@ -1,0 +1,46 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OLI_BillingNSaleTypeUpdate
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * July 30th, 2014    Naresh Kr Ojha(Appirio)      T-286035: Phase 2 Sprint 0 refactoring: Add titles to Apex Pages
+  =====================================================================*/
+-->
+<apex:page standardController="Opportunity" tabStyle="Opportunity" extensions="OLI_BillingNSaleTypeUpdateController" title="{!$Label.OLI_Title}">
+<apex:sectionHeader title="{!$Label.OLI_Title}" subtitle="{!Opportunity.Name}" id="shMain" />
+<apex:form >
+    <apex:pagemessages />
+    <apex:pageBlock >
+    
+        <apex:pageBlockButtons >
+            <apex:commandButton value="{!$Label.OLI_Button_Save}" action="{!performSave}"/>
+            <apex:commandButton value="{!$Label.ASS_Button_Cancel}" action="{!performCancel}"/>
+        </apex:pageBlockButtons>
+        <apex:pageblocktable value="{!OLIsToUpdate}" var="rec">
+            <!-- <apex:column value="{!rec.oliRec.Id}"/> -->
+            <apex:column value="{!rec.oliRec.PricebookEntry.Name}"/>
+            <apex:column value="{!rec.oliRec.UnitPrice}"/>
+            <apex:column value="{!rec.oliRec.Quantity}"/>
+            <apex:column value="{!rec.oliRec.ServiceDate}"/>
+            <apex:column headerValue="{!$ObjectType.OpportunityLineItem.Fields.Type_of_Sale__c.Label}" >
+                <apex:selectList value="{!rec.oliRec.Type_of_Sale__c}" multiselect="false" size="1" rendered="{!rec.TypesOfSale.size>1}">
+                    <apex:selectoptions value="{!rec.TypesOfSale}"/>
+                </apex:selectList>
+            </apex:column>
+            
+            <!--<apex:column value="{!rec.oliRec.Billing_Product__c}"/> -->
+            
+            <apex:column headerValue="{!$ObjectType.OpportunityLineItem.Fields.Billing_Product__c.Label}">
+                <apex:selectList value="{!rec.oliRec.Billing_Product__c}" multiselect="false" size="1" rendered="{!rec.BillingProducts.size>1}">
+                    <apex:selectoptions value="{!rec.BillingProducts}"/>
+                </apex:selectList>
+            </apex:column>
+        </apex:pageblocktable>
+    
+    </apex:pageBlock>
+</apex:form>
+</apex:page>

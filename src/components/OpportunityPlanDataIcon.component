@@ -1,0 +1,23 @@
+<!--
+    Author      : Topcoder developer
+    Description : Component used for displaying images for each picklist values in 
+                   Match to Project Qualification Profile section
+-->
+
+<apex:component >
+    
+    <!--    Attribute for passing the String from Page  -->
+    <apex:attribute name="value" description="value of picklist Field"
+        type="String" required="true"/>
+    
+    <!--    Display different images for different picklist values  -->
+   
+    <apex:image value="{!URLFOR($Resource.OpportunityPlanData, '/i/Tick-icon.png')}"
+        rendered="{!value == 'Known'}"/>
+    <apex:image value="{!URLFOR($Resource.OpportunityPlanData, '/i/Warning-icon.png')}"
+        rendered="{!value == 'Warning sign'}"/>
+    <apex:image value="{!URLFOR($Resource.OpportunityPlanData, '/i/thumb-up-icon.png')}"
+        rendered="{!value == 'Strength'}"/>
+    <apex:image value="{!URLFOR($Resource.OpportunityPlanData, '/i/Help-icon.png')}"
+        rendered="{!value == 'Unknown/Unsure'}"/> 
+</apex:component>

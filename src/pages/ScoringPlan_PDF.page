@@ -1,0 +1,28 @@
+<apex:page sidebar="false" showHeader="false" Controller="ScoringPlanController" title="Opportunity Plan Scoring Dashboard" 
+	standardStylesheets="false"  applyBodyTag="false" applyHtmlTag="false" renderAs="pdf">
+    <!--Include style sheets-->
+   
+    <head>
+    <apex:stylesheet value="{!URLFOR($Resource.PDFGenerator, 'PDFDocumentStyle.css')}" />
+	 <style type="text/CSS">
+		@page {
+		    size: landscape;
+		    margin-right : 0.1in;
+		} 
+		 
+		
+    </style>
+      <c:HeaderFooterComponent type="header" position="left">
+        <div >
+           <img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/>
+        </div>
+     </c:HeaderFooterComponent>
+     </head> 
+      <table  style="width:94%;" cellspacing="0" cellpadding="0">
+       
+      <tr><td>   <div > <apex:Image value="/servlet/servlet.FileDownload?file={!radarChartImageFirstId}"  /> </div></td></tr>   
+             
+       <tr><td>   <div >   <apex:Image value="/servlet/servlet.FileDownload?file={!radarChartImageSecondId}"  />  </div></td></tr>   
+      </table> 
+    
+</apex:page>

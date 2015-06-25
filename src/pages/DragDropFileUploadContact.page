@@ -1,0 +1,15 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: DragDropFileUploadContact
+ * Description: Allow users to drag files into this area (T-360065)
+ * Created Date: Feb 06th, 2015
+ * Created By: Arpita Bose(Appirio)
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * 
+  =====================================================================*/
+-->
+<apex:page standardController="Contact">
+  <c:DragnDropFileUploader parentId="{!Contact.Id}" multiple="true" retUrl="/{!Contact.Id}"></c:DragnDropFileUploader>
+</apex:page>

@@ -1,0 +1,57 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ContractsConfidentialInformationPage
+ * Description: Displays the Opportunity related Confidential Information
+ *              on the Contracts detail page
+ * Created Date: Feb 3rd, 2015 (Appirio)
+ *
+ * Date Modified        Modified By                 Description of the update
+ * Feb 12th, 2015       Arpita Bose(Appirio)        T-361211 : Commented Account and Membership coulmns and added button for New CI records
+ * Feb 13th, 2015       Arpita Bose                 S-277736 : Added CreatedDate in column and commented Add Document button as per chatter
+  =====================================================================*/
+-->
+<apex:page standardController="Case" extensions="ContractsConfidentialInformationExt"
+                sidebar="{!fullView}" showHeader="{!fullView}" showChat="false">
+
+  <script type="text/javascript">
+    function goToParentWindow(pid, parentName, returnUrl) {
+      window.parent.location.href = '/p/attach/NoteAttach?pid='+pid+'&parentname='+parentName+'&retURL='+returnUrl;
+    }
+    
+    function goToConInfo(){
+      //alert('URL: {!urlString}');
+      window.parent.location.href =  '{!urlString}';
+    }
+  </script>
+
+  <apex:sectionHeader title="{!$Label.Confidential_Information_on_Contract_Title}"
+                   subtitle="{!$Label.Confidential_Information_on_Contract_SubTitle} {!mycase.CaseNumber}" rendered="{!fullView}" />
+  <apex:form >
+    <apex:outputPanel >
+       <apex:commandButton onclick="goToConInfo();" value="{!$Label.Confidential_Information_Add_New_CI}"/>
+    </apex:outputPanel>
+  <apex:pageBlock >
+     <div style="height:200px;">
+    <apex:pageBlockTable value="{!confInfoList}" var="confInfo">
+      <apex:column headerValue="{!$ObjectType.Confidential_Information__c.fields.Name.label}" >
+        <apex:outputLink target="_blank" value="/{!confInfo.id}">{!confInfo.Name}</apex:outputLink>
+      </apex:column>
+     <!--  <apex:column headerValue="{!$ObjectType.Confidential_Information__c.fields.Account__c.label}" >
+        <apex:outputField value="{!confInfo.Account__r.Name}"/>
+      </apex:column>
+      <apex:column headerValue="{!$ObjectType.Confidential_Information__c.fields.Membership__c.label}" >
+        <apex:outputField value="{!confInfo.Membership__r.Name}"/>
+      </apex:column>  -->
+
+      <apex:column value="{!confInfo.Contract_Document__c}" />
+      <!-- <apex:column >
+        <apex:commandButton value="{!$Label.Confidential_Information_on_Contract_Add_Document}"
+                          onclick="javascript:goToParentWindow('{!confInfo.ID}', '{!confInfo.Name}', '{!mycase.ID}');return false;" />
+      </apex:column>  -->
+      <apex:column value="{!confInfo.CreatedDate}" />
+    </apex:pageBlockTable>
+     </div>
+  </apex:pageBlock>
+  </apex:form>
+</apex:page>

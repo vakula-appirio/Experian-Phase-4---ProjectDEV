@@ -1,0 +1,60 @@
+<apex:page standardController="Lead" extensions="LeadConvertPageExtension" title="{!$Label.LeadConvert_Convert_Lead}" action="{!prepareCampaigns}" >
+  <apex:form >
+    <apex:sectionHeader title="{!$Label.LeadConvert_Convert_Lead}" subtitle="{!$Label.LeadConvert_SelectPrimaryCampaign}" />
+    <apex:pageBlock id="wholePage">
+      <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Next} >" action="{!save}" />
+        <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" />
+      </apex:pageBlockButtons>
+      <apex:pageBlockSection columns="1">
+        <apex:pageBlockSectionItem >
+          <apex:outputLabel value="{!$Label.LeadConvert_DoNotCreateOpp}" />
+          <apex:outputPanel >
+            <apex:actionStatus id="pleaseWait">
+              <apex:facet name="start"><img src="/img/loading32.gif" width="16" height="16" alt="Please Wait..." /></apex:facet>
+              <apex:facet name="stop">
+                <apex:inputCheckbox value="{!doNotCreateOpp}">
+                  <apex:actionSupport event="onchange" action="{!skipOpp}" rerender="wholePage" status="pleaseWait" />
+                </apex:inputCheckbox>
+              </apex:facet>
+            </apex:actionStatus>
+          </apex:outputPanel>
+        </apex:pageBlockSectionItem>
+      </apex:pageBlockSection>
+      <apex:pageMessages />
+      <apex:pageBlockTable value="{!allCampaigns}" var="c">
+        <apex:column headerValue="Select">
+          <apex:actionStatus id="currentCheckbox">
+            <apex:facet name="start"><img src="/img/loading32.gif" width="16" height="16" alt="Please Wait..." /></apex:facet>
+            <apex:facet name="stop">
+              <apex:inputCheckbox value="{!c.selected}" disabled="{!doNotCreateOpp}" >
+                <apex:actionSupport event="onchange" action="{!checkTicks}" rerender="wholePage" status="currentCheckbox" />
+              </apex:inputCheckbox>
+            </apex:facet>
+          </apex:actionStatus>
+        </apex:column>
+        <apex:column value="{!c.camp.Name}" />
+        <apex:column value="{!c.camp.StartDate}" />
+        <apex:column value="{!c.camp.EndDate}" />
+        <apex:column value="{!c.camp.Type}" />
+        <apex:column value="{!c.camp.Status}" />
+      </apex:pageBlockTable>
+      <apex:outputPanel >
+        <apex:actionStatus id="showingMore">
+          <apex:facet name="start"><img src="/img/loading32.gif" width="16" height="16" alt="Please Wait..." /></apex:facet>
+          <apex:facet name="stop">
+            <apex:commandLink action="{!showMoreCampaigns}" rerender="wholePage" status="showingMore" >{!$Label.AccountTeamMembersList_Show_More}</apex:commandLink>
+          </apex:facet>
+        </apex:actionStatus>
+      </apex:outputPanel>
+      <apex:pageBlockSection columns="1">
+        <apex:pageBlockSectionItem >
+          <apex:outputLabel value="{!$Label.LeadConvert_DoNotAssignCampaign}" />
+          <apex:outputPanel >
+            <apex:inputCheckbox value="{!doNotAssignCamp}" />
+          </apex:outputPanel>
+        </apex:pageBlockSectionItem>
+      </apex:pageBlockSection>
+    </apex:pageBlock>
+  </apex:form>
+</apex:page>

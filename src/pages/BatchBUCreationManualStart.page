@@ -1,0 +1,28 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: BatchBUCreationManualStart
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Mar 27th, 2014     Arpita Bose(Appirio)         T-264459: Added Custom Labels in place of text
+ * May 02, 2014       NLG                          commenting out
+  =====================================================================*/
+-->
+<apex:page > <!--controller="BatchBUCreationManualStartController" tabStyle="BU_Relationship__c"-->
+<!--<apex:form >
+<apex:pageBlock >
+<apex:pageBlockSection columns="1" collapsible="false" title="{!$Label.BatchBUCreation_Title}">
+    <apex:pageMessages />
+    <apex:pageMessage severity="Info" summary="{!$Label.BatchBUCreation_Summary}" strength="2" rendered="{!hasFoundBUs}"/>
+</apex:pageBlockSection>
+
+<apex:pageBlockSection columns="1">
+<apex:commandButton action="{!startBatch}" value="{!$Label.Start_Batch}" rendered="{!!hasBatchQueued && !hasFoundBUs}"/>
+</apex:pageBlockSection>
+</apex:pageBlock>
+
+</apex:form>-->
+</apex:page>

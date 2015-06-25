@@ -1,0 +1,15 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: DragDropFileUploadOpportunity
+ * Description: Allow users to drag files into this area (T-360065)
+ * Created Date: Feb 09th, 2015
+ * Created By: Arpita Bose(Appirio)
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * 
+  =====================================================================*/
+-->
+<apex:page standardController="Opportunity">
+  <c:DragnDropFileUploader parentId="{!Opportunity.Id}" multiple="true" retUrl="/{!Opportunity.Id}"/>
+</apex:page>

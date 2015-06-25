@@ -1,0 +1,127 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: CSS_AddOrCreateNewContactAddress
+ * Description: 
+ * Created Date:
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * 10 April'2014      Jinesh Goyal(Appirio)        I-109889
+ * Apr 24, 2014       Nathalie Le Guay (Appirio)   Update to prevent Cross-site Scripting (XSS)
+ * May 19th, 2014     Nathalie Le Guay             Added page title
+ * Jan 7th, 2014      Noopur Sundriyal             T-286014: Rerendering error message panel only if error (not entire page)
+ * Feb 19, 2014       Noopur                       T-363891: added the logic to show the "Missing_Address__c" field
+  =====================================================================*/
+-->
+<!-- 
+    @author sfdcdev11981
+    VF page to create new Contact with fields configured using field set.
+ -->
+<apex:page controller="AddOrCreateNewContactAddressController" tabstyle="Contact" title="Create a Contact Address">
+  <apex:stylesheet value="{!$Resource.custom_stylesheet}" />
+<!--<style>-->
+<!--    .popupBackground {-->
+<!--            background-color:black;-->
+<!--            opacity: 0.20;-->
+<!--            filter: alpha(opacity = 20);-->
+<!--            width: 100%;-->
+<!--            height: 100%;-->
+<!--            top: 0;-->
+<!--            left: 0;-->
+<!--            z-index: 998;-->
+<!--            position: absolute;-->
+<!--        }-->
+<!--        .popupPanel {-->
+<!--            border: solid 1px;-->
+<!--            background-color: white;-->
+<!--            left: 50%;-->
+<!--            width: 200px;-->
+<!--            margin-left: -100px;-->
+<!--            top: 50%;-->
+<!--            height: 50px;-->
+<!--            margin-top: -25px;-->
+<!--            z-index: 999;-->
+<!--            position: fixed;-->
+<!--        }-->
+<!--</style>-->
+
+<apex:sectionHeader title="{!$ObjectType.Contact.Label}" subtitle="{!IF(action==$Label.CSS_Operation_AddContact,$Label.CSS_Button_Add_Contact,IF(action==$Label.CSS_Operation_AddAddress,$Label.ASS_Button_Add_Address,IF(action==$Label.CSS_Operation_NewContactAddress,$Label.CSS_Button_New_Contact,'')))}" />
+<apex:actionStatus id="status" stopText="">
+    <apex:facet name="start">
+        <div>
+            <div class="popupBackground" />
+            <div class="popupPanel">
+                <table border="0" width="100%" height="100%">
+                    <tr>
+                        <td align="center" style="font-family: Calibri; font-size: 13px; font-weight: normal;"><b>{!$Label.ASS_Wait_searching}</b></td>
+                    </tr>
+                    <tr>
+                        <td align="center"><img src="/img/loading.gif"/></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </apex:facet>
+</apex:actionStatus>
+
+<apex:pageMessages id="errorsMsg" />
+
+  <apex:form id="pageForm">     
+    <!-- Add New Contact page block section -->
+    <apex:pageBlock title="{!$ObjectType.Contact.Label}" mode="{!if(enableEditMode,'edit','')}" id="accPageBlock">
+   
+        <apex:pageBlockButtons id="pButtons" location="both" >
+            <apex:commandButton onClick="saveAF();return false;" value="{!$Label.OCL_Button_Save}" id="save" styleClass="btn" status="status" style="display:none" />
+            <apex:commandButton action="{!cancel}" value="{!$Label.OCL_Button_Cancel}" id="cancel" styleClass="btn" status="status" immediate="true" />
+        </apex:pageBlockButtons>
+        <apex:pageBlockSection collapsible="false" columns="2" title="{!$Label.CSS_Title_Contact_Information}" >
+        
+            <apex:repeat value="{!$ObjectType.Contact.FieldSets.ContactInfoSectionFieldSet}" var="f">
+                <apex:inputField value="{!contact[f]}" rendered="{!IF(enableEditMode,IF(f =='Missing_Address__c',IF(bypassQAS,true,false),true),false)}" 
+                required="{!OR(f.required, f.dbrequired)}" styleClass="inputForm"/>
+                <apex:outputField value="{!contact[f]}" rendered="{!!enableEditMode}"/>
+            </apex:repeat>
+        </apex:pageBlockSection>
+
+<!--commented by JG on 13 March'2014 for T-251967 
+<c:ASS_QAS_Address_Lookup addressRec="{!address}" contactAddressRec="{!contactAddress}" enableManualSelection="{!enableManualAddressSelection}" isAddressPopupOnload="{!isAddressPopupOnload}" buttonId="{!$Component.pageForm:accPageBlock:pButtons.save}"/>-->
+<!--the address component-->
+     <apex:outputPanel id="addressLookUpComponent" >
+        <c:ASS_QAS_Address_Lookup addressRec="{!address}" contactAddressRec="{!contactAddress}" 
+        enableManualSelection="{!enableManualAddressSelection}" isAddressPopupOnload="false"
+        buttonId="{!$Component.pageForm:accPageBlock:pButtons.save}" 
+        accountId="{!accountId}" bypassQAS="{!bypassQAS}"/>
+     </apex:outputPanel>
+<!--action function to update the address Id (for the address selected) coming from the address component on the page-->
+     <apex:actionFunction name="updateAddressId" action="{!updateAddress}" 
+                   status="status" immediate="true" rerender=""> 
+        <apex:param name="firstParam" assignTo="{!addressIdFrmComponent}" value="" />
+     </apex:actionFunction>
+<!--added by JG on 10 April'2014 for I-109889-->
+<!--action function to update the account Id (for the account selected) for the account selected on the page-->     
+     <apex:actionFunction name="updateAccountId" action="{!accountUpdateId}" rerender="addressLookUpComponent" 
+            status="status" immediate="true"> 
+            <apex:param name="firstParam" assignTo="{!accountName}" value="" />
+     </apex:actionFunction>
+     <apex:actionFunction action="{!performSave}" name="saveAF" rerender="errorsMsg"/>
+   </apex:pageBlock>
+  </apex:form>
+<script>
+//added by JG on 10 April'2014 for I-109889-->
+window.onload = function () {
+ if('{!$CurrentPage.parameters.accId}' == '') {
+    var labelsInForm = document.getElementsByTagName('Label');
+    var idAccountPageElement;
+    for(count = 0; count < labelsInForm.length; ++count) {
+      if (labelsInForm[count].innerHTML.toLowerCase().indexOf('account name') != -1) {
+        idAccountPageElement = labelsInForm[count].getAttribute("for");
+      }
+    }
+    document.getElementById(idAccountPageElement).onchange=function(){
+         updateAccountId (this.value.trim());
+    }
+ }
+};
+</script>
+</apex:page>

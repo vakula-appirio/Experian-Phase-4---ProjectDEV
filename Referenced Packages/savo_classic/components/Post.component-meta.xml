@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexComponent xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>26.0</apiVersion>
+    <description>This component can be placed on a client defined/created Visualforce page.  Use this component to display a SAVO Post within a Salesforce object.</description>
+    <label>Post</label>
+</ApexComponent>

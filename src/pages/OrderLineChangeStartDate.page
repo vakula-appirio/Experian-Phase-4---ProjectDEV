@@ -1,0 +1,38 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Page Name: OrderLineChangeStartDate
+ * Description: T-270940: Delivery Management: VF Page
+ * Created Date: Apr 11th, 2014
+ * Created By: Naresh Kr Ojha (Appirio)
+ * 
+ * Date Modified                Modified By                  Description of the update
+ * Apr 15th, 2014               Nathalie Le Guay             Removing conditional rendering of the "Back" button.
+ *                                                           Anyone should be allowed to go back
+ * July 30th, 2014    Naresh Kr Ojha(Appirio)      T-286035: Phase 2 Sprint 0 refactoring: Add titles to Apex Pages
+ =====================================================================*/
+-->
+<apex:page standardController="Order_Line_Item__c" extensions="OrderLineChangeStartDateExt" action="{!checkIfUserAllowed}" title="Update Order Line Start Date" >
+  <apex:sectionHeader title="Order Line Item" subtitle="Update Start Date" />
+  <apex:pageMessages />
+  <apex:form >
+    
+    <apex:pageBlock rendered="{!haveAccess}">
+    <apex:pageBlockButtons >
+      <apex:commandButton value="Save" action="{!Save}" />
+      <apex:commandButton value="Cancel" action="{!Cancel}" />
+    </apex:pageBlockButtons>
+
+      <apex:pageBlockSection columns="2">
+        <apex:pageBlockSectionItem >
+         Order Line: <apex:outputField value="{!Order_Line_Item__c.Name}" /> 
+        </apex:pageBlockSectionItem>
+
+        <apex:pageBlockSectionItem >
+         Start Date: <apex:inputField value="{!Order_Line_Item__c.Start_Date__c}" /> 
+        </apex:pageBlockSectionItem>
+      </apex:pageBlockSection>
+    </apex:pageBlock>
+    <apex:commandButton value="Back" action="{!Cancel}" style="margin-left:20px;" /> <!-- rendered="{!NOT(haveAccess)}"  -->
+  </apex:form>
+</apex:page>

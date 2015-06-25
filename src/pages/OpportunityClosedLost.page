@@ -1,0 +1,101 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OpportunityClosedLost
+ * Description: 
+ * Created Date: 
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * July 30th, 2014    Naresh Kr Ojha(Appirio)      T-286035: Phase 2 Sprint 0 refactoring: Add titles to Apex Pages
+ * Jan 16th, 2015     Tyaga Pati                   Case#00001743 Added code to make the Other Closed Reason Field available for all Closed Reason Values but required only when Closed Reason = Other
+  =====================================================================*/
+-->
+<apex:page standardController="Opportunity" extensions="OpportunityClosedLostExtension" title="Opportunity Closed/Lost" tabStyle="Opportunity" sidebar="true">
+<apex:sectionHeader title="{!$ObjectType.Opportunity.Name}" subtitle="{!Opportunity.Name}"/>
+<apex:variable var="isOppOpen" value="{!if(opp.StageName=custSetting.Opp_Closed_Lost_Stagename__c || opp.isClosed,false,true)}"/>
+<apex:form >
+    <apex:pagemessages id="messages"/>    
+    <apex:pageblock >
+        <apex:pageblockButtons >
+            <apex:commandButton value="{!$Label.OCL_Button_Save}" action="{!saveRecord}" id="butSave" rendered="{!isOppOpen}" onclick="showWaitCircle()"/>
+            <apex:commandButton value="{!$Label.OCL_Button_Cancel}" action="{!cancel}" id="butCancel" onclick="showWaitCircle()"/>
+            <script>
+                var butSaveId = '{!$Component.butSave}';
+                var butCancelId = '{!$Component.butCancel}';
+            </script>
+        </apex:pageblockButtons>
+        
+        
+        <apex:pageblockSection id="pbs" rendered="{!isOppOpen}" columns="1">
+          <apex:outputField value="{!opp.Name}" /> 
+          <apex:outputField value="{!opp.StageName}"/>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection id="ClosedReason">
+          <apex:pageBlockSectionItem >
+            <apex:outputLabel >{!$ObjectType.Opportunity.Fields.Primary_Reason_W_L__c.Label}</apex:outputLabel>
+            <apex:outputPanel layout="block" styleClass="requiredInput">
+           <apex:outputPanel layout="block" styleClass="requiredBlock"/>
+              <apex:selectlist id="PrimaryReason"  size="1" value="{!selectedPrimaryReason}">
+                <apex:selectOptions value="{!PrimaryReasons}" />
+                <apex:actionSupport status="waitStatus" event="onchange" action="{!primaryReasonChanged}" rerender="ClosedReason" />
+              </apex:selectlist>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <apex:pageBlockSectionItem >
+            <apex:outputLabel >{!$ObjectType.Opportunity.Fields.Other_Closed_Reason__c.Label}</apex:outputLabel>
+            <apex:outputPanel layout="block" styleClass="requiredInput">
+              <apex:outputPanel layout="block" styleClass="{!IF(selectedPrimaryReason == 'Other','requiredBlock','notRequiredBlock')}"/>
+              <apex:inputField id="otherPRC" value="{!opp.Other_Closed_Reason__c}"/>  
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+        </apex:pageblockSection>
+        <apex:pageblockSection rendered="{! isNoDecisionType == false}" columns="1">
+          <apex:pageBlockSectionItem >
+            <apex:outputLabel >{!$ObjectType.Opportunity.Fields.Primary_Winning_Competitor__c.Label}</apex:outputLabel>
+            <apex:outputPanel layout="block" styleClass="requiredInput">
+              <apex:outputPanel layout="block" styleClass="requiredBlock"/>
+              <apex:selectlist id="Competitors"  size="1" value="{!opp.Primary_Winning_Competitor__c}">
+                <apex:selectOptions value="{!Competitors}" />
+              </apex:selectlist>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+          <apex:inputField id="WinBackDate" label="{!$ObjectType.Opportunity.Fields.Win_Back_Date__c.Label}" value="{!opp.Win_Back_Date__c}" /> 
+         
+          <apex:pageBlockSectionItem > 
+            <apex:outputLabel value="Add Competitor"/>
+            <apex:outputPanel layout="block"> 
+              <apex:inputField id="Account" value="{!CompRec.Account__c}"/>
+              <apex:commandButton action="{!createComp}" value="Add"/>
+            </apex:outputPanel>
+          </apex:pageBlockSectionItem>
+        </apex:pageblockSection>
+        <center>
+        <apex:actionStatus id="waitStatus" >
+                <apex:facet name="start"><img src='/img/loading.gif'/></apex:facet>
+        </apex:actionStatus>
+        </center>
+        <script>
+            var waitStatusId = '{!$Component.waitStatus}.start';
+        </script>
+    </apex:pageblock>        
+</apex:form>
+    
+<script>
+
+function showWaitCircle()
+{
+    document.getElementById(waitStatusId).style.display='block';
+    
+    //Top buttons
+    document.getElementById(butSaveId.replace('bottom:','')).className='btnDisabled';
+    document.getElementById(butCancelId.replace('bottom:','')).className='btnDisabled';
+    
+    //Bottom buttons
+    document.getElementById(butSaveId).className='btnDisabled';
+    document.getElementById(butCancelId).className='btnDisabled';
+    
+    
+}
+</script>    
+</apex:page>

@@ -1,0 +1,22 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: AddressFieldsByCountry
+ * Description: 
+ * Created Date:
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ *
+  =====================================================================*/
+-->
+<apex:component controller="AddressFieldsByCountryController">
+<apex:attribute assignTo="{!addressId}" name="addressRecId" type="Id" description="Address record Id"/>
+<apex:attribute name="columns" type="Integer" description="PageBlockSection Columns"/>
+<apex:attribute name="title" type="String" description="PageBlockSection Title"/>
+<apex:pageBlockSection collapsible="false" title="{!title}" columns="{!columns}">
+    <apex:repeat value="{!fields}" var="f">
+        <apex:outputField value="{!address[f.fieldPath]}"/>
+    </apex:repeat>
+</apex:pageBlockSection>   
+</apex:component>

@@ -1,0 +1,113 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: SolutionAtAGlancePDF
+ * Description: T-278512: 
+ * Created Date: June 14th, 2014
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * June 6th,2014      Bharti Mehta                 Applied look and feel like others
+ * Dec 29th,2014      Arpita Bose                  Updated as per task T-343525 (Using Custom Labels)
+ * Feb 17th, 2015     Paul Kissick                 Case #552965 - Added body font
+  =====================================================================*/
+-->
+<apex:page standardController="Opportunity_Plan__c" extensions="SolutionAtAGlanceExtension" showHeader="false" renderAs="pdf"
+          sidebar="false" standardStylesheets="false" docType="html-5.0" action="{!saveAttachment}" applyHtmlTag="false">
+    <head>
+    <apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" />
+
+      <apex:stylesheet value="{!URLFOR($Resource.pdfCSS)}"/>    
+      <apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/custom-style.css')}" />
+      <style>
+        /* body { font-family: 'Arial Unicode MS'; }*/
+        body { /* PK Case #552965 */
+                font-family: sans-serif;
+                font-weight: normal;
+            }
+      </style>
+    </head>
+    
+    <table style="width:100%;">
+        <tr><td>
+            <img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/>
+        </td>
+        <td style="text-align:right;">
+            <span style="font-weight: bold; font-size: 20pt; margin-right: 15px;">{!$Label.ACCOUNTPLANNING_SolutionPDF_TITLE}</span>
+        </td></tr>
+    </table>
+   <apex:form id="formId">     
+    <div style="border:1px solid #000;min-height: 5.75in;margin-top: 15px;">  
+     <table style="width:100%" cellpadding="0" cellspacing="0" border="0">
+         <tr>
+            <td colspan="2" style="padding-left:0px;">
+                <span class="section-header">
+                    <label class="section-label" style="margin: 2px;">{!$Label.ACCOUNTPLANNING_SolutionPDF_General_Information}</label>
+                </span>
+            </td>
+         </tr>
+         <tr>
+             <td style="font-size:11pt; font-weight:bold;width:50%;padding-left: 17px;">{!$Label.ACCOUNTPLANNING_SolutionPDF_Account} </td>
+             <td style="font-size:11pt;padding-left: 5px;"> {!oppPlan.Account_Name__r.Name} </td>
+         </tr>
+         <tr>
+             <td style="font-size:11pt; font-weight:bold;width:50%;padding-left: 17px;">{!$Label.ACCOUNTPLANNING_SolutionPDF_Created_By} </td>
+             <td style="font-size:11pt;padding-left: 5px;"> {!oppPlan.CreatedBy.Name} </td>
+         </tr>
+         <tr>
+             <td style="font-size:11pt; font-weight:bold;width:50%;padding-left: 17px;">{!$Label.ACCOUNTPLANNING_SolutionPDF_Created_Date} </td>
+             <td style="font-size:11pt;padding-left: 5px;"> 
+                 <apex:outputText value="{0,date,dd.MM.yyyy}">
+                    <apex:param value="{!oppPlan.CreatedDate}"/>
+                 </apex:outputText> 
+             </td>
+         </tr>
+     </table>
+     
+     <br />
+      
+     <table style="width:100%" cellpadding="0" cellspacing="0" border="0">
+         <tr>
+         <td width="50%" style="padding-left:0px;"> 
+            <span class="section-header">
+                <label class="section-label">{!$Label.ACCOUNTPLANNING_SolutionPDF_Objectives_and_Requirements}</label>
+            </span>
+         </td>
+         <td width="50%" style="padding-left:0px;">
+            <span class="section-header">
+                <label class="section-label">{!$Label.ACCOUNTPLANNING_SolutionPDF_Solution}</label>
+            </span>
+         </td>
+        </tr>
+        <tr>
+         <td width="50%"  class="dataCell"> 
+            {!oppPlan.Objectives_and_Requirements__c}
+         </td>
+         <td width="50%" class="dataCell">
+            {!oppPlan.Solution__c}
+         </td>
+        </tr>
+        <tr>
+         <td width="50%" style="padding-left:0px;"> 
+            <span class="section-header">
+                <label class="section-label">{!$Label.ACCOUNTPLANNING_SolutionPDF_Benefits}</label>
+            </span>
+         </td>  
+         <td width="50%" style="padding-left:0px;">
+            <span class="section-header">
+                <label class="section-label">{!$Label.ACCOUNTPLANNING_SolutionPDF_Strengths}</label>
+            </span>
+         </td>
+        </tr>
+        <tr>
+         <td width="50%" class="dataCell"> 
+            {!oppPlan.Benefits__c}
+         </td>
+         <td width="50%" class="dataCell">
+            {!oppPlan.Strengths__c}
+         </td>
+        </tr>
+     </table>
+   </div>
+       </apex:form>  
+</apex:page>

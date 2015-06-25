@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>29.0</apiVersion>
+    <availableInTouch>false</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <description>Used to override standard Address page.
+Dynamically selects the correct fields to display from the Address Field Sets, based on the &apos;Country&apos; picklist value.</description>
+    <label>OverrideAddressDetail</label>
+</ApexPage>

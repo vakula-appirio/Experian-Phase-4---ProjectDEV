@@ -1,0 +1,59 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OpportunityPlanTask.page
+ * Description: T-273784: This page is used as an intermediate page for the user to create a task on Opportunity Plan record
+ * Created Date: Global CRM Phase 1
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * 24th Dec, 2014     Arpita Bose(Appirio)         Updated as per the Task T-343519
+ * =====================================================================*/
+ -->
+<apex:page title="{!$Label.ACCOUNTPLANNING_TITLE_Follow_up_Action}" controller="OpportunityPlanTaskController" action="{!doPageAction}">
+<link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+<apex:includeScript value="{!$Resource.jquery1_8}"/>
+
+  <apex:form >
+    <apex:pageMessages />
+    <apex:pageBlock >
+      <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.ACCOUNTPLANNING_OppPlanTask_Button_Next}" action="{!nextAction}"/>
+        <apex:commandButton value="{!$Label.ACCOUNTPLANNING_OppPlanTask_Button_Cancel}" action="{!cancelAction}"/>
+      </apex:pageBlockButtons>
+      <apex:pageblocksection columns="1">
+        <apex:pageblocksectionitem >
+          <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_OppPlanTask_Sales_Stage}" />
+          <apex:selectList id="sales_stage_select" value="{!selectedSalesStage}" multiselect="false" size="1">                                            
+            <apex:selectOptions value="{!salesStagesOptions}"/>       
+            <apex:actionSupport event="onchange" action="{!onChangeSalesStages}" onsubmit="showSpinner()" oncomplete="hideSpinner()" rerender="action_item_select"/>
+          </apex:selectList>
+        </apex:pageblocksectionitem>
+        <apex:pageblocksectionitem >
+          <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_OppPlanTask_Action_Item}"/>
+          <apex:selectList id="action_item_select" value="{!selectedActionItem}" multiselect="false" size="1">                                            
+            <apex:selectOptions value="{!actionItemsOptions}"/>                        
+          </apex:selectList> 
+        </apex:pageblocksectionitem>
+        <apex:pageblocksectionitem >
+          <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_OppPlanTask_If_Other}"/>
+          <apex:inputText id="if_other_text" value="{!selectedIfOther}" size="100" maxlength="100"/>            
+        </apex:pageblocksectionitem>
+      </apex:pageblocksection>      
+    </apex:pageBlock>
+  </apex:form>
+  <script type="text/javascript">   
+      var showSpinner = function(){
+            // This function is used to show spinner and mask the screen when change
+            // functionality is processing..    
+            var _bodyCell = $("body");
+            _bodyCell.append("<div class=\"spinnerMask\" id=\"spinnerMask\" style=\"position:fixed;left:0;top:0;background-color:#8d8d8d;height:100%;width:100%;opacity:0.6;filter:alpha(opacity=60);z-index:999;align:center;vertical-align:middle;\"><div style=\"position: absolute; top: 35%;left:50%;opacity:1.0;filter:alpha(opacity=100);z-index:1000;background-color:#F5FCFF;width:204; height:94;border-radius:1em;border:1px solid #CEECFF;padding:20px 40px 20px 40px; \"><img src=\"/img/analytics/reportbuilder/icons/spinner32.gif\" alt=\"Processing...\" style=\"width:32; height:32; align:center;\" title=\"Processing...\" />&nbsp;&nbsp;<p style=\"display:inline;font-size:135%;font-weight:bold;\">Processing...</p></div></div>");
+        }
+        
+        var hideSpinner = function(){
+            //This function is used to hide spinner and un mask the screen when change finish
+            //functionality is completed..      
+            $('#spinnerMask').remove();
+        }
+  </script>
+</apex:page>

@@ -1,0 +1,295 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OpportunityExitCriteriaStatus
+ * Description: 
+ * Created Date:
+ * Created By: 
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Apr 15th, 2014     Arpita Bose(Appirio)         T-271695: Removed reference to Below_Review_Thresholds__c field
+ * Apr 16th, 2014     Arpita Bose                  T-271695: Renamed fields Has_Stage_4_Approval__c to Has_Stage_3_Approval__c 
+ *                                                 and Has_Stage_5_Approval__c to Has_Senior_Approval__c
+ * Apr 16th, 2014     Nathalie Le Guay             T-272404: Adding Exit Criteria in Stage 3,4,5,6 for Approval Processes
+ * Apr 29th, 2014     Nathalie Le Guay             Update of 500,000 to be inclusive ('>=' instead of '>')
+ * May 07, 2014       Nathalie Le Guay             Add checks on the Opportunity.Amount (which can be null after Lead Conversion) and could create errors
+ * March 30, 2015     Nur Azlini                   Case-583423: Update the rendered criteria as same as OpportunityStageIndicator.
+ * Apr 22nd, 2015     Paul Kissick                 I-156537: Fixed rendering
+  =====================================================================*/
+-->
+<apex:page standardController="Opportunity"  extensions="OpportunityExitCriteriaStatusExtension" >
+    <style>
+        .alignText{
+            vertical-align:bottom;
+        }
+
+        .panelHeight {
+        line-height: 150%;
+     }
+    </style>
+<!-- *************** STAGE CONDITIONAL VARIABLES START  *************** -->                       
+      <!-- #################VAR: STAGE 3 COMPLETED CONDITIONS################# -->      
+      <apex:variable var="Stages3Completed" value="{! 
+           (  hasCompletedTask = true && 
+              hasContactRole = true &&
+              Opportunity.Competitor_Count__c > 0 && 
+              !ISBLANK(Opportunity.Budget__c)
+           )
+      }"/>
+      
+      <!-- #################VAR: STAGE 4 COMPLETED CONDITIONS################# -->
+      <apex:variable var="Stages4Completed" value="{! 
+                hasQuoteDelivered == true && 
+                ( Opportunity.Has_Stage_3_Approval__c == true) && 
+                Opportunity.Opportunity_Products_Count__c > 0 
+
+      }"/>    
+    
+    <!-- #################VAR: STAGE 5 COMPLETED CONDITIONS################# -->  
+      <apex:variable var="Stages5Completed" value="{! 
+                hasSelectionConfirmed == true && 
+                ( Opportunity.Has_Senior_Approval__c == true)
+    }"/> 
+    
+    <!-- #################VAR: ALL STAGE COMPLETED CONDITION################# -->   
+    <apex:variable var="Stages6Completed" value="{! 
+           hasSignedContract == true 
+    }"/>  
+<!-- *************** STAGE CONDITIONAL VARIABLES START  *************** -->                       
+
+<!-- *************** CONTENT RENDER START *************** -->  
+
+<table width="100%" border="0px" >         
+<tr>
+<td width="20%" style="color: #4A4A56;font-family:Arial,Helvetica,sans-serif; vertical-align : top;padding-top: 2px; padding-right: 8px; padding-bottom: 2px; padding-left: 7px; text-align: right; font-size: 91%; font-weight: bold; " >
+<apex:outputLabel >{!$Label.OECS_Exit_Criteria_Status}</apex:outputLabel>
+</td>
+<td>
+<!--
+<td style="padding-left: 8px;padding-top: 2px;"> 
+-->
+
+  <table border="0px">
+    <tr>
+
+      <td style="vertical-align:top;">
+        <apex:outputPanel rendered="{!missingAnyPreviousCriteria}">
+          <apex:image url="{!$Resource.bullet_warning}" styleClass="alignText"/>
+          <apex:outputLabel value="{!$Label.OECS_Missing_Criteria}"/>
+        </apex:outputPanel>
+         <br/>
+        <apex:outputPanel rendered="{!stagesCriteriaMissing['3'] == true && Opportunity.StageName != $Label.OPPTY_STAGE_QUALIFY}" styleClass="panelHeight" >
+          <!--Stage 3 Needs:<br/>-->
+          <apex:outputPanel rendered="{!NOT(hasCompletedTask)}">
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> {!$Label.OECS_Activity_Completed} <br/>
+          </apex:outputPanel>
+          <apex:outputPanel rendered="{!NOT(hasContactRole)}">
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> {!$Label.OECS_Contact_Role_Decider}<br/>
+          </apex:outputPanel>
+          <apex:outputPanel rendered="{!Opportunity.Competitor_Count__c == 0}">
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> {!$Label.OECS_Competitor_record}<br/>
+          </apex:outputPanel>
+          <apex:outputPanel rendered="{!ISBLANK(Opportunity.Budget__c)}">
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> {!$Label.OECS_Budget_value}<br/>
+          </apex:outputPanel>
+          <apex:outputPanel rendered="{!Opportunity.Stage_3_Approver__c == null && opportunity.Owner.Region__c=='UK&I' && IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 && Opportunity.StageName == $Label.OPPTY_STAGE_QUALIFY}">
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> Qualify Stage Approver populated <br/> 
+          </apex:outputPanel>
+          <apex:outputPanel rendered="{!NOT(Opportunity.Has_Stage_3_Approval__c) && opportunity.Owner.Region__c=='UK&I' && IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 && Opportunity.StageName == $Label.OPPTY_STAGE_QUALIFY}">    
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> Qualify Stage Approval granted <br/> <!-- {!$Label.OECS_Threshold_Yes_or_Approved} -->
+          </apex:outputPanel>
+          <apex:image url="{!$Resource.bullet_info}" /> {!$Label.OECS_Stage3_Comment}<br/> 
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!stagesCriteriaMissing['4'] == true && Opportunity.StageName != $Label.OPPTY_STAGE_PROPOSE && Opportunity.StageName != $Label.OPPTY_STAGE_QUALIFY}" styleClass="panelHeight" >
+          <!--Stage 4 Needs:<br/>-->
+          <apex:outputPanel rendered="{!Opportunity.Opportunity_Products_Count__c==0}">
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> {!$Label.OECS_Product_selected}<br/>
+          </apex:outputPanel>
+          <apex:outputPanel rendered="{!NOT(hasQuoteDelivered)}">
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> {!$Label.OECS_Activity_Quote_Delivered}<br/>    
+          </apex:outputPanel>
+          
+          <apex:outputPanel rendered="{!(Opportunity.Is_There_Commercial_Risk__c == null || opportunity.Is_There_Delivery_Risk__c == null ||
+                                         Opportunity.Is_There_Financial_Risk__c == null || opportunity.Is_There_Legal_Risk__c == null )
+                                      && opportunity.Owner.Region__c=='UK&I' && !bypassTheCriteria}">    
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> Delivery/Financial/Commercial/Legal Risks answered <br/>
+          </apex:outputPanel>
+          
+          <apex:outputPanel rendered="{!opportunity.Owner.Region__c == 'UK&I' && !bypassTheCriteria 
+                                                                              && (IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 || (opportunity.Is_There_Commercial_Risk__c == 'Yes'
+                                                                                                              ||  opportunity.Is_There_Delivery_Risk__c == 'Yes'
+                                                                                                              ||  opportunity.Is_There_Financial_Risk__c == 'Yes'
+                                                                                                              ||  opportunity.Is_There_Legal_Risk__c == 'Yes'))}">
+            <apex:outputPanel rendered="{!Opportunity.Senior_Approver__c == null && opportunity.Owner.Region__c=='UK&I' && IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000}">
+              <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> Senior Approver populated <br/> 
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!NOT(Opportunity.Has_Senior_Approval__c) && opportunity.Owner.Region__c=='UK&I' && IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000}">    
+              <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> Senior Approval granted <br/>
+            </apex:outputPanel>
+          </apex:outputPanel>
+          
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!stagesCriteriaMissing['5'] == true && Opportunity.StageName != $Label.OPPTY_STAGE_COMMIT && Opportunity.StageName != $Label.OPPTY_STAGE_PROPOSE && Opportunity.StageName != $Label.OPPTY_STAGE_QUALIFY}" styleClass="panelHeight">
+          <!--Stage 5 Needs:<br/>-->
+          <apex:outputPanel rendered="{!NOT(hasSelectionConfirmed)}">
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> {!$Label.OECS_Activity_Selection_Confirmed}<br/>
+          </apex:outputPanel>
+
+          <apex:outputPanel rendered="{!Opportunity.Has_There_Been_Significant_Change__c == null && opportunity.Owner.Region__c=='UK&I'}">    
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> "Has There Been Significant Changes?" populated <br/>
+          </apex:outputPanel>
+
+          <apex:outputPanel rendered="{!opportunity.Owner.Region__c == $Label.REGION_UK_AND_I && !bypassTheCriteria && 
+                                      (IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 || Opportunity.Has_There_Been_Significant_Change__c == 'Yes')}">
+            <apex:outputPanel rendered="{!Opportunity.Senior_Approver__c == null}">
+              <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> Senior Approver populated <br/> 
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!NOT(Opportunity.Has_Senior_Approval__c)}">    
+              <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> Senior Approval granted <br/>
+            </apex:outputPanel>
+          </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!stagesCriteriaMissing['6'] == true && Opportunity.StageName != $Label.OPPTY_STAGE_CONTRACT && Opportunity.StageName != $Label.OPPTY_STAGE_COMMIT
+                                                                          && Opportunity.StageName != $Label.OPPTY_STAGE_PROPOSE && Opportunity.StageName != $Label.OPPTY_STAGE_QUALIFY}" styleClass="panelHeight">
+            <!--Stage 6 Needs:<br/>-->
+          <apex:outputPanel rendered="{!NOT(hasSignedContract)}">
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> {!$Label.OECS_Activity_Received_Signed_Contract}<br/>
+          </apex:outputPanel>
+          
+
+          <apex:outputPanel rendered="{!Opportunity.Has_There_Been_Significant_Change__c == null && opportunity.Owner.Region__c=='UK&I'}">    
+            <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> "Has There Been Significant Changes?" populated <br/>
+          </apex:outputPanel>
+          
+          <apex:outputPanel rendered="{!opportunity.Owner.Region__c == $Label.REGION_UK_AND_I && !bypassTheCriteria && 
+                                      (IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 || Opportunity.Has_There_Been_Significant_Change__c == 'Yes')}">
+            <apex:outputPanel rendered="{!Opportunity.Senior_Approver__c == null}">
+              <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> Senior Approver populated <br/> 
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!NOT(Opportunity.Has_Senior_Approval__c)}">    
+              <apex:image url="{!$Resource.bullet_red}" styleClass="alignText"/> Senior Approval granted <br/>
+            </apex:outputPanel>
+          </apex:outputPanel>
+        </apex:outputPanel>
+        
+        <apex:outputPanel rendered="{!stagesCriteriaMissing['7'] == true}" styleClass="panelHeight">
+            <apex:outputPanel rendered="{!Opportunity.IsWon && Opportunity.IsClosed}"><apex:image url="{!$Resource.bullet_greentick}" styleClass="alignText"/> {!$Label.OECS_Closed_Won}</apex:outputPanel>
+            <apex:outputPanel rendered="{!!Opportunity.IsWon  && Opportunity.IsClosed}"><apex:image url="{!$Resource.bullet_redcross}" styleClass="alignText"/> {!$Label.OECS_Closed_Lost}</apex:outputPanel>     
+        </apex:outputPanel>
+      </td>
+      <td width="50px"></td>
+      <td style="vertical-align:top;">
+        <apex:outputPanel rendered="{!Opportunity.StageName == $Label.OPPTY_STAGE_QUALIFY}" styleClass="panelHeight" >
+          <!--Stage 3 Needs:<br/>-->
+          <apex:image url="{!$Resource.bullet_warning}" styleClass="alignText"/> {!$Label.OECS_Change_to_Stage_4_Possible}<br/>
+          <apex:image url="{!IF(!hasCompletedTask,$Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText"/> {!$Label.OECS_Activity_Completed} <br/>
+          <apex:image url="{!IF(!hasContactRole,$Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText"/> {!$Label.OECS_Contact_Role_Decider}<br/>
+          <apex:image url="{!IF(Opportunity.Competitor_Count__c == 0,$Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText"/> {!$Label.OECS_Competitor_record}<br/>
+          <apex:image url="{!IF(ISBLANK(Opportunity.Budget__c),$Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText"/> {!$Label.OECS_Budget_value}<br/>
+
+          <!-- Start Case-583423 -->
+            <!-- <apex:outputPanel rendered="{!opportunity.Owner.Region__c=='UK&I' && IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000  && !!bypassTheCriteria} "><br/>
+            <apex:image url="{!IF(Opportunity.Stage_3_Approver__c==null,$Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText"/> <apex:outputText value="Qualify Stage Approver populated"/><br/>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!NOT(Opportunity.Has_Stage_3_Approval__c) && opportunity.Owner.Region__c=='UK&I' && IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000  && !!bypassTheCriteria}">    
+            <apex:image url="{!IF(Opportunity.Has_Stage_3_Approval__c == false, $Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText"/> <apex:outputText value="Qualify Stage Approval granted"/>
+            </apex:outputPanel> -->
+            <apex:outputPanel rendered="{!IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 && !bypassTheCriteria && opportunity.Owner.Region__c == $Label.REGION_UK_AND_I && Opportunity.StageName != $Label.OPPTY_STAGE_QUALIFY}">
+                <apex:image url="{!IF(Opportunity.Stage_3_Approver__c==null && opportunity.Owner.Region__c == $Label.REGION_UK_AND_I && IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000, $Resource.bullet_red, $Resource.bullet_greentick)}"/>
+                    <apex:outputText value="Qualify Stage Approver populated" styleClass="alignText"/><br/>
+                <apex:image url="{!IF(Opportunity.Has_Stage_3_Approval__c == false && IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 && opportunity.Owner.Region__c == $Label.REGION_UK_AND_I, $Resource.bullet_red, $Resource.bullet_greentick)}"/>
+                    <apex:outputText value="Qualify Stage Approval granted" styleclass="alignText"/><br/>
+            </apex:outputPanel>
+            <!-- End Case-583423 -->
+
+            <apex:image url="{!$Resource.bullet_info}" /> {!$Label.OECS_Stage3_Comment}
+        </apex:outputPanel>
+        
+  
+        <apex:outputPanel rendered="{!Opportunity.StageName == $Label.OPPTY_STAGE_PROPOSE}" styleClass="panelHeight" >
+          <!--Stage 4 Needs:<br/>-->
+          <apex:image url="{!$Resource.bullet_exclamation}" styleClass="alignText"/> {!$Label.OECS_Ensure_Revenue_Schedules}<br/>
+          <apex:image url="{!$Resource.bullet_warning}" styleClass="alignText"/> {!$Label.OECS_Change_to_Stage_5_Possible}<br/>
+          <apex:image url="{!IF(Opportunity.Opportunity_Products_Count__c==0,$Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText"/> {!$Label.OECS_Product_selected}<br/>
+          <apex:image url="{!IF(!hasQuoteDelivered,$Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText"/> {!$Label.OECS_Activity_Quote_Delivered}<br/>    
+          <apex:outputPanel rendered="{!opportunity.Owner.Region__c == 'UK&I' && !bypassTheCriteria}">
+            <apex:image url="{!IF((
+                           Opportunity.Is_There_Commercial_Risk__c == null || opportunity.Is_There_Delivery_Risk__c == null ||
+                           Opportunity.Is_There_Financial_Risk__c == null || opportunity.Is_There_Legal_Risk__c  == null
+                           ), $Resource.bullet_red, $Resource.bullet_greentick)}" />
+            <apex:outputText value="Delivery/Financial/Commercial/Legal Risks answered" styleclass="missingCriteria"/><br/>
+          </apex:outputPanel>
+          
+          <apex:outputPanel rendered="{!opportunity.Owner.Region__c == 'UK&I' && !bypassTheCriteria && (IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 || (opportunity.Is_There_Commercial_Risk__c == 'Yes'
+                                                                                                              ||  opportunity.Is_There_Delivery_Risk__c == 'Yes'
+                                                                                                              ||  opportunity.Is_There_Financial_Risk__c == 'Yes'
+                                                                                                              ||  opportunity.Is_There_Legal_Risk__c == 'Yes'))}">
+            <apex:image url="{!IF(Opportunity.Senior_Approver__c==null,$Resource.bullet_red,$Resource.bullet_greentick)}"/>
+            <apex:outputText value="Senior Approver populated" styleClass="missingCriteria"/><br/>
+          
+            <apex:image url="{!IF(Opportunity.Has_Senior_Approval__c == false, $Resource.bullet_red,$Resource.bullet_greentick)}"/>
+            <apex:outputText value="Senior Approval granted" styleclass="missingCriteria"/><br/>
+         </apex:outputPanel>
+         
+        </apex:outputPanel>
+  
+        <apex:outputPanel rendered="{!Opportunity.StageName == $Label.OPPTY_STAGE_COMMIT}" styleClass="panelHeight" > 
+          <!--Stage 5 Needs:<br/>-->
+          <apex:image url="{!$Resource.bullet_warning}" styleClass="alignText" /> {!$Label.OECS_Change_to_Stage_6_Possible}<br/>
+          <apex:image url="{!IF(!hasSelectionConfirmed,$Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText" /> {!$Label.OECS_Activity_Selection_Confirmed}<br/>
+        
+        
+          <apex:outputPanel rendered="{!opportunity.Owner.Region__c=='UK&I' && !bypassTheCriteria}">
+            <apex:image url="{!IF(opportunity.Has_There_Been_Significant_Change__c == null,$Resource.bullet_red,$Resource.bullet_greentick)}"/>
+            <apex:outputText value="Has There Been Significant Changes? populated" styleClass="missingCriteria"/><br/>
+          </apex:outputPanel>
+          
+          <apex:outputPanel rendered="{!opportunity.Owner.Region__c == $Label.REGION_UK_AND_I && !bypassTheCriteria &&
+                                      (IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 || Opportunity.Has_There_Been_Significant_Change__c == 'Yes')}">
+            <apex:image url="{!IF(Opportunity.Senior_Approver__c==null,$Resource.bullet_red,$Resource.bullet_greentick)}"/>
+            <apex:outputText value="Senior Approver populated" styleClass="missingCriteria"/><br/>
+
+            <apex:image url="{!IF(Opportunity.Has_Senior_Approval__c == false, $Resource.bullet_red,$Resource.bullet_greentick)}"/>
+            <apex:outputText value="Senior Approval granted" styleclass="missingCriteria"/><br/>
+          </apex:outputPanel>
+        </apex:outputPanel>
+  
+        <apex:outputPanel rendered="{!Opportunity.StageName == $Label.OPPTY_STAGE_CONTRACT}" styleClass="panelHeight" >
+          <!--Stage 6 Needs:<br/>-->
+          <apex:image url="{!$Resource.bullet_warning}" styleClass="alignText" /> {!$Label.OECS_Change_to_Stage_7_Possible}<br/>
+          <apex:image url="{!IF(!hasSignedContract,$Resource.bullet_red,$Resource.bullet_greentick)}" styleClass="alignText" /> {!$Label.OECS_Activity_Received_Signed_Contract}<br/>
+          
+          
+          <apex:outputPanel rendered="{!opportunity.Owner.Region__c=='UK&I' && !bypassTheCriteria}">
+            <apex:image url="{!IF(opportunity.Has_There_Been_Significant_Change__c == null,$Resource.bullet_red,$Resource.bullet_greentick)}"/>
+            <apex:outputText value="Has There Been Significant Changes? populated" styleClass="missingCriteria"/><br/>
+          </apex:outputPanel>
+          
+          <apex:outputPanel rendered="{!opportunity.Owner.Region__c == $Label.REGION_UK_AND_I && !bypassTheCriteria && 
+                                      (IF(opportunity.Amount == null, 0, opportunity.Amount) >= 500000 || Opportunity.Has_There_Been_Significant_Change__c == 'Yes')}">
+            <apex:image url="{!IF(Opportunity.Senior_Approver__c==null,$Resource.bullet_red,$Resource.bullet_greentick)}"/>
+            <apex:outputText value="Senior Approver populated" styleClass="missingCriteria"/><br/>
+
+            <apex:image url="{!IF(Opportunity.Has_Senior_Approval__c == false, $Resource.bullet_red,$Resource.bullet_greentick)}"/>
+            <apex:outputText value="Senior Approval granted" styleclass="missingCriteria"/><br/>
+          </apex:outputPanel>
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!Opportunity.StageName == $Label.OPPTY_STAGE_EXECUTE}" styleClass="panelHeight" >
+          <apex:outputPanel rendered="{!Opportunity.IsWon && Opportunity.IsClosed}"><apex:image url="{!$Resource.bullet_greentick}" styleClass="alignText" /> {!$Label.OECS_Closed_Won}</apex:outputPanel>
+          <apex:outputPanel rendered="{!!Opportunity.IsWon  && Opportunity.IsClosed}"><apex:image url="{!$Resource.bullet_redcross}" styleClass="alignText" /> {!$Label.OECS_Closed_Lost}</apex:outputPanel>     
+        </apex:outputPanel>
+      </td>
+    </tr>
+  </table>
+</td> 
+</tr>
+</table> 
+
+<!-- *************** CONTENT RENDER END *************** -->             
+</apex:page>

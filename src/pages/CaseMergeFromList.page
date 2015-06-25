@@ -1,0 +1,25 @@
+<!--
+/**=====================================================================
+ * Experian
+ * Name: CaseMergeFromList
+ * Description: Merges multiple cases into 1 primary case.
+ *              Case #556253
+ * Created Date: Mar 23rd, 2015
+ * Created By: Paul Kissick
+ *
+ * Date Modified      Modified By                  Description of the update
+ * Mar 23rd, 2015     Paul Kissick                 Created 
+  =====================================================================*/
+-->
+<apex:page standardController="Case" recordSetVar="c" extensions="CaseMergeController" title="Merge Cases" action="{!mergeFromList}">
+  <apex:sectionHeader title="Merge Cases" />
+  <apex:form >
+    <apex:pageMessages />
+    <apex:pageBlock mode="maindetail" rendered="{!NOT($Permission.Case_Merge_Allowed)}">
+     <apex:outputPanel >
+       <h1>{!$Label.Case_Merge_Denied}</h1>
+       <p><a href="javascript:history.back();">Back to Previous Page</a></p>
+     </apex:outputPanel>
+    </apex:pageBlock>
+  </apex:form>
+</apex:page>

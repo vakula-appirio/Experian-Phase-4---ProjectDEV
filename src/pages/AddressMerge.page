@@ -1,0 +1,99 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: AddressMerge
+ * Description: 
+ * Created Date: Mar 06th, 2014
+ * Created By: Naresh Kr Ojha (Appirio)
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Mar 26, 2014       Nathalie Le Guay             Added column <apex:column value="{!addressMap[a].address_o.Used_on_Aria_Billing_Account__c}"/>
+ * Mar 27th, 2014     Arpita Bose (Appirio)        T-264459: Added Custom Labels in place of text
+ * Jul 31, 2014       Naresh Ojha                  T-286036: moved Javascript from top of class to bottom of class
+ * Oct 25th, 2014     Nathalie Le Guay (Appirio)   Removing functionality
+  =====================================================================*/
+-->
+<apex:page standardController="Address__c" extensions="AddressMergeController" title="{!$Label.Address_Merge_CREATE_ADDRESS_MERGE_REQUESTS}">
+
+<!-- 
+   <apex:includeScript value="{!$Resource.jquery1_8}"/>
+   <apex:sectionHeader title="{!$Label.Address_Merge_ADDRESS_MERGE_REQUEST}" subtitle="{!$Label.Address_Merge_CREATE_ADDRESS_MERGE_REQUESTS}"/>
+   <apex:form >
+     <apex:actionFunction action="{!addSelectedToSet}" name="selectAddress" reRender="pb3,opSelected">
+        <apex:param id="addressId" name="addressId" value="" />
+        <apex:param id="event" name="event" value="" />
+     </apex:actionFunction>
+     <apex:actionFunction action="{!resizePage}" name="resizePageJS" status="fetchStatus" reRender="pb,pb3,opSelected">
+     </apex:actionFunction>
+             
+     <apex:pagemessages />
+
+        <apex:pageBlock id="pb">
+              <script>
+                $(document).ready(function(){
+                    $('input.selectChk').show();
+                });
+                    </script>
+            <apex:pageBlockButtons id="pb1">
+              <apex:commandButton value="Merge Selected" action="{!mergeAddresses}" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockTable value="{!addressMap}" var="a" id="pbTable">
+                <apex:column headerValue="Select" >
+                  
+                  <apex:inputCheckbox accesskey="{!addressMap[a].address_o.ID}" value="{!addressMap[a].isSelected}"  styleClass="selectChk" style="display:none;" />
+                </apex:column>
+                <apex:column headerValue="Address Name">
+                    <apex:outputLink value="/{!addressMap[a].address_o.ID}" target="_blank">{!addressMap[a].address_o.Name}</apex:outputLink>
+                </apex:column>
+                <apex:column value="{!addressMap[a].address_o.Address_1__c}"/>
+                <apex:column value="{!addressMap[a].address_o.Last_Validated__c}"/>
+                <apex:column value="{!addressMap[a].address_o.Validation_Status__c}"/>
+                <apex:column value="{!addressMap[a].address_o.Used_on_Aria_Billing_Account__c}"/>
+            </apex:pageBlockTable>
+            <apex:panelGrid columns="4" style="margin-top:5px;">
+                Page size: <apex:selectList value="{!size}" size="1" onchange="resizePageJS();" style="margin-top:-2px;" >
+                    <apex:selectOptions value="{!items}"/>
+                </apex:selectList>
+        
+                <apex:outputText >Showing: {!(pageNumber * size)+1-size}-{!IF((pageNumber * size)>noOfRecords, noOfRecords,(pageNumber * size))} of {!noOfRecords}</apex:outputText>
+        
+                <apex:outputPanel style="color:#4AA02C;font-weight:bold">
+                    <apex:actionStatus id="fetchStatus" startText="{!$Label.Address_Merge_Fetching}" stopText=""/>
+                </apex:outputPanel>
+            </apex:panelGrid>
+            <div style="float:right; clear:both; margin-top: -18px;">
+                <apex:commandButton status="fetchStatus" reRender="pb, pbTable" value="{!$Label.First}" action="{!first}" disabled="{!!hasPrevious}" title="First Page"/>
+                <apex:commandButton status="fetchStatus" reRender="pb, pbTable" value="{!$Label.Previous}" action="{!previous}" disabled="{!!hasPrevious}" title="Previous Page"/>
+                <apex:commandButton status="fetchStatus" reRender="pb, pbTable" value="{!$Label.Next}" action="{!next}" disabled="{!!hasNext}" title="Next Page"/>
+                <apex:commandButton status="fetchStatus" reRender="pb, pbTable" value="{!$Label.Last}" action="{!last}" disabled="{!!hasNext}" title="Last Page"/>
+                <br />
+            </div><br />
+        </apex:pageBlock>
+
+         <apex:outputPanel id="opSelected">
+             <apex:pageBlock id="pb3" rendered="{!IF(TotalSelectedAddresses > 0, true, false)}">
+                <apex:outputText ><strong>Selected Addresses to Merge: {!TotalSelectedAddresses}</strong> </apex:outputText><br /><br />
+                <apex:pageBlockTable value="{!selectedAddressResultMap}" var="a" >
+                    <apex:column value="{!selectedAddressResultMap[a].address_o.Name}"/>
+                    <apex:column value="{!selectedAddressResultMap[a].address_o.Address_1__c}"/>
+                    <apex:column value="{!selectedAddressResultMap[a].address_o.Last_Validated__c}"/>
+                    <apex:column value="{!selectedAddressResultMap[a].address_o.Validation_Status__c}"/>
+                    <apex:column value="{!selectedAddressResultMap[a].address_o.Used_on_Aria_Billing_Account__c}"/>
+                </apex:pageBlockTable>
+             </apex:pageBlock>
+         </apex:outputPanel>
+    </apex:form>
+   <script>
+     $(document).ready(function(){
+       $('input.selectChk').live('click', function(){
+         if ($(this).attr('checked')) {
+           selectAddress($(this).attr('accesskey'), 'Add');
+         } else {
+           selectAddress($(this).attr('accesskey'), 'Remove');
+         }
+       });
+     });
+   </script>
+   
+   -->
+</apex:page>

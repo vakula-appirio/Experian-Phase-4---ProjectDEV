@@ -1,0 +1,88 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ContactOpportunityRoles
+ * Description: Created from Appirio Asset Library:
+ * https://appirio.my.salesforce.com/apex/CMC_AssetView?id=a3E50000000CeKyEAK&sfdc.override=1
+ * Created Date: Feb 24, 2014
+ * Created By: Nathalie Le Guay (Appirio)
+ * 
+ * Date Modified      	Modified By                 Description of the update
+ * June 13, 2014		James Weatherall			rendered property added to New Opp/New Order links 
+  =====================================================================*/
+-->
+<apex:component controller="ContactOppRolesController">
+    <apex:attribute name="contactId" type="Id" assignTo="{!contactId}"
+        required="true" description="Contact ID for whom Account roles should be shown" />
+    
+    <apex:attribute name="accountId" type="Id" assignTo="{!accountId}"
+        required="true" description="Account ID to check User has Access to Account" />
+
+    <apex:attribute name="title" type="String"
+        description="Title to be shown for the grid" />
+
+    <apex:attribute name="noRolesMessage" type="boolean" default="false"
+        description="Pass true, if you want to show a message in case the contact is not part of any roles" />
+    <apex:form >
+    <apex:pageBlock title="{!IF(ISBLANK(title), '', title)}">
+        <apex:pageBlockButtons location="top">
+          <!-- <apex:outputLink value="/006/e?retURL={!contact.Id}&accid={!contact.AccountId}&opp11=3-Qualify Opportunity&opp3={!LEFT(contact.Account.Name, 15)} - &conid={!contact.Id}"
+                           target="_parent" styleClass="btn" style="text-decoration:none;">
+            New Opportunity
+          </apex:outputLink> -->
+          <apex:outputLink value="/apex/URLredirect?Id={!contact.Id}&action=createOpportunity" target="_parent" styleClass="btn" style="text-decoration:none;" rendered="{!hasAccess}">
+            New Opp
+          </apex:outputLink>
+          <apex:outputLink value="/apex/URLredirect?Id={!contact.Id}&action=createOrder" target="_parent" styleClass="btn" style="text-decoration:none;" rendered="{!hasAccess}">
+            New Order
+          </apex:outputLink>
+        </apex:pageBlockButtons>
+        <apex:pageBlockTable value="{!opportunityRoles}" var="role">
+            <apex:column headerValue="Opportunity Name">
+                <apex:outputLink value="{!URLFOR($Action.Opportunity.View, role.OpportunityId, [retURL=URLFOR($Action.Contact.View, $CurrentPage.parameters.Id)])}"
+                    target="_top">
+                    {!role.Opportunity.Name}
+                </apex:outputLink>
+            </apex:column>
+
+            <apex:column headerValue="Close Date"
+                value="{!role.Opportunity.CloseDate}"/>
+                
+            <apex:column headerValue="Created Date"
+                value="{!role.Opportunity.CreatedDate}"/>
+
+            <apex:column headerValue="Owner"
+                value="{!role.Opportunity.Owner.Name}"/>
+
+
+            <apex:column headerValue="Stage"
+                value="{!role.Opportunity.StageName}"/>
+            
+            <apex:column headerValue="Amount"
+                value="{!role.Opportunity.Amount}"/>
+
+            <apex:column headerValue="Type"
+                value="{!role.Opportunity.Type}"/>
+
+            <apex:column headerValue="{!$ObjectType.OpportunityContactRole.fields.Role.Label}"
+                value="{!role.Role}" />
+
+            <apex:column headerValue="{!$ObjectType.OpportunityContactRole.fields.IsPrimary.Label}">
+
+                <apex:image value="/img/checkbox_checked.gif" alt="Checked"
+                    width="21" height="16" styleClass="checkImg" title="Checked"
+                    rendered="{!role.isPrimary}" />
+
+                <apex:image value="/img/checkbox_unchecked.gif" alt="Not Checked"
+                    width="21" height="16" styleClass="checkImg" title="Not Checked"
+                    rendered="{!NOT(role.isPrimary)}" />
+
+            </apex:column>
+        </apex:pageBlockTable>
+
+        <apex:pageMessage summary="No associations with Opportunity in any role"
+            severity="warning" strength="3"
+            rendered="{!AND (noRolesMessage, opportunityRoles.size == 0)}" />
+    </apex:pageBlock>
+  </apex:form>
+</apex:component>

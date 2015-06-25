@@ -1,0 +1,44 @@
+<apex:page controller="ExportBatchExtractProcessController" title="Export Process"  showHeader="false" sidebar="false"  cache="true" standardStylesheets="false" action="{!exportFileProcess}" contentType="text/csv#{!Filename}.csv"> 
+
+ <!-- contentType="text/csv#CustomerFile.csv"  exportCustFile exportRPMFile exportRoyaltyFile  exportPartnerFile exportSummitFile "-->
+ 
+<apex:outputText value="{!CSVContent}"></apex:outputText>
+ 
+<!--<head>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+</head> -->
+ 
+<!--  contentType="application/vnd.ms-excel#CustomerFile.xls"> -->
+
+<!--
+<apex:dataTable value="{!reportDisplayList}" var="displayList">
+<apex:repeat value="{!displayList}" var="displayRec">
+
+<apex:column value="{!displayRec}"/>
+
+</apex:repeat>
+
+
+</apex:dataTable>
+
+-->
+
+<!--
+<apex:outputText escape="false">
+ <apex:repeat value="{!reportDisplayList}" var="displayList">
+ <apex:repeat value="{!displayList}" var="displayListField">
+     
+   
+
+
+                        <apex:outputText value="{!displayListField}"/> ,
+
+     
+ </apex:repeat>
+ 
+  </apex:repeat>
+
+ 
+</apex:outputText>   
+ -->
+</apex:page>

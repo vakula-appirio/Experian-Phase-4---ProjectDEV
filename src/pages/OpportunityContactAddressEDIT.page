@@ -1,0 +1,131 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OpportunityContactAddressEDIT.page
+ * Description: Page is to list out Contact Addresses of Opportunity contact and to update
+ *              Opportunity_Contact_Address__c's address as selected on page.
+ * Created Date: Oct 14th, 2014
+ * Created By: Naresh Kr Ojha (Appirio)
+  =====================================================================*/
+-->
+<apex:page standardController="Opportunity_Contact_Address__c" extensions="OpportunityContactAddressEDIT_Extension" title="Edit Address for {!currentOpptyContactAddress.Contact__r.Name}">
+  <apex:includeScript value="{!URLFOR($Resource.datepicker, 'jquery.js')}"/>
+  <apex:sectionHeader subtitle="Edit Address" title="Opportunity Contact Address"/>
+    <apex:form >
+      <apex:pageBlock id="pb">
+     <apex:actionStatus id="savingStatus">
+    <apex:facet name="start" >           
+     <div class="message infoM4" role="alert"><table border="0" cellpadding="0" cellspacing="0" class="messageTable" 
+                 style="padding:0px;margin:0px;"><tbody><tr valign="top"><td>
+                 <img alt="INFO" class="msgIcon" src="/s.gif" title="INFO" /></td>
+                 <td class="messageCell"><div id="j_id0:j_id3:pb:j_id4:j_id5:j_id6:0:j_id7:j_id8:j_id10" class="messageText">
+                 <span id="j_id0:j_id3:pb:j_id4:j_id5:j_id6:0:j_id7:j_id8:j_id11"><h4></h4></span>Saving record...<br />
+                 </div></td></tr><tr><td></td><td></td></tr></tbody></table></div>
+                </apex:facet>       
+     </apex:actionStatus>
+        <apex:pageMessages escape="false" />
+        <apex:pageBlockTable value="{!ContactAddressList}" var="ca">
+            <apex:column headerValue="Select">
+             <script>    function checkSelected () {
+                $('.selContAdd').each(function(){
+                     if ($(this).attr('rel') == '{!currentAddressOnOppty}') {
+                       $(this).attr('checked', 'checked');
+                     }
+                   });
+                }
+                checkSelected ();
+             </script>
+               <input id="{!ca.contactAddress.ID}" rel="{!ca.contactAddress.Address__c}" name="selContAdd" class="selContAdd" type="radio" />
+            </apex:column>
+            <apex:column headerValue="Contact Name">
+               <apex:outputLink value="/{!ca.contactAddress.Contact__c}" target="_blank">{!ca.contactAddress.Contact__r.Name}</apex:outputLink>
+            </apex:column>
+
+            <apex:column value="{!ca.contactAddress.Address_Type__c}" />
+            
+            <apex:column value="{!ca.contactAddress.Contact_Address1__c}" />
+
+            <apex:column value="{!ca.contactAddress.Contact_Address2__c}" />
+            
+            <apex:column value="{!ca.contactAddress.Contact_Address_City__c}" />
+            <apex:column value="{!ca.contactAddress.Address__c}" />
+
+        </apex:pageBlockTable>
+        <div style="text-align:center; border:0px solid;">
+          <apex:commandButton onclick="saveOpptyContAd();return false;" value="{!$Label.BTN_SAVE}" reRender="pb" />
+          <apex:commandButton onclick="saveOpptyContAdAndReturn();return false;" value="{!$Label.BTN_SAVE_RETURN}" reRender="pb" />
+          <apex:commandButton action="{!noAction}" value="{!$Label.Cancel}" reRender="pb" />          
+        </div>        
+        <div style="text-align:center; border:0px solid; float:right;">
+          <apex:panelGrid columns="7" style="float:left;">
+            <apex:commandButton styleClass="pgBtn" status="fetchStatus" reRender="pb" value="|<" action="{!first}" disabled="{!!hasPrevious}" title="{!$Label.EXPORT_BATCH_FIRST_PAGE}"/>
+            <apex:commandButton styleClass="pgBtn" status="fetchStatus" reRender="pb" value="<" action="{!previous}" disabled="{!!hasPrevious}" title="{!$Label.EXPORT_BATCH_PREVIOUS_PAGE}"/>
+            <apex:commandButton styleClass="pgBtn" status="fetchStatus" reRender="pb" value=">" action="{!next}" disabled="{!!hasNext}" title="{!$Label.EXPORT_BATCH_NEXT_PAGE}"/>
+            <apex:commandButton styleClass="pgBtn" status="fetchStatus" reRender="pb" value=">|" action="{!last}" disabled="{!!hasNext}" title="{!$Label.EXPORT_BATCH_LAST_PAGE}"/>
+            <apex:outputText >{!(pageNumber * size)+1-size}-{!IF((pageNumber * size)>noOfRecords, noOfRecords,(pageNumber * size))} of {!noOfRecords}</apex:outputText>
+            <apex:commandButton oncomplete="uncheckSelectAll();"  styleClass="pgBtn" status="fetchStatus" reRender="pb" value="{!$Label.EXPORT_BATCH_REFRESH}" action="{!refresh}" title="{!$Label.EXPORT_BATCH_REFRESH}"/>
+
+            <apex:outputPanel style="color:#4AA02C;font-weight:bold">
+                <apex:actionStatus id="fetchStatus" startText="{!$Label.EXPORT_BATCH_FETCHING}" stopText=""/>
+            </apex:outputPanel>
+          </apex:panelGrid>
+        </div><br /><br />
+   
+       </apex:pageBlock>
+       <apex:actionFunction name="saveOpptyContAdJS" action="{!saveOpptyContact}" reRender="pb" status="savingStatus"  >
+         <apex:param name="selectedRec" id="selectedRec" assignTo="{!selectedRec}" value="" />
+       </apex:actionFunction>
+       <apex:actionFunction name="saveOpptyContAdAndReturnJS" action="{!saveOpptyContactAndReturn}" reRender="pb" status="savingStatus" >
+         <apex:param name="selectedRec" id="selectedRecRet" assignTo="{!selectedRec}" value="" />
+       </apex:actionFunction>       
+     </apex:form>
+               
+
+  <script>
+    function saveOpptyContAdAndReturn () {
+      var isSelectedRec = false;
+      $('.selContAdd').each(function(){
+        if ($(this).is(':checked')) {
+          isSelectedRec = true;
+          saveOpptyContAdAndReturnJS($(this).attr('Id'));
+        }
+      });
+      
+      if (!isSelectedRec) {
+        alert('{!$Label.OPPTY_CONT_ADD_ERR_SELECT_ADD}');
+      }
+      return false;
+    }
+
+    function saveOpptyContAd () {
+      var isSelectedRec = false;
+      $('.selContAdd').each(function(){
+        if ($(this).is(':checked')) {
+          isSelectedRec = true;
+          saveOpptyContAdJS($(this).attr('Id'));
+        }
+      });
+      
+      if (!isSelectedRec) {
+        alert('{!$Label.OPPTY_CONT_ADD_ERR_SELECT_ADD}');
+      }
+      return false;
+    }
+    
+    $(document).ready(function(){
+       $('.selContAdd').each(function(){
+         if ($(this).attr('rel') == '{!currentAddressOnOppty}') {
+           $(this).attr('checked', 'checked');
+         }
+       });
+    });
+    
+    /*var currentSelected = '';
+    function setSelected(var selctedID) {
+      currentSelected = selectedID;
+      alert('-->'+currentSelected);
+    }*/
+    
+
+  </script>
+</apex:page>

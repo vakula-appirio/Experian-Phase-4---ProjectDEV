@@ -1,0 +1,438 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: ASS_QAS_Address_Lookup
+ * Description: 
+ * Created Date:
+ * Created By:
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * April 23, 2014     Jinesh Goyal (Appirio)       I-113176: added fixes for IE 8
+ * Dec 2, 2014        James Weatherall             Case #29635 Add Barcode for the AUSBAR value
+ * Feb 19, 2014       Noopur                       T-363891: added the logic to see if bypassQAS parameter 
+ *                                                 is true,and then set the address to not required (if bypassQAS is true) 
+ * Apr 9th, 2015      Paul Kissick                 Case #531600 : Adding Address 2 and 3 to view apex:pageBlockTable pbTable
+  * June 2nd,2015      Sadar Yacob                  Gleam Service Console issue with Accept button not working
+                                                   Do not use the Resource.jQuery_QAS_Address_Component and use the direct URL (Per QAS Developer)
+ =====================================================================*/
+-->
+<apex:component controller="ASS_QAS_Address_Lookup_Controller" id="qasAddrComp" allowDML="true" >
+<apex:attribute name="addressRec" type="Address__c" description="Address Record" assignTo="{!address}"/>  
+<apex:attribute name="enableManualSelection" type="boolean" description="Allow user to search/select address" />  
+<apex:attribute name="isAddressPopupOnload" type="boolean" description="Auto Popup on load" />  
+<apex:attribute name="accountAddressRec" type="Account_Address__c" description="Account Address Record" />  
+<apex:attribute name="contactAddressRec" type="Contact_Address__c" description="Contact Address Record" /> 
+<apex:attribute name="buttonId" type="String" description="Button Id to make vissible after loading." />  
+<apex:attribute name="accountId" type="Id" assignTo="{!accId}" description="Account Id to populate list of corresponding Account Address records" />
+<apex:attribute name="bypassQAS" type="Boolean" description="To check if Address is to be required or not." /> 
+<apex:includeScript value="/soap/ajax/25.0/connection.js" />
+<apex:includeScript value="/soap/ajax/25.0/apex.js" />
+<!--<script src="https://online.qas.com/SalesForceV4/Scripts/all_sf_with_jQuery-2.0.min.js"> </script> -->
+<!--<script src="{!$Resource.jQuery_QAS_Address_Component}"></script>-->
+<script src="https://online.qas.com/SalesforceV4/Scripts/all_sf_with_jQuery-2.0.min.js"></script>
+
+
+<script>
+QASNA.typedown.sfdc._isEditMode = function _isEditMode() { return true; };  //Override the isEditMode function to always return true
+
+function testCallBack(elementId, val){
+    //console.log("elementId: " + elementId + " val: " + val);
+    //alert("elementId: " + elementId + " val: " + val);
+    var inputTxtObj = document.getElementById(varOplConcatenatedAddress);
+    if(elementId.indexOf("Address_1") != -1)
+    {
+        if(inputTxtObj.innerText!=null)
+           inputTxtObj.innerText='';
+       else    
+           inputTxtObj.textContent='';
+    }
+    
+    var inputTxtValue = (inputTxtObj.innerText!=null)?inputTxtObj.innerText:(inputTxtObj.textContent!=null)?inputTxtObj.textContent:'';
+    
+    if(val!='' && inputTxtValue.indexOf(val) == -1 && val!='Verified by Experian QAS!')
+    {
+       if(inputTxtObj.innerText!=null)
+           inputTxtObj.innerText+=val+', ';
+       else    
+           inputTxtObj.textContent+=val+', ';
+       
+    }  
+    
+};
+
+var qasSetElementValue = QASNA.typedown.Client.prototype._setElementValue;
+QASNA.typedown.Client.prototype._setElementValue = function _setElementValue(configuration, elementId, val, callback) {
+    var oldCallBack = arguments[3];
+    arguments[3] = function () {
+        var sys = QASNA.system;
+        //alert('...');  
+        testCallBack(elementId, val);
+        if(sys.isFunction(oldCallBack )) { oldCallBack (); };
+    };
+    
+    qasSetElementValue.apply(this, arguments);
+};
+
+$(document).ready(function () { //Make sure that the DOM is loaded 
+    
+           var sys  = QASNA.system;
+           var td   = QASNA.typedown;
+           var xd = QASNA.typedown.XD;
+           var sfdc = QASNA.typedown.sfdc;
+    
+           td.jQuery = jQuery;         //Tell typedown which jQuery to use.
+            
+           sforce.connection.sessionId = '{!$Api.Session_ID}'; //Initialize the sforce connection session
+           var settings = {};
+           settings[xd.Proxy.ProxyUrlParameterKey]           = location.protocol + "//" + document.domain+ "/apex/QASTypedownProxy"; // "{!URLFOR('/apex/QASTypedownProxy')}"; //Url to the Salesforce proxy page.   = "https://c.cs14.visual.force.com/apex/QASTypedownProxy";
+           settings[xd.PostMessage.TargetDomainParameterKey] = location.protocol + "//" + document.domain; //"SF_DOMAIN";
+
+           settings['packagePrefix']= "QAS_NA";
+           settings[xd.ISDTP] = "mn";      //Tell Typedown to load the proxy page without home page components on the left.
+        
+           var configurations = getConfigurations();   //Create configuration.
+        
+           window.typedownClient = new sfdc.Client(configurations, settings);  //Create and initialize the typedown object.
+           
+           //Start button only invoke.
+           //beforeLoadTypedownCallback you only need to override this function if you would like to onvoke typedown with a button.
+           window.typedownClient.beforeLoadTypedownCallback = function beforeLoadTypedownCallback (configuration, cause, typedownClient) { //This function checks whether the invokation cause is on focus and if it is cancels typedown invoke. This is to be used when you choose to invoke typedown with a custom button.
+                var client = QASNA.typedown.Client;
+                
+                if(cause.type === client.TypedownLoadElementFocus) { 
+                    return false; 
+                };
+                
+                return true;
+           };
+           //End button only invoke
+           
+           window.typedownClient.initialize(true); 
+            //console.log(window.typedownClient);
+          //Code to subscribe to the save buttons on click event and which calls                                                    
+         // window.typedownClient.fixValidationStatus();     
+         
+         
+         //Onload invoke;
+         if({!enableManualSelection} && isAddressPopupOnload && getUrlVars()["action"]!=null && {!bypassQAS} == false)
+            invokeTypedown();    
+        
+        //MIrfan@Appirio. 02/Dec/13. Load the Parent form's Save button after Address Component is loaded.
+        try
+        {    
+            document.getElementById('{!buttonId}').style.display='';    
+            var pos = '{!buttonId}'.lastIndexOf(':');
+            var bottomButtonId = '{!buttonId}'.substring(0,pos) + ':bottom' + '{!buttonId}'.substring(pos);
+            document.getElementById(bottomButtonId).style.display='';
+        }catch(ex){}
+        
+    });
+ 
+ 
+ 
+function getUrlVars() { 
+    var vars = {}; 
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) { 
+        vars[key] = value; 
+    }); 
+    return vars; 
+} 
+
+ 
+ var config;
+ var isAddressPopupOnload = {!isAddressPopupOnload};
+ 
+ function getConfigurations () {
+    var sys  = QASNA.system;
+    var td = QASNA.typedown;
+    
+    config = new td.Configuration();
+    
+    config.isUpperCase = false;
+    //config.defaultCountry = 'USA';
+    config.defaultCountry = '{!IF(ISNULL(addressRec.Country__c),'USA',addressRec.Country__c)}';
+    
+    config.addressValidationKey = "{!QASTypedownSessionToken}"; //You have to supply this parameter from your controller.
+   
+    //config.invocationMode = 1; //To invoke typedown with a button make this a 2, to invoke typedown on focus make it a 1.
+    
+    //MIrfan. 311013.
+    config.defaultSearchEngine = "Singleline";
+    
+    //The below logic for finding the ids may have to be adjusted depending on which field set is shown.
+    var address1Id = jQuery(document).find('input[id$=":Address_1"]').attr('id');
+    var address2Id = jQuery(document).find('input[id$=":Address_2"]').attr('id');
+    var address3Id = jQuery(document).find('input[id$=":Address_3"]').attr('id'); 
+    var address4Id = jQuery(document).find('input[id$=":Address_4"]').attr('id'); 
+    var floorId = jQuery(document).find('input[id$=":Floor"]').attr('id'); 
+    var districtId = jQuery(document).find('input[id$=":District"]').attr('id'); 
+    var countyId = jQuery(document).find('input[id$=":County"]').attr('id'); 
+    var cityId = jQuery(document).find('input[id$=":City"]').attr('id');
+    var stateId = jQuery(document).find('input[id$=":State"]').attr('id'); 
+    var provinceId = jQuery(document).find('input[id$=":Province"]').attr('id'); 
+    var zipId = jQuery(document).find('input[id$=":Zip"]').attr('id');
+    var postcodeId = jQuery(document).find('input[id$=":Postcode"]').attr('id');
+    var countryId = jQuery(document).find('input[id$=":Country"]').attr('id');
+    var validationStatusId    = jQuery(document).find('input[id$=":Validation_Status"]').attr('id');
+    var validationTimestampId = jQuery(document).find('input[id$=":Last_Validated"]').attr('id'); 
+    // 2nd Dec, 2014 - Case 29635 by JW - Add Barcode variable 
+    var barcodeId = jQuery(document).find('input[id$=":Barcode"]').attr('id'); 
+    //##############End logic for finding the ids may have to be adjusted depending on which field set is shown.
+      
+    //##############InputMapping Start##############\\
+    config.addInputMapping(address1Id, td.DeliveryLine1); // Primary delivery address line. Contains the house number, pre-directional,
+                                                          // street name, street suffix, post-directional, secondary abbreviation, and
+                                                          // secondary number. For example, 445 N Hamilton Ave Ste 608.
+    
+    config.addInputMapping(address2Id, td.AddressLine2);
+    config.addInputMapping(address3Id, td.AddressLine3);
+    config.addInputMapping(address4Id, td.AddressLine4);
+    
+    config.addInputMapping(floorId, td.Floor);
+    config.addInputMapping(districtId, td.PostalDistrict);
+    config.addInputMapping(countyId, td.CountyName); 
+    config.addInputMapping(cityId, td.City); 
+    config.addInputMapping(stateId, td.StateOrProvinceName); 
+    config.addInputMapping(provinceId, td.StateOrProvinceName); 
+    config.addInputMapping(zipId, td.ZIPPlus4OrPostalCode); 
+    config.addInputMapping(postcodeId, td.ZIPPlus4OrPostalCode); 
+    config.addInputMapping(countryId, td.CountryName);     
+    
+    //config.addInputMapping(cityId, td.City);
+    //if(!sys.isNullOrEmpty(stateId )) { //Make sure to check whether stateId exists.
+    //    config.addInputMapping(stateId, td.StateOrProvinceName);
+    //}
+    //config.addInputMapping(zipId, td.ZIPPlus4OrPostalCode);
+    //config.addInputMapping(countryId, td.TwocharacterISOcountrycode);   
+    //##############InputMapping END##############\\
+    
+    //##############OutputMapping Start##############\\  
+/*
+    config.addOutputMapping(address1Id, td.DeliveryLine1); // Primary delivery address line. Contains the house number,
+                                                           // pre-directional, street name, street suffix, post-directional,
+                                                           // secondary abbreviation, and secondary number. For example, 445 N Hamilton Ave Ste 608.
+    
+    config.addOutputMapping(address2Id, td.DeliveryLine2);
+    config.addOutputMapping(address3Id, td.DeliveryLine3);
+    config.addOutputMapping(address4Id, td.DeliveryLine4);
+    
+    config.addOutputMapping(cityId, td.City);
+    if(!sys.isNullOrEmpty(stateId )) { //Make sure to check whether stateId exists.
+        config.addOutputMapping(stateId, td.StateOrProvinceName);
+    }
+    config.addOutputMapping(zipId, td.ZIPPlus4OrPostalCode);
+    //config.addOutputMapping(countryId, td.TwocharacterISOcountrycode);
+    config.addOutputMapping(countryId, td.CountryName);
+*/
+    config.addOutputMapping(validationStatusId, td.ValidationStatus);
+    config.addOutputMapping(validationTimestampId, td.LastValidated);
+    
+    
+    
+    config.addOutputMapping(address1Id, td.DeliveryLine1); // Primary delivery address line. Contains the house number,
+                                                           // pre-directional, street name, street suffix, post-directional,
+                                                           // secondary abbreviation, and secondary number. For example, 445 N Hamilton Ave Ste 608.
+    
+    config.addOutputMapping(address2Id, td.AddressLine2);
+    config.addOutputMapping(address3Id, td.AddressLine3);
+    config.addOutputMapping(address4Id, td.AddressLine4);
+    
+    config.addOutputMapping(floorId, td.Floor);
+    config.addOutputMapping(districtId, td.PostalDistrict);
+    config.addOutputMapping(countyId, td.CountyName); 
+    config.addOutputMapping(cityId, td.City); 
+    config.addOutputMapping(stateId, td.StateOrProvinceName); 
+    config.addOutputMapping(provinceId, td.StateOrProvinceName); 
+    config.addOutputMapping(zipId, td.ZIPPlus4OrPostalCode); 
+    config.addOutputMapping(postcodeId, td.ZIPPlus4OrPostalCode); 
+    config.addOutputMapping(countryId, td.CountryName);
+    // 2nd Dec, 2014 - Case 29635 by JW - Add Barcode variable 
+    config.addOutputMapping(barcodeId, 'AUSBAR');
+    
+    
+    //##############OutputMapping END##############\\
+    return [config];            
+   }
+   
+function fixTypedownValidationStatuses() { // You need to call this function before the save occurs.
+                                           // Tie it up to the onclick event of all save buttons, or to onchange of any of the address fields.
+    var sys  = QASNA.system;
+          
+    if(!sys.isNull(typedownClient)) { 
+       window.typedownClient.fixValidationStatus();  
+    };
+};
+
+//Start Button only invoke.
+function invokeTypedown() {
+    var client = QASNA.typedown.Client;
+    
+    window.typedownClient.loadTypedown(config, client.createTypedownLoadCause(client.TypedownLoadExplicit, ''));
+};
+//End button only invoke.
+
+
+</script>
+
+<!-- END INPUT FIELDS-->
+<apex:pageBlockSection collapsible="false" title="{!$ObjectType.Address__c.Label}" id="pbsAddressFields" columns="1">
+<!-- onchange event modified to support IE 8   -->
+    <apex:outputPanel rendered="{!contactAddressRec!=null}">
+    <input type="radio" name="radClass" value="Existing" onclick="radioButtonSelected(this.value);" />Choose an Existing Address<br />
+    <br />
+
+    <apex:pageBlockTable rendered="{!IF(ISNULL(accountAddressList),false,true)}" value="{!accountAddressList}" 
+                         var="item" id="pbTable">
+      <apex:column headerValue="Select">
+          <input type="radio" name="radAddressOptions" class="radAddress" value="{!item.Address__c}" 
+                 disabled="disabled" onclick="existingAddressSelected(this)" />
+      </apex:column>
+      <apex:column headerValue="Address Line 1">
+          <apex:outputField value="{!item.Address__r.Address_1__c}" id="address1"/>
+      </apex:column>
+      <apex:column headerValue="Address Line 2">
+          <apex:outputField value="{!item.Address__r.Address_2__c}" id="address2"/>
+      </apex:column>
+      <apex:column headerValue="Address Line 3">
+          <apex:outputField value="{!item.Address__r.Address_3__c}" id="address3"/>
+      </apex:column>
+      <apex:column headerValue="City">
+          <apex:outputField value="{!item.Address__r.City__c}" id="city"/>
+      </apex:column>
+      <apex:column headerValue="Country">
+          <apex:outputField value="{!item.Address__r.Country__c}" id="country"/>
+      </apex:column>
+      <apex:column headerValue="Postcode">
+          <apex:outputField value="{!item.Address__r.Postcode__c}" id="postCode"/>
+      </apex:column>
+    </apex:pageBlockTable>
+  </apex:outputPanel>
+    <apex:outputPanel rendered="{!IF(bypassQAS,false,true)}" >
+      <input type="radio" name="radClass" value="new" onclick="radioButtonSelected(this.value)" />Search for a new address<br />
+    </apex:outputPanel>
+    <br />
+    <apex:outputPanel rendered="{!IF(enableManualSelection && !bypassQAS , true ,false)}" layout="block" >
+      <input type="button" id="searchButton" class="btnDisabled" value="Search" onclick="invokeTypedown(); return false;" disabled="disabled" />
+    </apex:outputPanel>
+    <br />
+    <apex:inputfield value="{!accountAddressRec.Address_Type__c}" id="addrPurpose1"  required="{!IF(bypassQAS,false,true)}"  rendered="{!IF(ISNULL(accountAddressRec),false,IF(bypassQAS,false,true))}"/>
+    <apex:inputfield value="{!contactAddressRec.Address_Type__c}" id="addrPurpose2"  required="{!IF(bypassQAS,false,true)}"  rendered="{!IF(ISNULL(contactAddressRec),false,IF(bypassQAS,false,true))}"/>
+    <apex:pageBlockSectionItem id="pbsiAddress" rendered="{!!bypassQAS}" >
+        <apex:outputLabel value="{!$ObjectType.Address__c.Label}" />
+        <apex:outputText id="oplConcatenatedAddress" />
+    </apex:pageBlockSectionItem>
+</apex:pageBlockSection>
+
+<script>
+       var varOplConcatenatedAddress = '{!$Component.pbsAddressFields.pbsiAddress.oplConcatenatedAddress}';
+       //added by JG
+       //function to help functionality of checkboxes and search button
+       function radioButtonSelected (optionSelected) {
+         if (optionSelected.toLowerCase() == 'new') {
+           document.getElementById("searchButton").className = 'btn';
+           document.getElementById("searchButton").disabled = false;
+           var arrCheckBoxes =  document.getElementsByName("radAddressOptions");
+           for (index = 0; index < arrCheckBoxes.length; ++index) {
+               arrCheckBoxes[index].disabled = true;
+               arrCheckBoxes[index].checked = false;
+           }
+           updateAddressId('');//to re-initiate the address id
+         } else if (optionSelected.toLowerCase() == 'existing') {
+           document.getElementById("searchButton").className = 'btnDisabled';
+           document.getElementById("searchButton").disabled = true;
+           var arrCheckBoxes = document.getElementsByName("radAddressOptions");
+           for (index = 0; index < arrCheckBoxes.length; ++index) {
+               arrCheckBoxes[index].disabled = false;
+           }
+         }
+         //empty the address record on change
+         document.getElementById(varOplConcatenatedAddress).innerText='';
+         document.getElementById(varOplConcatenatedAddress).textContent='';
+       }
+       //added by JG
+       //function to update the address on page (text only-for UI purpose on page)
+       function existingAddressSelected (addressSelected) {
+         var chkBoxId = new String (addressSelected.parentNode.getAttribute('id'));
+         updateAddressId(addressSelected.value);
+         var addressTxt = 
+                     document.getElementById(chkBoxId.substring(0,chkBoxId.lastIndexOf(":"))+':address1').innerHTML+', '+
+                     document.getElementById(chkBoxId.substring(0,chkBoxId.lastIndexOf(":"))+':city').innerHTML+', '+
+                     document.getElementById(chkBoxId.substring(0,chkBoxId.lastIndexOf(":"))+':country').innerHTML+', '+
+                     document.getElementById(chkBoxId.substring(0,chkBoxId.lastIndexOf(":"))+':postCode').innerHTML;
+                     document.getElementById(varOplConcatenatedAddress).innerText=addressTxt;
+                     document.getElementById(varOplConcatenatedAddress).textContent=addressTxt;
+       }
+</script>
+
+
+<!--<center>-->
+<!--    <apex:outputPanel rendered="{!enableManualSelection}">-->
+<!--        <input type="button" class="btn" value="{!$Label.ASS_Button_Update_Address}" onclick="invokeTypedown(); return false;" />  Button only invoke -->
+<!--    </apex:outputPanel>    -->
+<!--</center>  -->
+
+    <!-- All Fields Start --->
+    <apex:outputPanel style="display: none;" rendered="{!enableManualSelection}">
+        <apex:inputtext value="{!addressRec.Address_1__c}" id="Address_1"/>
+        <apex:inputtext value="{!addressRec.Address_2__c}" id="Address_2" />
+        <apex:inputtext value="{!addressRec.Address_3__c}" id="Address_3" />
+        <apex:inputtext value="{!addressRec.Address_4__c}" id="Address_4" />
+        <apex:inputtext value="{!addressRec.CEDEX__c}" id="CEDEX" />
+        <apex:inputtext value="{!addressRec.City__c}" id="City" />
+        <apex:inputtext value="{!addressRec.Codiga_Postal__c}" id="Codiga_Postal" />
+        <apex:inputtext value="{!addressRec.Country__c}" id="Country" />
+        <apex:inputtext value="{!addressRec.County__c}" id="County" />
+        <apex:inputtext value="{!addressRec.District__c}" id="District" />
+        <apex:inputtext value="{!addressRec.Emirate__c}" id="Emirate" />
+        <apex:inputtext value="{!addressRec.Floor__c}" id="Floor" />
+        <apex:inputtext value="{!addressRec.Partofterritory__c}" id="Partofterritory" />
+        <apex:inputtext value="{!addressRec.POBox__c}" id="POBox" />
+        <apex:inputtext value="{!addressRec.Postcode__c}" id="Postcode" />
+        <apex:inputtext value="{!addressRec.Prefecture__c}" id="Prefecture" />
+        <apex:inputtext value="{!addressRec.Province__c}" id="Province" />
+        <apex:inputtext value="{!addressRec.SortingCode__c}" id="SortingCode" />
+        <apex:inputtext value="{!addressRec.State__c}" id="State" />
+        <apex:inputtext value="{!addressRec.Suite__c}" id="Suite" />
+        <apex:inputtext value="{!addressRec.Zip__c}" id="Zip" />
+        
+        <apex:inputfield value="{!addressRec.Validation_Status__c}" id="Validation_Status" />
+        <apex:inputfield value="{!addressRec.Last_Validated__c}" id="Last_Validated" />
+        <!-- 2nd Dec, 2014 - Case 29635 by JW - Add Barcode variable  -->
+        <apex:inputfield value="{!addressRec.Bar_Code__c}" id="Barcode" />
+    </apex:outputPanel> 
+    <!--All Fields End -->
+    <script>
+    
+        jQuery(document).find('input[id$=":Address_1"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Address_2"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Address_3"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Address_4"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":CEDEX"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":City"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Codiga_Postal"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Country"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":County"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":District"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Emirate"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Floor"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Partofterritory"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":POBox"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Postcode"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Prefecture"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Province"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":SortingCode"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":State"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Suite"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":Zip"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":LastValidated"]').attr('readonly', true);
+        jQuery(document).find('input[id$=":ValidationStatus"]').attr('readonly', true);
+    
+    </script>
+<!-- END INPUT FIELDS-->
+    
+<!-- START OUTPUT FIELDS -->    
+<c:AddressFieldsByCountry addressRecId="{!addressRec.id}" rendered="{!!enableManualSelection}" title="{!$ObjectType.Address__c.Label}" columns="2"/> 
+<!-- END READ ONLY -->        
+
+
+</apex:component>

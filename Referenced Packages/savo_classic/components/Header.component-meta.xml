@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexComponent xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>26.0</apiVersion>
+    <description>This component is used on Visualforce pages that use any of the other SAVO components listed below. It is used to include the links to style sheets and javascript as well as set the current session information</description>
+    <label>Header</label>
+</ApexComponent>

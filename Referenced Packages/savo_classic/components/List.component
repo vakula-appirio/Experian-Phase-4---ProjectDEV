@@ -1,0 +1,29 @@
+<apex:component access="global">
+	<apex:attribute access="global" name="criteria" type="string" description="Search text" />
+	<apex:attribute access="global" name="tags" type="string"
+		description="Comma-separated list of tag ids to filter by" />
+	<apex:attribute access="global" name="libraryIds" type="string"
+		description="Comma-separated list of library ids to filter by" />
+	<apex:attribute access="global" name="assetTypes" type="string"
+		description="Comma-separated list of asset types" />
+	<apex:attribute access="global" name="numResults"
+		description="Number of results to display" type="string" />
+	<apex:attribute access="global" name="title" type="String"
+		description="Title of the component" />
+    <apex:attribute access="global" name="openInTab" type="String"
+        description="Open SAVO links in SAVO Tab" />	
+ 	<apex:attribute access="global" name="recordDownloads" type="String"
+        description="Record / save the download activities" />
+            	
+	<div class="panel" data-list="true" data-criteria="{!criteria}"
+		data-tags="{!tags}" data-library-ids="{!libraryIds}"
+		data-asset-types="{!assetTypes}" data-num-results="{!numResults}"
+		data-default-title="{!title}" data-default-load="true" data-record-downloads="{!recordDownloads}" data-open-in-tab = "{!openInTab}" data-place-holder = " " >
+		<div class="widgetheader" width="100%">
+			<span align="right" data-bind="visible:!isListLoading()"> <a
+				href="#" data-bind=" click: Refresh"><span class="refresh_Image operationIcon"></span></a> </span>
+			<h1 class="label" align="left" style="width: 100%;">{!title}</h1>							
+		</div>
+		<c:Document ></c:Document>
+	</div>
+</apex:component>

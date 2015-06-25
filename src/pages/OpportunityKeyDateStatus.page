@@ -1,0 +1,26 @@
+<!-- 
+/**=====================================================================
+ * Appirio, Inc
+ * Name: OpportunityKeyDateStatus
+ * Description: S-176177 - Displays key dates out of alignment status to user
+ *              
+ * Created Date: April 10, 2014
+ * Created By: Naresh Kj Ojha (Appirio)
+ * 
+ * Date Modified                Modified By                  Description of the update
+ =====================================================================*/
+ -->
+<apex:page StandardController="Opportunity" extensions="OpportunityKeyDateStatusExt" showHeader="false" sidebar="false">
+  <style>
+    .itemList {margin-left:0em}
+  </style>
+  
+  <apex:outputPanel rendered="{!IF(errorList.size > 0, true, false)}"> 
+    <!--<ol>
+    <apex:repeat value="{!errorList}" var="err">
+      <li class="itemList">{!err}</li>
+    </apex:repeat>
+    </ol>-->
+  <apex:pageMessages />
+  </apex:outputPanel>
+</apex:page>

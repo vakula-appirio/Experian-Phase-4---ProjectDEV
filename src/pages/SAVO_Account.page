@@ -1,0 +1,23 @@
+<apex:page standardController="account"> 
+<savo_classic:Header ></savo_classic:Header> 
+
+<savo_classic:Html title="Recommended Assets">
+                <ul>
+                    <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=33404717');">Experian's Core Capabilities</a></li> 
+                </ul>  
+</savo_classic:Html>
+<savo_classic:List title="Suggested Content" tags="SFDC suggested content" assetTypes="xls,pdf,doc,ppt,cp" recordDownloads="True" numResults="5"> </savo_classic:List>
+<savo_classic:Search numResults="5" >  </savo_classic:Search> 
+
+<savo_classic:Html title="FUSE can help with...">
+                <ul> 
+                    <li><a href="#" onclick="window.open('http://zoomglobal/services/discoverexperian/pages/howwehelpourclients.aspx');">Explore "Discover Experian"</a></li>
+                    <li><a href="#" onclick="window.open('/a0E/e?retURL=%2Fa0E%2Fo');">Request Bid Support</a></li>
+                    <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/Search/Search.aspx?criteria=&t=1053548');">Case Studies </a></li> 
+                    <li><a href="#" onclick="window.open('https://www.gosavo.com/ExperianFUSE/CustomPage/View.aspx?id=1635885');">Review Sales Stage criteria</a></li>
+                    <li><a href="#" onclick="window.open('http://express/xforms/nt/corpfinance/salesshare/request.aspx');">Submit a SalesShare lead</a></li>
+                </ul> 
+</savo_classic:Html>
+
+
+</apex:page>

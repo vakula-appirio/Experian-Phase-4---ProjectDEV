@@ -1,0 +1,2 @@
+<apex:page standardController="ARIA_Order__c" extensions="AriaOrder_CloneController" action="{!runClone}">
+</apex:page>

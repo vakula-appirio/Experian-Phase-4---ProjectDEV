@@ -1,0 +1,352 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: JointActionPlan.page
+ * Description: 
+ * Created Date: 06/06/2014
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Dec 26th, 2014     Naresh kr Ojha(Appirio)      T-343515: Refactoring
+*  =====================================================================*/
+-->
+<!-- Page that is triggered from Button click on Opportunity Plan Record -->
+<apex:page standardController="Opportunity_Plan__c" showHeader="false" sidebar="false" standardStylesheets="false" docType="html-5.0" 
+    extensions="JointActionPlanExt" title="Joint Action Plan">
+    <head>
+    <link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+    <apex:stylesheet value="{!URLFOR($Resource.prototypeCss, 'css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.opptyStageIndicatorCSS, 'opptyStageIndicatorCSS/opptyStageIndicatorCSS.css')}"/>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" media="print" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+    <apex:styleSheet value="{!URLFOR($Resource.BootstrapJS,'css/bootstrap-datetimepicker.min.css')}"/>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="{!URLFOR($Resource.BootStrapJS,'js/moment.js')}"/>
+    <script src="{!URLFOR($Resource.BootStrapJS,'js/bootstrap-datetimepicker.min.js')}"/>
+    </head>
+    
+    <!-- Styles for Vertical Text -->
+    <style>
+        body {
+          padding-top: 5px;
+        }
+
+        p.css-vertical-text {
+            color:#333;
+            border:0px solid red;
+            writing-mode:tb-rl;
+            -webkit-transform:rotate(90deg);
+            -moz-transform:rotate(90deg);
+            -o-transform: rotate(90deg);
+            white-space:nowrap;
+            display:block;
+            bottom:0;
+            width:20px;
+            height:20px;
+            font-family: ‘Trebuchet MS’, Helvetica, sans-serif;
+            font-size:24px;
+            font-weight:normal;
+        }
+        
+   .title{
+        background: #cce4f3;
+        position: relative;
+        height: 37px;
+        line-height: 37px;
+        border: 1px solid #95c6e3;
+    }
+    
+    .titletext{color: #ed174c; font-size: 15px; margin: 0; padding: 0 0 0 15px;
+        text-shadow: 1px 1px 1px #fff; font-weight:bold;}
+    .titletextExt {width:175px !important;}    
+    .titleCust {margin-top:40px;font-weight:bold;}
+    .blankTh{width:35px;} .inputTextArea{width:175px;}
+    .left-padding5per {padding-left:5%;}
+    table.oppStages {width:1000px;}
+    table.oppStages td.headerComplete {padding:0px 50px 0px 50px;font-weight:none;
+                line-height:1;height:100px;width:150px;colour:#FFFFFF !important;}
+        </style>    
+    <body>
+    <header>
+      <div class="inner">
+        <a href="/" class="logo"></a>
+      </div>
+    </header>
+     <apex:form >  
+      <nav>
+        <div class="inner">
+            <ul>
+                <li class="first">
+                    <apex:commandLink action="{!cancleAction}">
+                        <span class="icon icon-home"></span>{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_BACKTOPLAN}
+                    </apex:commandLink>
+                </li>
+                <li class="active"><a href="#"><span
+                        class="icon icon-opportunities"></span>{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_JOINTACTPLAN}</a>
+                    <span class="icon icon-arrow"></span>
+                </li>
+                <li>
+                    <apex:commandLink action="{!saveActionPlans}">
+                        <span class="icon icon-navigation"></span>{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_SAVE}
+                    </apex:commandLink>
+                </li>
+                <li>
+                    <apex:commandLink action="{!generatePDF}" target="_blank">
+                        <span class="icon icon-navigation"></span>{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_GENERATEPDF}
+                    </apex:commandLink>
+                    
+                </li> 
+                
+                <!--  <li class="next"><a href="javascript:;"><span class="icon icon-navigation"></span>Manage</a></li>
+                <li class="first"><a href="/home/home.jsp"><span class="icon icon-home"></span>HOME</a></li>
+                <li><a href="javascript:generatePDFJS();return false;" target="_blank"><span class="icon icon-navigation"></span>PDF</a></li>
+                <li><a href="javascript:void(0);" id="showShrBtn"><span class="icon icon-navigation"></span>Share</a></li>-->
+<!--                <li><a href="javascript:;"><span class="icon icon-navigation"></span>NAVIGATION#6</a></li>-->
+            </ul>
+            <div class="clear"></div>
+        </div>
+      </nav>    
+     
+      <!-- <apex:actionFunction name="sharePDFAF" action="{!sharePDF}" reRender="theMessages"/>
+      <apex:actionFunction name="generatePDFJS" action="{!generatePDF}" reRender="theMessages2"/> -->
+<!--    <div class="navbar navbar-inverse navbar-fixed-top hidden-print" id="navId" role="navigation">-->
+<!--      <div class="container">-->
+<!--        <div class="collapse navbar-collapse">-->
+<!--          <ul class="nav navbar-nav">-->
+<!--            <li class="active"><a href="#">Manage</a></li>-->
+<!--            <li><a href="/home/home.jsp">Home</a></li>-->
+<!--            <li><apex:commandLink value="PDF" action="{!generatePDF}" rerender="theMessages" target="_blank"/></li>-->
+<!--            <li><a href="#" id="showShrBtn">Share</a></li>-->
+<!--          </ul>-->
+<!--        </div>/.nav-collapse -->
+<!--      </div>-->
+<!--    </div>-->
+    
+     <apex:outputPanel id="theMessages">
+        <div class="container" id="msgDiv">
+        <apex:repeat value="{!messages}" var="m">
+            <div class="alert alert-danger alert-dismissable col-md-3"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>{!m}</div>
+        </apex:repeat>
+        </div>
+    </apex:outputPanel>
+  
+    <apex:outputPanel id="theContainerPanel" rendered="{!NOT(isError)}" >
+    
+    <!-- MAIN CONTAINER -->
+    <div class="container left-padding5per" >
+        <!-- MODAL for LOOKUP RECORDS DIV -->
+        <div class="modal" id="lookupModal" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+             <div class="modal-dialog">
+               <div class="modal-content">
+                 <div class="modal-header">
+                    {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_TOEMAILS}
+                 </div>
+                 <div class="modal-body">
+                    <apex:inputTextarea value="{!toAddresses}" id="toid"/>
+                 </div>
+                 <div class="modal-footer">
+                    <div class="text-center" >
+                        <button class="btn btn-primary btn-sm" id="shrBtn">{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_BTN_SHARE}</button>
+                        <button class="btn btn-danger btn-sm" id="cnclBtn">{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_BTN_CANCEL}</button>
+                    </div>
+                 </div>
+               </div>
+             </div>
+        </div>
+        <!-- End MODAL for LOOKUP RECORDS DIV -->
+        
+        <!-- COMMAND BUTTON FOR SAVE -->
+       <!-- <div class="row">
+            <div class="text-center">
+                <br/>
+                <apex:commandButton value=" Save " action="{!saveActionPlans}" styleClass="btn btn-primary btn-large"></apex:commandButton>&nbsp;
+                <apex:commandButton value="Cancel" action="{!cancleAction}" styleClass="btn btn-primary btn-large"></apex:commandButton>
+                <br/><br/>
+                
+            </div>
+        </div> --> 
+        <!-- END COMMAND BUTTON FOR SAVE -->
+       
+        <!-- MAIN HEADERS -->
+        <div class="row">
+            <!--  <div class="col-md-4">
+                <p class="lead titletext" style="background-image: url('light_blue_chevron.png');">Understand Value Propositions</p>
+            </div>
+            <div class="col-md-4">
+                <p class="lead titletext">Request for Proposal</p>
+            </div>
+            <div class="col-md-4">
+                <p class="lead titletext">Make Decision</p>
+            </div>-->
+            <br />
+            <table cell-padding="6" class="oppStages" >
+                <tbody>
+                    <tr>
+                        <td class="headerComplete icon-navigation">
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_UNDERSTAND}<br/>
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_VALUE}<br/>
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_PROPOSITIONS}
+                        </td>
+                        <td class="headerComplete icon-navigation" >
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_REQUEST}<br />
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_FOR}<br />
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_PROPOSAL}
+                        </td>
+                        <td class="headerComplete icon-navigation" >
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_MAKE} <br/>
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_DECISION}
+                            
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- END MAIN HEADERS -->
+        <br/>
+        <!-- TABLE BEGINS -->
+        <table class="table table-bordered">
+            <thead class="title">
+                <th class="blankTh" ></th>
+                <th class="titletext titletextExt" >{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_INIT_DISCUSSION}</th>
+                <th class="titletext titletextExt" >{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_NEEDANALYSIS}</th>
+                <th class="titletext titletextExt" >{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_SOLUTION}</th>
+                <th class="titletext titletextExt" >{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_FULFILLMENT}</th>
+            </thead>
+            <tbody>
+              <apex:repeat value="{!jActionPlan.aPlans}" var="a">
+                <tr>
+                    <td class="title titletext">
+                        <p class="titletext titleCust">                         
+                            <apex:outputPanel rendered="{!a.cType == 'Customer'}">
+                                {!oPlan.Account_Name__r.Name}
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!a.cType != 'Customer'}">
+                                {!a.cType}
+                            </apex:outputPanel>
+                        </p>
+                    </td>
+                    <td><apex:inputTextarea styleClass="inputTextArea" rows="10" cols="37" value="{!a.initialdiscussion}" ></apex:inputTextarea></td>
+                    <td><apex:inputTextarea styleClass="inputTextArea" rows="10" cols="37" value="{!a.needsAnalysis}" ></apex:inputTextarea></td>
+                    <td><apex:inputTextarea styleClass="inputTextArea" rows="10" cols="37" value="{!a.solution}" ></apex:inputTextarea></td>
+                    <td><apex:inputTextarea styleClass="inputTextArea" rows="10" cols="37" value="{!a.fulfillment}" ></apex:inputTextarea></td>
+                </tr>
+              </apex:repeat>
+               <tr>
+                   <td class="title titletext" >{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_DEADLINE}</td>
+
+                   <td>
+                     <apex:inputField type="date" value="{!jActionPlan.oPlan.Action_Item_Initial_Discussions_Deadline__c}" showdatepicker="false"/>
+                   </td>
+
+                   <td>
+                     <apex:inputField type="date" value="{!jActionPlan.oPlan.Action_Item_Needs_Analysis_Deadline__c}" showdatepicker="false"/>
+                   </td>
+
+                   <td>
+                     <apex:inputField type="date" value="{!jActionPlan.oPlan.Action_Item_Solution_Deadline__c}" showdatepicker="false"/>
+                   </td>
+                   <td>
+                     <apex:inputField type="date" value="{!jActionPlan.oPlan.Action_Item_Fulfillment_Deadline__c}" showdatepicker="false"/>
+                   </td>
+               </tr>
+                <tr>
+                    <td class="title titletext" >{!$Label.ACCOUNTPLANNING_JOINTACTPLANT_COMPLETE}</td>
+                    <td>
+                    <apex:inputField type="date" value="{!jActionPlan.oPlan.Action_Item_Initial_Discussions_Complete__c}" showdatepicker="false"/>
+                    </td>
+                    <td>
+                    <apex:inputField type="date" value="{!jActionPlan.oPlan.Action_Item_Needs_Analysis_Completed__c}" showdatepicker="false"/>
+                    </td>
+                    <td>
+                    <apex:inputField type="date" value="{!jActionPlan.oPlan.Action_Item_Solution_Completed__c}" showdatepicker="false"/>
+                    </td>
+                    <td>
+                    <apex:inputField type="date" value="{!jActionPlan.oPlan.Action_Item_Fulfillment_Completed__c}" showdatepicker="false"/>
+                    </td>
+                </tr>   
+
+            </tbody>
+        </table>
+        <!-- TABLE ENDS -->
+        
+        <!-- MAIN FOOTER -->
+        <div class="row">
+            <!-- <div class="col-md-4">
+                <p class="lead titletext">Draft Project Plan</p>
+            </div>
+            <div class="col-md-4">
+                <p class="lead titletext">Requirements Understood</p>
+            </div>
+            <div class="col-md-4">
+                <p class="lead titletext">Solution Proposal</p>
+            </div> -->
+                        <br/>
+            <table cell-padding="6" class="oppStages">
+                <tbody>
+                    <tr>
+                        <td class="headerComplete icon-navigation" >
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_DRAFT} <br/>
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_PROJECT} <br/>
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_PLAN}  
+                        </td>
+                        <td class="headerComplete icon-navigation" >
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_REQUIREMENTS} <br/>
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_UNDERSTOOD}
+                        </td>
+                        <td class="headerComplete icon-navigation" >
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_SOLUTION}<br/>
+                            {!$Label.ACCOUNTPLANNING_JOINTACTPLANT_PROPOSAL}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+                        <br/>
+        </div>
+        <!-- END MAIN FOOTER -->
+    </div>
+    
+    </apex:outputPanel>
+
+    </apex:form>
+    <script>
+            
+            
+            $j = $.noConflict();
+            
+            function setFocusOnLoad() {}
+                        
+            $j(document).ready(function(){
+                
+                // Shows the Share to Send Emails.
+                $j('#showShrBtn').click(function(e){
+                    e.preventDefault();
+                    $j('#lookupModal').show();
+                });
+
+                // Cancel Event
+                $j('#cnclBtn').click(function(e){
+                    e.preventDefault();
+                    $j('#lookupModal').hide();
+                });
+
+                // Share button when clicked, will trigger Action Function that sends the Email.
+                
+                $j('#shrBtn').click(function(e){
+
+                    sharePDFAF();
+                    $j('#lookupModal').hide();  
+                    $j('#msgDiv').append('<div class="alert alert-info alert-dismissable col-md-3"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+
+                                     'Email Message Successfully Sent');
+             
+
+                });
+                
+            });
+            
+        
+    </script>
+    
+    </body>
+
+</apex:page>

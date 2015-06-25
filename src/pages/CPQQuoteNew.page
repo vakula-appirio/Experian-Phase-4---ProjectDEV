@@ -1,0 +1,9 @@
+<apex:page standardController="Quote__c" showHeader="true"
+ extensions="CPQQuoteNewAndEditExtension" title="Create Product/Quote">
+<apex:pagemessages id="errdisply" />
+<apex:outputPanel rendered="{!NOT(isError)}"> 
+   <!--<apex:iframe scrolling="true" height="1000" src="https://test.webcomcpq.com/salesforce/SfLogin.aspx?sfauthUserID={!$User.Username}&apiPartnerURL={!$Api.Partner_Server_URL_190}&apiSessionID={!$Api.Session_ID}&domain_name=Experian&apiPass=Password&action=New&sfqpOpportunityID={!Quote__c.Opportunity__c}" /> -->
+  <apex:iframe scrolling="true" height="1000" src="{!$Label.CPQ_URL}/salesforce/SfLogin.aspx?sfauthUserID={!$User.Username}&apiPartnerURL={!$Api.Partner_Server_URL_190}&apiSessionID={!$Api.Session_ID}&domain_name={!$Label.CPQ_Domain}&apiPass=Password&action=New&sfqpOpportunityID={!Quote__c.Opportunity__c}" />
+  
+</apex:outputPanel>
+</apex:page>

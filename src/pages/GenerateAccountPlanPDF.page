@@ -1,0 +1,1050 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc;
+ * Name: AccountPlanPenetration.page
+ * Description: 
+ * Created Date: 
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Dec 30th, 2014     Noopur Sundriyal             T-343375: Refactoring CSS/Labels
+ *  =====================================================================*/
+-->
+<apex:page standardcontroller="Account_Plan__c"
+   extensions="GenerateAccountPlanPDFController,AccountValueAreasExt,AccountPlanPenetration,AccountHealthRadarChartController1,AccPlanContactRelStatusController"
+   showHeader="false" sidebar="false" applyHtmlTag="false" id="base" renderas="{!$Request.mode}"> 
+<!--   renderAs="pdf">-->
+   
+  <!--  Include Static resources -->
+   <link rel="stylesheet" href="{!URLFOR($Resource.AccountPlanningCSS, 'css/default-style.css')}" type="text/css"/>
+   <apex:stylesheet value="{!URLFOR($Resource.PDFGenerator, 'PDFDocumentStyle.css')}" />
+   <apex:stylesheet value="{!URLFOR($Resource.SWOT_Analysis_UI, 'SWOT_Analysis_UI/css/style.css')}" />
+   <apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'css/accountPlanPDF.css')}"/>
+   <head>
+  
+    
+      <!-- This would be Header and footer for all pages -->
+     <c:HeaderFooterComponent type="header" position="left">
+        <div style="padding: 5px;">
+           <img src="{!URLFOR($Resource.prototypeCss, 'i/spritelogo.png')}" style="width:200px;"/>
+        </div>
+     </c:HeaderFooterComponent>
+   
+     <c:HeaderFooterComponent type="header" position="right" showPageNumbers="true"/>
+        
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/jspdf.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/html2canvas.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.chartToPdf, '/canvas2image.js')}" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <apex:includeScript value="/soap/ajax/28.0/connection.js"/>
+    <apex:includeScript value="/soap/ajax/28.0/apex.js"/>
+         
+ 
+      </head>
+      <apex:outputPanel rendered="{!$Request.mode != 'pdf'}" >
+      <apex:outputPanel id="blankPanel"/>
+      <apex:form >
+      <apex:actionFunction action="{!saveAttachment}" name="SaveAccPlan" rerender="blankPanel"/>
+      </apex:form>
+      <center><a class="btn" onclick="SaveAccPlan();" href="apex/GenerateAccountPlanPDF?id={!accountPlanObj.Id}&mode=pdf" style="text-decoration:none" download="AccountPlan.pdf">Download PDF</a></center>
+      <br/>
+      </apex:outputPanel>
+      
+      <!-- Customer Information Section on PDF -->
+      <apex:outputPanel id="pdfPanel">
+      <table class="table-bordered" style="width:94%;border-spacing: 2 !important" cellspacing="0" cellpadding="0">
+      <tr><td colspan="4" style="padding-left:0px !important;" ><div class="title">{!$Label.ACCOUNTPLANNING_PDF_Account_Team_Vision}</div></td></tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold;text-align:left;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Account_Name}</td>
+
+            <td  colspan="3" width="75%" style="font-size: 13px; font-weight: normal;text-align:left;padding-left : 10px;"  >{!accountPlanObj.account__r.name}</td>
+         </tr>
+         <tr>
+         <td width="25%" style="font-size: 13px; font-weight: bold;text-align:left;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Industry}</td>
+            <td width="25%" style="padding-left : 10px;">{!accountPlanObj.Account_Industry__c}</td>
+         <td width="25%" style="font-size: 13px; font-weight: bold;text-align:left;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Sector}</td>
+            <td width="25%" style="padding-left : 10px;">{!accountPlanObj.Account_Sector__c}</td>   
+         </tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold;text-align:left;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Vision}</td>
+            <td  colspan="3" width="75%" style="font-size: 13px; font-weight: normal;text-align:left;padding-left : 10px;"  >{!accountPlanObj.Experian_Vision_for_Account__c}</td>
+        </tr>
+      </table>
+      <br />
+      <br />
+      
+      <!-- Account Team Section on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;margin-top:{!If(AND(accPlanTeamList.size <= 8 , $Request.mode == 'pdf'), 150, 10)}px !important;">
+      <tr><td colspan="2" style="padding-left:0px !important;"> <div class="title">{!$Label.ACCOUNTPLANNING_PDF_Account_Team}</div> </td></tr>
+         <tr style="background-color: rgb(207, 207, 207);">
+            <td width="25%" style="font-size: 13px; font-weight: bold;text-align:left;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Name}</td>
+            <td width="25%" style="font-size: 13px; font-weight: bold;text-align:left;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Responsibility}</td>
+         </tr>
+            <apex:repeat value="{!accPlanTeamList}" var="teamMember">
+            <tr>
+               <td width="50%" style="font-size: 13px;padding-left : 10px;">
+                  {!teamMember.User__r.Name}
+               </td>
+               <td width="50%;" style="font-size: 13px;padding-left : 10px;">
+                  {!teamMember.Job_Title__c}
+               </td>
+            </tr>
+            </apex:repeat>
+      </table>
+      <br />
+      <br />
+      
+      <div class="page-break" />  
+            <!-- Customer Information Section on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;margin-top:10px;">
+      <tr><td colspan="6" style="padding-left:0px !important;"> <div class="title">{!$Label.ACCOUNTPLANNING_PDF_Client_Information}</div></td></tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Core_Business}
+            </td>
+            <td colspan="5" style="padding-left : 10px;" >{!accountPlanObj.Core_Business__c}</td>
+         </tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Capex_in_our_Domain}
+            </td>
+            <td style = "padding-left : 10px;">{!accountPlanObj.Annual_CAPEX_in_Experian_Domain__c}</td>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_Our_Share}
+            </td>
+            <td  style = "padding-left : 10px;">{!accountPlanObj.Experian_CAPEX_share__c}</td>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Total}
+            </td>
+            <td style = "padding-left : 10px;">{!accountPlanObj.Experian_Capex_Total__c}</td>
+         </tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Opex_in_our_Domain}
+            </td>
+            <td style = "padding-left : 10px;">{!accountPlanObj.Annual_OPEX_in_Experian_Domain__c}</td>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;"> 
+               {!$Label.ACCOUNTPLANNING_PDF_Our_Share}
+            </td>
+            <td style = "padding-left : 10px;">{!accountPlanObj.Experian_OPEX_Share__c}</td>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Total}
+            </td>
+            <td  style = "padding-left : 10px;">{!accountPlanObj.Experian_OPEX_Total__c}</td>
+         </tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Strategic_Direction}
+            </td>
+            <td colspan="5" style = "padding-left : 10px;">{!accountPlanObj.Strategic_Direction__c}</td>
+         </tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Business_Objective}
+            </td>
+            <td colspan="5" style = "padding-left : 10px;">{!accountPlanObj.Business_Objectives__c}</td>
+         </tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Major_Changes}
+            </td>
+            <td colspan="5" style = "padding-left : 10px;">{!accountPlanObj.Major_Changes__c}</td>
+         </tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Major_Competitors}
+            </td>
+            <td colspan="5" style = "padding-left : 10px;">{!accountPlanObj.Major_Competitors__c}</td>
+         </tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Major_Partners}
+            </td>
+            <td colspan="5" style = "padding-left : 10px;">{!accountPlanObj.Major_Partners__c}</td>
+         </tr>
+         <tr>
+            <td width="25%" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Experian_Annualised_Revenue}
+            </td>
+            <td colspan="5" style = "padding-left : 10px;">{!accountPlanObj.Experian_Annualised_Revenue__c}</td>
+         </tr>
+      </table>
+      
+      <br />
+      <br />
+      
+
+            <!-- Recent History Section on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;margin-top:30px !important">
+      <tr><td colspan="2" style="padding-left:0px !important;"> <div class="title"> {!$Label.ACCOUNTPLANNING_PDF_Recent_History}</div></td></tr>
+         <tr>
+            <td width="172.5px"  style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Summary}
+            </td>
+            <td width="517.5px" style = "padding-left : 10px;">{!accountPlanObj.Summary_Recent_History__c}</td>
+         </tr>
+         <tr>
+            <td width="172.5px" style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Main_Recent_Successes}
+            </td>
+            <td width="517.5px" style = "padding-left : 10px;">{!accountPlanObj.Recent_Successes__c}</td>
+         </tr>
+         <tr>
+            <td width="172.5px"  style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Objectives_Not_Achieved}
+            </td>
+            <td width="517.5px" style = "padding-left : 10px;">{!accountPlanObj.Objectives_Not_Achieved__c}</td>
+         </tr>
+         <tr>
+            <td width="172.5px"  style="font-size: 13px; font-weight: bold; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Lessons_Learned}
+            </td>
+            <td width="517.5px" style = "padding-left : 10px;">{!accountPlanObj.Lessons_Learned__c}</td>
+         </tr>
+      </table>
+      
+      <br />
+      <br />
+      <div class="page-break" />
+      
+      <!-- Account Penetration Section on PDF -->
+      <table class="table-bordered" id="CBTable" style="width:94%;border-spacing: 0 !important;margin-top:10px;">
+      <tr><td colspan="20" style="padding-left:0px !important;"> <div class="title"> {!$Label.ACCOUNTPLANNING_PDF_Account_Penetration}</div></td></tr>
+         <tr >
+            <td style = "padding-left : 10px;"><b>{!$Label.ACCOUNTPLANNING_PDF_Name_of_the_Entity}</b></td>
+            <apex:repeat value="{!listAPPTemp}" var="keyHeader">
+               <td colspan="2"  style = "padding-left : 10px;">
+                  <b>
+                     <apex:outputText value="{!keyHeader.FirstName}"/>
+                  </b>
+               </td>
+            </apex:repeat>
+            <td colspan="2"  style = "padding-left : 10px;"><b>{!$Label.ACCOUNTPLANNING_PDF_Total_Revenue}</b></td>
+         </tr>
+         <apex:repeat value="{!mapApp}" var="key">
+            <tr >
+               <td style = "padding-left : 10px;">
+                  <apex:outputText value="{!key}" />
+               </td>
+               <apex:repeat value="{!mapApp[key]}" var="item">
+                  <td style="{!IF(item.accountPlanPenet.Penetration__c == 'H', 'background-color:#00FF00;', IF(item.accountPlanPenet.Penetration__c == 'M', 'background-color:#FFFF00;', IF(item.accountPlanPenet.Penetration__c == 'L', 'background-color:#FF0000;', 'background-color:#FFFFFF;')))}; text-align:right;padding-right:2px;" >
+                        <apex:outputText value="{!item.AccRevenue}"/>
+                  </td>
+                  <td style="{!IF(item.accountPlanPenet.Penetration__c == 'H', 'background-color:#00FF00;', IF(item.accountPlanPenet.Penetration__c == 'M', 'background-color:#FFFF00;', IF(item.accountPlanPenet.Penetration__c == 'L', 'background-color:#FF0000;', 'background-color:#FFFFFF;')))}">
+                     <apex:outputText escape="false" value="{!IF(item.accountPlanPenet.Penetration__c == null, '&nbsp;&nbsp;&nbsp;&nbsp;', item.accountPlanPenet.Penetration__c)}" /> 
+                  </td>
+               </apex:repeat>
+               <td style="text-align:right;padding-right:2px;" >{!mapCapToTotal[key]}
+               </td>
+               <td>
+                   &nbsp;&nbsp;&nbsp;&nbsp;
+               </td>
+            </tr>
+         </apex:repeat>
+         <tr >
+            <td style = "padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Totals}</td>
+            <apex:repeat value="{!listAccBuTotal}" var="item">
+               <td colspan="2" style="text-align:right;padding-right:2px;" >{!item}
+               </td>
+            </apex:repeat>
+         </tr>
+      </table>
+      <br />
+      <br />
+      <div class="page-break" />
+            
+       <!-- Closed Won Opportunities Section on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;margin-top:{!If(AND(openOpps.size <= 4, wonOpps.size <= 4, $Request.mode == 'pdf'), 150, 10)}px !important;">
+      <tr><td colspan="7" style="padding-left:0px !important;"> <div class="title"> {!$Label.ACCOUNTPLANNING_PDF_Closed_Won_Opportunities} </div></td></tr>
+         <tr>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Name}</td>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Owner}</td>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Primary_Capability}</td>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Business_Unit}</td>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_TCV}</td>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Annualised_Contract_Value}</td>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Close_Date}</td>
+         </tr>
+         <apex:repeat value="{!wonOpps}" var="Opp">
+            <tr>
+               <td style = "padding-left : 10px;">
+                  <apex:outputLink value="/{!Opp.opp.Id}" target="_blank">
+                     <apex:outputField value="{!Opp.opp.Name}"/>
+                  </apex:outputLink>
+               </td>
+               <td style = "padding-left : 10px;">
+                  <apex:outputField value="{!Opp.opp.Owner.Name}"/>
+               </td>
+               <td style = "padding-left : 10px;">
+                  <apex:outputField value="{!Opp.opp.Capability__c}"/>
+               </td>
+               <td style = "padding-left : 10px;">
+                    <apex:repeat value="{!Opp.oppGBL}" var="gbl">
+                      <apex:outputText value="{!gbl}" /><br />
+                    </apex:repeat>
+               </td>
+               <td style = "padding-left : 10px;">
+                  <apex:outputText value="{0, number, 0,000.00}">
+                     <apex:param value="{!Opp.opp.Amount}" />
+                  </apex:outputText>
+                  &nbsp; GBP
+               </td>
+               <td style = "padding-left : 10px;">
+                  <apex:outputText value="{0, number, 0,000.00}">
+                     <apex:param value="{!Opp.opp.Amount_Corp__c}" />
+                  </apex:outputText>
+                  &nbsp; GBP
+               </td>
+               <td style = "padding-left : 10px;">
+                  <apex:outputField value="{!Opp.opp.CloseDate}"/>
+               </td>
+            </tr>
+         </apex:repeat>
+      </table>
+      <br />
+      <br />
+      <div class="page-break" />
+      
+      
+     <table class="table-bordered" style="width:94%;border-spacing: 0 !important;">
+      <tr><td colspan="7" style="padding-left:0px !important;"> <div class="title"> {!$Label.ACCOUNTPLANNING_PDF_Account_Relationship_Status}</div></td></tr>
+         <tr>
+            <td style="font-weight: bold;padding:5px;text-align: center;vertical-align: bottom;"> 
+            <apex:iframe src="apex/AccPlanContactRelStatusPage?id={!$Request.id}&mode=pdf" rendered="{!$Request.mode != 'pdf'}"/>        
+            <apex:Image value="/servlet/servlet.FileDownload?file={!contactRelationImage.Id}" height="100%" width="100%" rendered="{!$Request.mode == 'pdf'}"/>    
+            </td>
+         </tr>
+     </table>
+           
+      
+      <br />
+      <br />
+      <div class="page-break" />
+      
+      
+      
+     <table class="table-bordered" style="width:94%;border-spacing: 0 !important;">
+      <tr><td colspan="7" style="padding-left:0px !important;"> <div class="title"> {!$Label.ACCOUNTPLANNING_PDF_Account_Health_Status}</div></td></tr>
+         <tr>
+            <td style="font-weight: bold;padding:5px;" align="center"> 
+            <apex:Image value="/servlet/servlet.FileDownload?file={!radarChartImageId}" height="100%" rendered="{!($Request.mode == 'pdf' && radarChartImageId != NULL)}"/>
+<!--            T-326874-->
+            <apex:outputLabel rendered="{!IF($Request.mode == 'pdf' && radarChartImageId == NULL,TRUE,FALSE)}">{!$Label.Account_Health_Status}</apex:outputLabel>
+            
+            <c:AccountHealth1 isDownloadPlan="TRUE" rendered="{!$Request.mode != 'pdf'}" />  
+                 
+            </td>
+         </tr>
+     </table>
+     <br />
+     <br />
+     <div class="page-break" />
+     
+     <table class="table-bordered" style="width:94%;border-spacing: 0 !important;">    
+         <tr><td colspan="4" style="padding-left:0px !important;"> <div class="title"> {!$Label.ACCOUNTPLANNING_PDF_Account_Plan_Contacts}</div></td></tr>
+         <tr>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Contact_Name}</td>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Experian_Relationship}</td>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Last_Modified_Date}</td>
+            <td style="font-weight: bold;width:40px;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Include_in_Overall_Health_Status}</td>
+         </tr>
+         <apex:repeat value="{!accPlanContactList}" var="d">
+            <tr>
+               <td style = "padding-left : 10px;">{!d.Contact_Name__c}</td>
+               <td style = "padding-left : 10px;">{!d.Experian_Relationship__c}</td>
+               <td style = "padding-left : 10px;"><apex:outputfield value="{!d.LastModifiedDate}" /></td>
+               <td style = "padding-left : 10px;">{!d.Include_in_Overall_Health_Status__c}</td>
+            </tr>
+         </apex:repeat>
+      </table>
+      <br />
+      <br /> 
+      
+      <div class="page-break" />
+      
+      <!-- Account Dashboard Section on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;">
+      <tr><td colspan="2" style="padding-left:0px !important;"> <div class="title"> {!$Label.ACCOUNTPLANNING_PDF_Account_Dashboard}</div></td></tr>
+         <tr>
+            <td width="350px" style="font-size: 13px; font-weight: bold;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Indicator}
+            </td>
+            <td width="180px" style="font-size: 13px; font-weight: bold;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Status}
+            </td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_RISKS}
+            </td>
+            <!-- Dynamically Decides the color of the section -->
+            <td width="180px" style="{!IF(accountPlanObj.Risks__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Risks__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Risks__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))};padding-left : 10px;">{!accountPlanObj.Risks__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_REFERENCE}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Reference__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Reference__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Reference__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Reference__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_EXECUTIVE}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Executive__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Executive__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Executive__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Executive__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_ONE_EXPERIAN}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.One_Experian__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.One_Experian__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.One_Experian__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.One_Experian__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_CLIENT_PLAN}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Client_Plan__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Client_Plan__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Client_Plan__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Client_Plan__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_FACE_TO_FACE}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Face_to_Face__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Face_to_Face__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Face_to_Face__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Face_to_Face__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_CONTACT_PLAN}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Contact_Plan__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Contact_Plan__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Contact_Plan__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Contact_Plan__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_HEALTH_STATUS}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Health_Status__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Health_Status__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Health_Status__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Health_Status__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_REVENUE}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Revenue__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Revenue__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Revenue__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Revenue__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_OPPORTUNITIES_Dashboard_Text}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Opportunities__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Opportunities__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Opportunities__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Opportunities__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_EXPIRATION}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Expiration__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Expiration__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Expiration__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Expiration__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px; text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_CONTRACTS}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Contracts__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Contracts__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Contracts__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Contracts__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_PAYMENT_ISSUES}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Payment_Issues__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Payment_Issues__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Payment_Issues__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Payment_Issues__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_STABILITY}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Stability__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Stability__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Stability__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Stability__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_SOLUTIONS}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Solutions__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Solutions__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Solutions__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Solutions__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_VALUE}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Value__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Value__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Value__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Value__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_NPS}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.NPS__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.NPS__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.NPS__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.NPS__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_INTERNAL_ACCOUNT_TEAM}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Internal_Account_Team__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Internal_Account_Team__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Internal_Account_Team__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Internal_Account_Team__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_INDUSTRY_EXPERTISE}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Industry_Expertise__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Industry_Expertise__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Industry_Expertise__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Industry_Expertise__c}</td>
+         </tr>
+         <tr>
+            <td width="350px" style="font-size: 13px;text-align:left;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_MAJOR_WINS}
+            </td>
+            <td width="180px" style="{!IF(accountPlanObj.Major_Wins__c == 'Strength', 'background-color:#00FF00', IF(accountPlanObj.Major_Wins__c == 'Negative', 'background-color:#FF0000;', IF(accountPlanObj.Major_Wins__c == 'Neutral', 'background-color:#FFFF00;', 'background-color:#FFFFFF;')))}padding-left : 10px;">{!accountPlanObj.Major_Wins__c}</td>
+         </tr>
+      </table>
+
+      <br />
+      <br />
+      <div class="page-break" />
+      <!-- Competition Section on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;">
+      <tr><td colspan="3" style="padding-left:0px !important;"> <div class="title"> {!$Label.ACCOUNTPLANNING_PDF_Competition}</div></td></tr>
+         <tr>
+            <td width="200px" style="font-size: 13px; font-weight: bold;padding-left : 10px;">
+               {!$Label.ACCOUNTPLANNING_PDF_Competitor}
+            </td>
+            <td width="200px" style="font-size: 13px; font-weight: bold;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Our} 
+               {!$Label.ACCOUNTPLANNING_PDF_Advantage}
+            </td>
+            <td width="200px" style="font-size: 13px; font-weight: bold;padding-left : 10px;">{!$Label.ACCOUNTPLANNING_PDF_Their} 
+               {!$Label.ACCOUNTPLANNING_PDF_Advantage}
+            </td>
+         </tr>
+         <apex:repeat value="{!competitorsList}" var="compList">
+            <tr>
+               <td width="200px" style = "padding-left : 10px;">{!compList.Competitor__r.name}</td>
+               <td width="200px" style = "padding-left : 10px;">
+                  <apex:outputPanel rendered="{!compList.Exp_Adv_1__c != null}" >{!compList.Exp_Adv_1__c}<br /> </apex:outputPanel>
+                  <apex:outputPanel rendered="{!compList.Exp_Adv_2__c != null}" >{!compList.Exp_Adv_2__c}<br /> </apex:outputPanel>
+                  <apex:outputPanel rendered="{!compList.Exp_Adv_3__c != null}" >{!compList.Exp_Adv_3__c}<br /> </apex:outputPanel>                  
+                  <apex:outputPanel rendered="{!compList.Exp_Adv_4__c != null}" >{!compList.Exp_Adv_4__c}<br /> </apex:outputPanel>                  
+                  <apex:outputPanel rendered="{!compList.Exp_Adv_5__c != null}" >{!compList.Exp_Adv_5__c}<br /> </apex:outputPanel>
+               </td>
+               <td width="200px" style = "padding-left : 10px;">
+                  <apex:outputPanel rendered="{!compList.Comp_Adv_1__c != null}" >{!compList.Comp_Adv_1__c}<br /> </apex:outputPanel>
+                  <apex:outputPanel rendered="{!compList.Comp_Adv_2__c != null}" >{!compList.Comp_Adv_2__c}<br /> </apex:outputPanel>
+                  <apex:outputPanel rendered="{!compList.Comp_Adv_3__c != null}" >{!compList.Comp_Adv_3__c}<br /> </apex:outputPanel>                  
+                  <apex:outputPanel rendered="{!compList.Comp_Adv_4__c != null}" >{!compList.Comp_Adv_4__c}<br /> </apex:outputPanel>                  
+                  <apex:outputPanel rendered="{!compList.Comp_Adv_5__c != null}" >{!compList.Comp_Adv_5__c}<br /> </apex:outputPanel>
+               </td>
+            </tr>
+         </apex:repeat>
+      </table>      
+      <br />
+      <br />
+      
+      <div class="page-break" />
+      
+  <!-- SWOT Analysis on PDF -->
+  
+   <table class="table-bordered" style="width:94%;border-spacing: 0 !important;margin-top:10px;">
+      <tr class="header"><td colspan="3" style="padding-left:0px !important;"> <div class="title">{!$Label.ACCOUNTPLANNING_PDF_Experian_SWOT_Analysis}</div></td></tr>
+         <tr>
+            <td width="50%" style="font-size: 13px; font-weight: bold;text-align: left;padding-left : 10px;">
+                  <!-- Strengths starts here -->
+               <apex:outputPanel styleClass="swot oHidden" layout="block">
+                  <apex:outputPanel styleClass="pull-left box greenTheme"
+                     layout="block">
+                     <h4>{!$Label.ACCOUNTPLANNING_PDF_Strengths}</h4>
+                     <!-- UL in here -->
+                     <ul class="oHidden" id="strengthsId">
+                        <apex:repeat value="{!strengthAccPlanSWOTs}" var="accPlanSwot"
+                           rendered="{!strengthAccPlanSWOTS.size>0}">
+                           <apex:variable var="chk" value="" rendered="{!!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left window" style="">
+                              <apex:outputPanel styleClass="description" layout="block">
+                                 <strong>{!$Label.ACCOUNTPLANNING_PDF_Description}: </strong>
+                                 <apex:outputText value="{!accPlanSwot.Description__c}"
+                                    id="strengthDesc" />
+                              </apex:outputPanel>
+                              <apex:outputPanel styleClass="importance" layout="block">
+                                 <strong> {!$Label.ACCOUNTPLANNING_PDF_Importance}: </strong>
+                                 <apex:outputPanel styleClass="value"> 
+                                    <apex:outputText value="{!accPlanSwot.Importance__c}/10"
+                                       id="strengthImportance" />
+                                 </apex:outputPanel>
+                              </apex:outputPanel>
+                           </li>
+                           </apex:variable>
+                           <apex:variable var="chk" value="" rendered="{!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left empty"></li>
+                           </apex:variable>
+                        </apex:repeat>
+                     </ul>
+                  </apex:outputPanel>
+                  <!-- Strengths end here -->
+               </apex:outputPanel>
+            </td>
+            <td width="50%" style="font-size: 13px; font-weight: bold;text-align: left;">
+                  <!-- Weaknesses starts here -->
+                <apex:outputPanel styleClass="swot oHidden" layout="block">
+                  <apex:outputPanel styleClass="pull-left box redTheme"
+                     layout="block">
+                     <h4>{!$Label.ACCOUNTPLANNING_PDF_Weaknesses}</h4>
+                     <!-- UL in here -->
+                     <ul class="oHidden" id="strengthsId">
+                        <apex:repeat value="{!weaknessAccPlanSWOTs}" var="accPlanSwot"
+                           rendered="{!weaknessAccPlanSWOTs.size>0}">
+                           <apex:variable var="chk" value="" rendered="{!!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left window" style="">
+                              <apex:outputPanel styleClass="description" layout="block">
+                                 <strong>{!$Label.ACCOUNTPLANNING_PDF_Description}: </strong>
+                                 <apex:outputText value="{!accPlanSwot.Description__c}"
+                                    id="strengthDesc" />
+                              </apex:outputPanel>
+                              <apex:outputPanel styleClass="importance" layout="block">
+                                 <strong> {!$Label.ACCOUNTPLANNING_PDF_Importance}: </strong>
+                                 <apex:outputPanel styleClass="value">
+                                    <apex:outputText value="{!accPlanSwot.Importance__c}/10"
+                                       id="strengthImportance" />
+                                 </apex:outputPanel>
+                              </apex:outputPanel>
+                           </li>
+                           </apex:variable>
+                           <apex:variable var="chk" value="" rendered="{!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left empty"></li>
+                           </apex:variable>
+                        </apex:repeat>
+                     </ul>
+                  </apex:outputPanel>
+                  <!-- Weaknesses ends here -->
+               </apex:outputPanel>
+            </td>
+         </tr>
+      </table>   
+      <!-- End of content block -->
+     
+     <div class="page-break" /> 
+     
+       <table class="table-bordered" style="width:94%;border-spacing: 0 !important;">
+         <tr>
+            <td width="50%" style="font-size: 13px; font-weight: bold;text-align: left;">            
+                <!-- Opportunities starts here -->
+               <apex:outputPanel styleClass="swot oHidden" layout="block">
+                  <apex:outputPanel styleClass="pull-left box greenTheme"
+                     layout="block">
+                     <h4>{!$Label.ACCOUNTPLANNING_PDF_Opportunities}</h4>
+                     <!-- UL in here -->
+                     <ul class="oHidden" id="strengthsId">
+                        <apex:repeat value="{!opportunityAccPlanSWOTs}" var="accPlanSwot"
+                           rendered="{!opportunityAccPlanSWOTs.size>0}">
+                           <apex:variable var="chk" value="" rendered="{!!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left window" style="">
+                              <apex:outputPanel styleClass="description" layout="block">
+                                 <strong>{!$Label.ACCOUNTPLANNING_PDF_Description}: </strong>
+                                 <apex:outputText value="{!accPlanSwot.Description__c}"
+                                    id="strengthDesc" />
+                              </apex:outputPanel>
+                              <apex:outputPanel styleClass="importance" layout="block">
+                                 <strong> {!$Label.ACCOUNTPLANNING_PDF_Importance}: </strong>
+                                 <apex:outputPanel styleClass="value">
+                                    <apex:outputText value="{!accPlanSwot.Importance__c}/10"
+                                       id="strengthImportance" />
+                                 </apex:outputPanel>
+                              </apex:outputPanel>
+                           </li>
+                           </apex:variable>
+                           <apex:variable var="chk" value="" rendered="{!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left empty"></li>
+                           </apex:variable>
+                        </apex:repeat>
+                     </ul>
+                  </apex:outputPanel>
+               </apex:outputPanel>           
+                <!-- Opportunities ends here -->
+            </td>
+            <td width="50%" style="font-size: 13px; font-weight: bold;text-align: left;">            
+                <!-- Threats starts here -->
+                <apex:outputPanel styleClass="swot oHidden" layout="block">
+                  <apex:outputPanel styleClass="pull-left box redTheme"
+                     layout="block">
+                     <h4>{!$Label.ACCOUNTPLANNING_PDF_Threats}</h4>
+                     <!-- UL in here -->
+                     <ul class="oHidden" id="strengthsId">
+                        <apex:repeat value="{!threatAccPlanSWOTs}" var="accPlanSwot"
+                           rendered="{!threatAccPlanSWOTs.size>0}">
+                           <apex:variable var="chk" value="" rendered="{!!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left window" style="">
+                              <apex:outputPanel styleClass="description" layout="block">
+                                 <strong>{!$Label.ACCOUNTPLANNING_PDF_Description}: </strong>
+                                 <apex:outputText value="{!accPlanSwot.Description__c}"
+                                    id="strengthDesc" />
+                              </apex:outputPanel>
+                              <apex:outputPanel styleClass="importance" layout="block">
+                                 <strong> {!$Label.ACCOUNTPLANNING_PDF_Importance}: </strong>
+                                 <apex:outputPanel styleClass="value">
+                                    <apex:outputText value="{!accPlanSwot.Importance__c}/10"
+                                       id="strengthImportance" />
+                                 </apex:outputPanel>
+                              </apex:outputPanel>
+                           </li>
+                           </apex:variable>
+                           <apex:variable var="chk" value="" rendered="{!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left empty"></li>
+                           </apex:variable>
+                        </apex:repeat>
+                     </ul>
+                  </apex:outputPanel>
+                  <!-- Threats end here -->
+               </apex:outputPanel>
+            </td>
+         </tr>
+      </table>   
+      <br/><br/>
+      <!-- End of content block -->
+     
+     <div class="page-break" /> 
+     
+     
+       <!-- Client SWOT Analysis on PDF -->
+  
+   <table class="table-bordered" style="width:94%;border-spacing: 0 !important;">
+      <tr class="header"><td colspan="3" style="padding-left:0px !important;"> <div class="title">{!$Label.ACCOUNTPLANNING_PDF_Client_SWOT_Analysis}</div></td></tr>
+         <tr>
+            <td width="50%" style="font-size: 13px; font-weight: bold;text-align: left;">
+                  <!-- Strengths starts here -->
+               <apex:outputPanel styleClass="swot oHidden" layout="block">
+                  <apex:outputPanel styleClass="pull-left box greenTheme"
+                     layout="block">
+                     <h4>{!$Label.ACCOUNTPLANNING_PDF_Strengths}</h4>
+                     <!-- UL in here -->
+                     <ul class="oHidden" id="strengthsId">
+                        <apex:repeat value="{!ClientstrengthAccPlanSWOTs}" var="accPlanSwot"
+                           rendered="{!ClientstrengthAccPlanSWOTS.size>0}">
+                           <apex:variable var="chk" value="" rendered="{!!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left window" style="">
+                              <apex:outputPanel styleClass="description" layout="block">
+                                 <strong>{!$Label.ACCOUNTPLANNING_PDF_Description}: </strong>
+                                 <apex:outputText value="{!accPlanSwot.Description__c}"
+                                    id="strengthDesc" />
+                              </apex:outputPanel>
+                              <apex:outputPanel styleClass="importance" layout="block">
+                                 <strong> {!$Label.ACCOUNTPLANNING_PDF_Importance}: </strong>
+                                 <apex:outputPanel styleClass="value">
+                                    <apex:outputText value="{!accPlanSwot.Importance__c}/10"
+                                       id="strengthImportance" />
+                                 </apex:outputPanel>
+                              </apex:outputPanel>
+                           </li>
+                           </apex:variable>
+                           <apex:variable var="chk" value="" rendered="{!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left empty"></li>
+                           </apex:variable>
+                        </apex:repeat>
+                     </ul>
+                  </apex:outputPanel>
+                  <!-- Strengths end here -->
+               </apex:outputPanel>
+            </td>
+            <td width="50%" style="font-size: 13px; font-weight: bold;text-align: left;">
+                  <!-- Weaknesses starts here -->
+                <apex:outputPanel styleClass="swot oHidden" layout="block">
+                  <apex:outputPanel styleClass="pull-left box redTheme"
+                     layout="block">
+                     <h4>{!$Label.ACCOUNTPLANNING_PDF_Weaknesses}</h4>
+                     <!-- UL in here -->
+                     <ul class="oHidden" id="strengthsId">
+                        <apex:repeat value="{!ClientweaknessAccPlanSWOTs}" var="accPlanSwot"
+                           rendered="{!ClientweaknessAccPlanSWOTs.size>0}">
+                           <apex:variable var="chk" value="" rendered="{!!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left window" style="">
+                              <apex:outputPanel styleClass="description" layout="block">
+                                 <strong>{!$Label.ACCOUNTPLANNING_PDF_Description}: </strong>
+                                 <apex:outputText value="{!accPlanSwot.Description__c}"
+                                    id="strengthDesc" />
+                              </apex:outputPanel>
+                              <apex:outputPanel styleClass="importance" layout="block">
+                                 <strong> {!$Label.ACCOUNTPLANNING_PDF_Importance}: </strong>
+                                 <apex:outputPanel styleClass="value">
+                                    <apex:outputText value="{!accPlanSwot.Importance__c}/10"
+                                       id="strengthImportance" />
+                                 </apex:outputPanel>
+                              </apex:outputPanel>
+                           </li>
+                           </apex:variable>
+                           <apex:variable var="chk" value="" rendered="{!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left empty"></li>
+                           </apex:variable>
+                        </apex:repeat>
+                     </ul>
+                  </apex:outputPanel>
+                  <!-- Weaknesses ends here -->
+               </apex:outputPanel>
+            </td>
+         </tr>
+      </table>   
+      <!-- End of content block -->
+     
+     <div class="page-break" /> 
+     
+       <table class="table-bordered" style="width:94%;border-spacing: 0 !important;">
+         <tr>
+            <td width="50%" style="font-size: 13px; font-weight: bold;text-align: left;">            
+                <!-- Opportunities starts here -->
+               <apex:outputPanel styleClass="swot oHidden" layout="block">
+                  <apex:outputPanel styleClass="pull-left box greenTheme"
+                     layout="block">
+                     <h4>{!$Label.ACCOUNTPLANNING_PDF_Opportunities}</h4>
+                     <!-- UL in here -->
+                     <ul class="oHidden" id="strengthsId">
+                        <apex:repeat value="{!ClientopportunityAccPlanSWOTs}" var="accPlanSwot"
+                           rendered="{!ClientopportunityAccPlanSWOTs.size>0}">
+                           <apex:variable var="chk" value="" rendered="{!!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left window" style="">
+                              <apex:outputPanel styleClass="description" layout="block">
+                                 <strong>{!$Label.ACCOUNTPLANNING_PDF_Description}: </strong>
+                                 <apex:outputText value="{!accPlanSwot.Description__c}"
+                                    id="strengthDesc" />
+                              </apex:outputPanel>
+                              <apex:outputPanel styleClass="importance" layout="block">
+                                 <strong> {!$Label.ACCOUNTPLANNING_PDF_Importance}: </strong>
+                                 <apex:outputPanel styleClass="value">
+                                    <apex:outputText value="{!accPlanSwot.Importance__c}/10"
+                                       id="strengthImportance" />
+                                 </apex:outputPanel>
+                              </apex:outputPanel>
+                           </li>
+                           </apex:variable>
+                           <apex:variable var="chk" value="" rendered="{!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left empty"></li>
+                           </apex:variable>
+                        </apex:repeat>
+                     </ul>
+                  </apex:outputPanel>
+               </apex:outputPanel>           
+                <!-- Opportunities ends here -->
+            </td>
+            <td width="50%" style="font-size: 13px; font-weight: bold;text-align: left;">            
+                <!-- Threats starts here -->
+                <apex:outputPanel styleClass="swot oHidden" layout="block">
+                  <apex:outputPanel styleClass="pull-left box redTheme"
+                     layout="block">
+                     <h4>{!$Label.ACCOUNTPLANNING_PDF_Threats}</h4>
+                     <!-- UL in here -->
+                     <ul class="oHidden" id="strengthsId">
+                        <apex:repeat value="{!ClientthreatAccPlanSWOTs}" var="accPlanSwot"
+                           rendered="{!ClientthreatAccPlanSWOTs.size>0}">
+                           <apex:variable var="chk" value="" rendered="{!!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left window" style="">
+                              <apex:outputPanel styleClass="description" layout="block">
+                                 <strong>{!$Label.ACCOUNTPLANNING_PDF_Description}: </strong>
+                                 <apex:outputText value="{!accPlanSwot.Description__c}"
+                                    id="strengthDesc" />
+                              </apex:outputPanel>
+                              <apex:outputPanel styleClass="importance" layout="block">
+                                 <strong> {!$Label.ACCOUNTPLANNING_PDF_Importance}: </strong>
+                                 <apex:outputPanel styleClass="value">
+                                    <apex:outputText value="{!accPlanSwot.Importance__c}/10"
+                                       id="strengthImportance" />
+                                 </apex:outputPanel>
+                              </apex:outputPanel>
+                           </li>
+                           </apex:variable>
+                           <apex:variable var="chk" value="" rendered="{!ISNULL(accPlanSwot.Id)}">
+                           <li class="pull-left empty"></li>
+                           </apex:variable>
+                        </apex:repeat>
+                     </ul>
+                  </apex:outputPanel>
+                  <!-- Threats end here -->
+               </apex:outputPanel>
+            </td>
+         </tr>
+      </table>   
+      <br/><br/>
+      <!-- End of content block -->
+     
+     <div class="page-break" /> 
+     
+      <!-- Account Development Action Plan on PDF -->
+      
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important">
+      <tr><td colspan="6" style="padding-left:0px !important;"> <div class="title">{!$Label.ACCOUNTPLANNING_PDF_Value_Areas_and_Critical_Success_Factors}</div> </td></tr>
+         <tr>
+            <td style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Type}</td>
+            <!--<td style="font-weight: bold;padding-left:10px;">Attr Client</td>-->
+            <!--<td style="font-weight: bold;padding-left:10px;">Attr Us</td>-->
+            <td style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Current_Year}</td>
+            <td style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Year}+1</td>
+            <td style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Year}+2</td>
+         </tr>
+         <apex:repeat value="{!listAPO}" var="apo">
+            <tr>
+               <td style = "padding-left:10px;">
+                  <apex:outputText value="{!apo.Type__c}"
+                     style="{!if(apo.Type__c='Total','font-weight: bold;', 'font-weight:normal;')}" />
+               </td>
+               <!--<td width="80px;" style="{!IF(apo.Attr_to_Account__c == 'High', 'background-color:#00FF00;', IF(apo.Attr_to_Account__c == 'Medium', 'background-color:#FFFF00;', IF(apo.Attr_to_Account__c == 'Low', 'background-color:#FF0000;', 'background-color:#FFFFFF;')))}">{!apo.Attr_to_Account__c}</td>-->
+               <!--<td width="80px;" style="{!IF(apo.Attr_to_Experian__c == 'High', 'background-color:#00FF00;', IF(apo.Attr_to_Experian__c == 'Medium', 'background-color:#FFFF00;', IF(apo.Attr_to_Experian__c == 'Low', 'background-color:#FF0000;', 'background-color:#FFFFFF;')))}" >{!apo.Attr_to_Experian__c}</td>-->
+               <td  style = "padding-left:10px;">
+                  <apex:outputfield value="{!apo.Current_Year_Revenue__c}" />
+               </td>
+               <td style = "padding-left:10px;">
+                  <apex:outputfield value="{!apo.Year_1_Revenue__c}" />
+               </td>
+               <td style = "padding-left:10px;">
+                  <apex:outputfield value="{!apo.Year_2_Revenue__c}" />
+               </td>
+            </tr>
+         </apex:repeat>
+      </table>
+      <br/><br/>
+      <!-- Open Opportunities Section on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;margin-top:10px;">
+      <tr><td colspan="9" style="padding-left:0px !important;"> <div class="title"> {!$Label.ACCOUNTPLANNING_PDF_Open_Opportunities}</div></td></tr>
+         <tr>
+            <td width="100px" style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Name}</td>
+            <td width="100px" style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Attr_Client}</td>
+            <td width="100px" style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Attr_Us}</td>
+            <td width="100px" style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Business_Unit}</td>
+            <td width="100px" style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_TCV}</td>
+            <td width="100px" style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Annualised_Contract_Value}</td>            
+            <td width="100px" style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Stage}</td>
+            <td width="100px" style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Close_Date}</td>
+            <td width="100px" style="font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Probability}</td>
+         </tr>
+         <apex:repeat value="{!openOpps}" var="Opp">
+            <tr>
+               <td width="100px" style = "padding-left:10px;">
+                  <apex:outputLink value="/{!Opp.opp.Id}" target="_blank">
+                     <apex:outputField value="{!Opp.opp.Name}"/>
+                  </apex:outputLink>
+               </td >
+               <td width="80px" style = "padding-left:10px;">
+                  <apex:repeat value="{!Opp.opp.Account_Plan_Opportunity__r}" var="apo">
+                     <apex:outputText value="{!apo.Attr_to_Account__c}" style="{!IF(apo.Attr_to_Account__c == 'High', 'background-color:#00FF00;', IF(apo.Attr_to_Account__c == 'Medium', 'background-color:#FFFF00;', IF(apo.Attr_to_Account__c == 'Low', 'background-color:#FF0000;', 'background-color:#FFFFFF;')))}"/>
+                  </apex:repeat>
+               </td>
+               <td width="80px" style = "padding-left:10px;">
+                  <apex:repeat value="{!Opp.opp.Account_Plan_Opportunity__r}" var="apo">
+                     <apex:outputText value="{!apo.Attr_to_Experian__c}" style="{!IF(apo.Attr_to_Experian__c == 'High', 'background-color:#00FF00;', IF(apo.Attr_to_Experian__c == 'Medium', 'background-color:#FFFF00;', IF(apo.Attr_to_Experian__c == 'Low', 'background-color:#FF0000;', 'background-color:#FFFFFF;')))}"/>
+                  </apex:repeat>
+               </td>
+               <td width="100px" style = "padding-left:10px;">
+                    <apex:repeat value="{!Opp.oppGBL}" var="gbl">
+                      <apex:outputText value="{!gbl}" /><br />
+                    </apex:repeat>
+               </td>
+               <td width="100px" style = "padding-left:10px;">
+                  <apex:outputText value="{0, number, 0,000.00}">
+                     <apex:param value="{!Opp.opp.Amount}" />
+                  </apex:outputText>
+                  &nbsp; <apex:outputText value="{!Opp.opp.CurrencyISOCode}"/>
+               </td>
+               <td width="100px" style = "padding-left:10px;">
+                  <apex:outputText value="{0, number, 0,000.00}">
+                     <apex:param value="{!Opp.opp.Amount_Corp__c}" />
+                  </apex:outputText>
+                  &nbsp; <apex:outputText value="{!Opp.opp.CurrencyISOCode}"/>
+               </td>
+               <td width="100px" style = "padding-left:10px;">
+                  <apex:outputField value="{!Opp.opp.StageName}"/>
+               </td>
+               <td width="100px" style = "padding-left:10px;">
+                  <apex:outputField value="{!Opp.opp.CloseDate}"/>
+               </td>
+               <td width="100px" style = "padding-left:10px;">
+                  <apex:outputField value="{!Opp.opp.Probability}"/>
+               </td>
+            </tr>
+         </apex:repeat>
+      </table>
+      <br />
+      <br />
+      
+       <!-- New Sales Opportunities Plan on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;margin-top:{!If(AND(listAPO.size == 0 , $Request.mode == 'pdf'), 80, 10)}px !important;">
+         <tr><td colspan="6" style="padding-left:0px !important;"> <div class="title">{!$Label.ACCOUNTPLANNING_PDF_Potential_Future_Opportunities}</div> </td></tr>
+         <tr>
+            <td width="200px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_Sales_Opportunities}
+            </td>
+            <td width="80px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_Attr_Client}
+            </td>
+            <td width="80px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_Attr_Us}
+            </td>
+            <td width="80px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_Current_Year}
+            </td>
+            <td width="80px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Year}
+               1
+            </td>
+            <td width="80px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Year}
+               2
+            </td>
+         </tr>
+         <apex:repeat value="{!accPlanOppList}" var="accPlanOpp">
+            <tr>
+               <td width="100px;" style = "padding-left:10px;">{!accPlanOpp.Opportunity_Name__c}</td>
+               <td width="80px;" style="{!IF(accPlanOpp.Attr_to_Account__c == 'High', 'background-color:#00FF00;', IF(accPlanOpp.Attr_to_Account__c == 'Medium', 'background-color:#FFFF00;', IF(accPlanOpp.Attr_to_Account__c == 'Low', 'background-color:#FF0000;', 'background-color:#FFFFFF;')))}padding-left:10px;" >{!accPlanOpp.Attr_to_Account__c}</td>
+               <td width="80px;" style="{!IF(accPlanOpp.Attr_to_Experian__c == 'High', 'background-color:#00FF00;', IF(accPlanOpp.Attr_to_Experian__c == 'Medium', 'background-color:#FFFF00;', IF(accPlanOpp.Attr_to_Experian__c == 'Low', 'background-color:#FF0000;', 'background-color:#FFFFFF;')))}padding-left:10px;">{!accPlanOpp.Attr_to_Experian__c}</td>
+               <td width="80px;"  style = "padding-left:10px;">{!accPlanOpp.Current_Year_Revenue__c}</td>
+               <td width="80px;" style = "padding-left:10px;">{!accPlanOpp.Year_1_Revenue__c}</td>
+               <td width="80px;" style = "padding-left:10px;">{!accPlanOpp.Year_2_Revenue__c}</td>
+            </tr>
+         </apex:repeat>
+      </table>
+      <br />
+      <br />
+        <!-- Critical Success Factors section on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;margin-top:{!If(AND(accPlanOppList.size == 0 , $Request.mode == 'pdf'), 70, 10)}px !important;">
+         <tr><td style="padding-left:0px !important;"> <div class="title">{!$Label.ACCOUNTPLANNING_PDF_Critical_Success_Factors}</div> </td></tr>
+         <tr>
+            <td width="700px" style="font-size: 13px; font-weight: bold;text-align:left;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Description}
+               ({!$Label.ACCOUNTPLANNING_PDF_How_to_mitigate})
+            </td>
+         </tr>
+         <apex:repeat value="{!criticalSuccessFacList}" var="successFactor">
+            <tr>
+               <td width="700px" style="text-align:left;padding-left:10px;">{!successFactor.Description__c}</td>
+            </tr>
+         </apex:repeat>
+      </table>
+      <br/><br/>
+      <div class="page-break" /> 
+      <!-- Account Developement Action Plan section on PDF -->
+      <table class="table-bordered" style="width:94%;border-spacing: 0 !important;margin-top:10px;">
+         <tr><td colspan="6" style="padding-left:0px !important;"> <div class="title">{!$Label.ACCOUNTPLANNING_PDF_Account_Development_Action_Plan}</div> </td></tr>
+         <tr>
+            <td width="100px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_What_must_be_done}
+            </td>
+            <td width="100px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_By_whom}
+            </td>
+            <td width="100px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_By_When}
+            </td>
+            <td width="100px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">{!$Label.ACCOUNTPLANNING_PDF_Investment}</td>
+            <td width="100px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_Date_Completed}
+            </td>
+            <td width="100px;" style="font-size: 13px; font-weight: bold;padding-left:10px;">
+              {!$Label.ACCOUNTPLANNING_PDF_Result_of_Action}
+            </td>
+         </tr>
+         <apex:repeat value="{!taskList}" var="taskObj">
+            <tr>
+               <td width="100px;" style = "padding-left:10px;">{!taskObj.Subject}</td>
+               <td width="100px;" style = "padding-left:10px;">{!taskObj.Owner.Name}</td>
+               <td width="100px;" style = "padding-left:10px;">
+                    <apex:outputText value="{0,date,MM/dd/yy}">
+                      <apex:param value="{!taskObj.ActivityDate}" />
+                    </apex:outputText>
+               </td>
+               <td width="100px;" style = "padding-left:10px;">{!taskObj.Investment__c}</td>
+               <td width="100px;" style = "padding-left:10px;">
+                   <apex:outputText value="{0,date,MM/dd/yy}">
+                     <apex:param value="{!taskObj.Completed_Date__c}" />
+                   </apex:outputText> </td>
+               <td width="100px;" style = "padding-left:10px;">{!taskObj.Result__c}</td>
+            </tr>
+         </apex:repeat>
+      </table>     
+ </apex:outputPanel> 
+  
+</apex:page>

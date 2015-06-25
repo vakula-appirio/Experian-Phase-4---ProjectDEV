@@ -1,0 +1,522 @@
+<!--
+/**=====================================================================
+ * Appirio, Inc
+ * Name: SWOTAnalysis
+ * Description: 
+ * Created Date: June 06th, 2014
+ * Created By: Appirio
+ * 
+ * Date Modified      Modified By                  Description of the update
+ * Jan 12th, 2014     Naresh Kr Ojha (Appirio)     As per T-351418.
+*  =====================================================================*/
+-->
+<apex:page standardController="Account_Plan__c" extensions="SwotAnalysisController" showHeader="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0"  standardStylesheets="false" > <!-- Retrieve the Experian records by default -->
+  <apex:form id="fullScreen">
+  <html>
+    <!--style sheets-->
+    <apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'swa/css/style.css')}"/>  <!-- Calling both Stylesheets from the static resource -->
+    <apex:stylesheet value="{!URLFOR($Resource.AccountPlanningCSS, 'swa/css/jquery.selectbox.css')}"/> <!-- Calling both Stylesheets from the static resource -->
+
+
+
+    <apex:outputText value="{!Account_Plan__c.Account__c}" rendered="false"/>
+    <title>{!$Label.ACCOUNTPLANNING_SWOT_TITLE}</title>
+    <header>
+      <apex:outputPanel styleClass="inner" layout="block">
+        <apex:outputText styleClass="logo"/> <!-- We can place a link instead in here -->
+      </apex:outputPanel>
+    </header>
+
+
+
+
+    <!-- Navigation Bar + Buttons on it that call controller methods -->
+    <nav> <!-- Need this and closing nav tags, they make the blue bar appear along the top -->
+      <apex:outputPanel styleClass="inner" layout="block">
+        <ul>
+          <li class="first">
+            <a href="/{!Account_Plan__c.id}">
+              <span class="icon icon-home"></span>{!$Label.ACCOUNTPLANNING_SWOT_BACKTOPLAN}</a>
+          </li>
+
+          <apex:outputPanel rendered="{!experianActive}" id="selectedExperianRecsLink"> <!-- render this initially. If client link is pressed, don't render this -->
+            <li class="active">
+              <a> <!-- Experian Navigation Link -->
+
+                <span class="icon icon-navigation">
+                <!-- <apex:outputPanel styleClass="icon icon-navigation"> -->
+                  <apex:commandLink action="{!selectExperianSWOTRecords}" value="{!$Label.ACCOUNTPLANNING_SWOT_EXPERIAN}" />
+                <!-- </apex:outputPanel> -->
+                </span>
+              </a>
+              <apex:outputPanel styleClass="icon icon-arrow"/>
+              <!-- <span class="icon icon-arrow"></span> -->
+            </li>
+          </apex:outputPanel>
+ 
+          <apex:outputPanel rendered="{!clientActive}" id="unselectedExperianRecsLink"> <!-- do not render this initially. If client link is pressed, render this -->
+            <li class="next">
+              <a> <!-- Experian Navigation Link -->
+                <span class="icon icon-navigation">
+                  <apex:commandLink action="{!selectExperianSWOTRecords}" value="{!$Label.ACCOUNTPLANNING_SWOT_EXPERIAN}"/>
+                </span>
+              </a>
+            </li>
+          </apex:outputPanel>
+
+          <apex:outputPanel rendered="{!clientActive}" id="selectedClientRecsLink">
+            <li class="active">
+              <a> <!-- Client Navigation Link-->
+                <apex:outputPanel styleClass="icon icon-navigation">
+                  <apex:commandLink action="{!selectClientSWOTRecords}" value="{!parentAccountName}" /> <!-- This needs to be changed to the Account's name -->
+                </apex:outputPanel>
+              </a>
+              <apex:outputPanel styleClass="icon icon-arrow"/>
+            </li>
+          </apex:outputPanel>
+
+          <apex:outputPanel rendered="{!experianActive}" id="unselectedClientRecsLink">
+            <li>
+              <a> <!-- Client Navigation Link-->
+                <apex:outputPanel styleClass="icon icon-navigation">
+                  <apex:commandLink action="{!selectClientSWOTRecords}" value="{!parentAccountName}" />
+                </apex:outputPanel>
+              </a>
+            </li>
+          </apex:outputPanel>
+
+        </ul>
+        <apex:outputPanel styleClass="clear" layout="block"/>
+      </apex:outputPanel>
+    </nav>
+      <!-- End of Navigation Bar + Buttons-->
+
+      <!-- Start of content block -->
+
+      <apex:outputPanel styleClass="content" layout="block">
+        <apex:outputPanel styleClass="analysis-box" layout="block">
+
+          <apex:outputPanel styleClass="title" layout="block">
+            <h2>{!$Label.ACCOUNTPLANNING_SWOT_TITLE}</h2>
+          </apex:outputPanel>
+
+          <apex:outputPanel styleClass="inner" layout="block">
+            <apex:outputPanel styleClass="oHidden" layout="block">
+              <apex:outputPanel styleClass="pull-left" layout="block">
+                <!-- When we click this button, bring up the grey outputpanel overlay, and on top of this, add the modal box. -->
+                <apex:commandLink action="{!showNewItemPopup}" value="{!$Label.ACCOUNTPLANNING_SWOT_ADDITEM}" id="addItemButton" styleClass="button add-item pull-left"/>
+              </apex:outputPanel>
+            </apex:outputPanel>
+
+
+
+            <apex:outputPanel styleClass="dotted-line" layout="block"/>
+            <apex:outputPanel styleClass="swot oHidden" layout="block">
+
+
+              <apex:outputPanel styleClass="pull-left box greenTheme" layout="block">
+                <h4>{!$Label.ACCOUNTPLANNING_SWOT_STRENGTHS}</h4>
+
+                <!-- UL in here -->
+                <ul class="oHidden" id="strengthsId">
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+
+                  <apex:repeat value="{!strengthAccPlanSWOTs}"  var="strengthRecs" rendered="{!strengthAccPlanSWOTS.size>0}">
+                    <li class="pull-left window" style="">
+
+                    <apex:outputPanel styleClass="description" layout="block" >
+                      <strong>{!$Label.ACCOUNTPLANNING_SWOT_DESCRIPTION}: </strong>
+                      <apex:outputText value="{!strengthRecs.Description__c}" id="strengthDesc"/>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel styleClass="importance" layout="block">
+                      <strong>{!$Label.ACCOUNTPLANNING_SWOT_IMPORTANCE}: </strong>
+                      <apex:outputPanel styleClass="value">
+                        <apex:outputText value="{!strengthRecs.Importance__c}/10" id="strengthImportance"/>
+                      </apex:outputPanel>
+                      <input type="hidden" value="" class="olHidden"/>
+                    </apex:outputPanel>
+
+                    <!-- Start of rollout buttons here -->
+                    <div class="editDel hide"> <!-- remove the hide, and make it display on mouseover-->
+                      <span>
+                        <!-- View Button -->
+                        <apex:commandLink id="btnView" action="{!showCurrentAccPlanSWOTRecordPopup}" >{!$Label.ACCOUNTPLANNING_SWOT_VIEW}<!-- we have the record's ID and other field values.
+                         <!-- Cannot call an action here, but can pass the parameter to the controller. Should pass in the full record. -->
+                        <!-- <apex:commandLink id="btnView" value="View" action="{!viewAccPlanSWOTRecord}"> -->
+                          <apex:param name="strengthRecId" assignTo="{!currentRecId}" value="{!strengthRecs.Id}  "/> <!-- -->
+                          <!-- <apex:param name="strengthRec" assignTo="{!currentRecDesc}" value="{!strengthRecs.Description__c} "/> --><!-- needs to be a string, number , or boolean. pass in 3 bits? -->
+                        <!-- </apex:outputLink> -->
+                        </apex:commandLink> <!-- View -->
+                        <!-- End of View Button -->
+
+                      </span> <!-- need to remove this span, and replace it with a command link, (With a param in it) and a method call for when the user clicks it -->
+                      
+                      <!-- Delete Button -->
+                      <span>
+                        <apex:commandLink id="btnDelete" action="{!deleteAccPlanSWOTRecord}" value="{!$Label.ACCOUNTPLANNING_SWOT_DELETE}">
+                          <apex:param name="strengthRecId" assignTo="{!currentRecId}" value="{!strengthRecs.Id}  "/> <!-- param seems to be set correctly here -->
+                        </apex:commandLink>
+                      </span>
+                      <!-- End of Delete Button -->
+
+                    </div>
+                    <!-- End of rollout buttons-->
+
+                    </li>
+                  </apex:repeat>
+                </ul>
+              </apex:outputPanel>
+
+
+              <!-- weaknesses start in here -->
+
+              <apex:outputPanel styleClass="pull-left box redTheme" layout="block">
+                <h4>{!$Label.ACCOUNTPLANNING_SWOT_WEAKNESSES}</h4>
+
+                <!-- UL in here -->
+                <ul class="oHidden" id="strengthsId">
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+
+                  <apex:repeat value="{!weaknessAccPlanSWOTs}"  var="weaknessRecs" rendered="{!weaknessAccPlanSWOTS.size>0}">
+                    <li class="pull-left window" style="">
+
+                    <apex:outputPanel styleClass="description" layout="block">
+                      <strong>{!$Label.ACCOUNTPLANNING_SWOT_DESCRIPTION}: </strong>
+                      <apex:outputText value="{!weaknessRecs.Description__c}" id="weaknessDesc"/>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel styleClass="importance" layout="block">
+                      <strong> {!$Label.ACCOUNTPLANNING_SWOT_IMPORTANCE}: </strong>
+                      <apex:outputPanel styleClass="value">
+                        <apex:outputText value="{!weaknessRecs.Importance__c}/10" id="weaknessImportance"/>
+                      </apex:outputPanel>
+                      <input type="hidden" value="" class="olHidden"/>
+                    </apex:outputPanel>
+
+                    <!-- Start of rollout buttons here -->
+                    <div class="editDel hide"> <!-- remove the hide, and make it display on mouseover-->
+                      <span>
+                        <!-- View Button -->
+                        <apex:commandLink id="btnView" action="{!showCurrentAccPlanSWOTRecordPopup}" >{!$Label.ACCOUNTPLANNING_SWOT_VIEW} <!-- we have the record's ID and other field values.
+                         <!-- Cannot call an action here, but can pass the parameter to the controller. Should pass in the full record. -->
+                        <!-- <apex:commandLink id="btnView" value="View" action="{!viewAccPlanSWOTRecord}"> -->
+                          <apex:param name="weaknessRecId" assignTo="{!currentRecId}" value="{!weaknessRecs.Id}  "/>
+                          <!--<apex:param name="weaknessRec" assignTo="{!currentRecDesc}" value="{!weaknessRecs.Description__c} "/> --> <!-- needs to be a string, number , or boolean. pass in 3 bits? -->
+                        <!-- </apex:outputLink> -->
+                        </apex:commandLink> <!-- View -->
+                        <!-- End of View Button -->
+
+                      </span> <!-- need to remove this span, and replace it with a command link, (With a param in it) and a method call for when the user clicks it -->
+                      
+                      <!-- Delete Button -->
+                      <span>
+                        <apex:commandLink id="btnDelete" action="{!deleteAccPlanSWOTRecord}" value="{!$Label.ACCOUNTPLANNING_SWOT_DELETE}">
+                          <apex:param name="weaknessRecId" assignTo="{!currentRecId}" value="{!weaknessRecs.Id}  "/> <!-- param seems to be set correctly here -->
+                        </apex:commandLink>
+                      </span>
+                      <!-- End of Delete Button -->
+
+                    </div>
+                    <!-- End of rollout buttons-->
+
+                    </li>
+                  </apex:repeat>
+                </ul>
+              </apex:outputPanel>
+
+
+              <!-- weaknesses end here -->
+
+              <!-- Opportunities start here-->
+
+              <apex:outputPanel styleClass="pull-left box greenTheme" layout="block">
+                <h4>{!$Label.ACCOUNTPLANNING_SWOT_OPPORTUNITIES}</h4>
+
+                <!-- UL in here -->
+                <ul class="oHidden" id="strengthsId">
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+
+                  <apex:repeat value="{!opportunityAccPlanSWOTs}"  var="opportunityRecs" rendered="{!opportunityAccPlanSWOTS.size>0}">
+                    <li class="pull-left window" style="">
+
+                    <apex:outputPanel styleClass="description" layout="block">
+                      <strong>{!$Label.ACCOUNTPLANNING_SWOT_DESCRIPTION}: </strong>
+                      <apex:outputText value="{!opportunityRecs.Description__c}" id="opportunityDesc"/>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel styleClass="importance" layout="block">
+                      <strong> {!$Label.ACCOUNTPLANNING_SWOT_IMPORTANCE}: </strong>
+                      <apex:outputPanel styleClass="value">
+                        <apex:outputText value="{!opportunityRecs.Importance__c}/10" id="opportunityImportance"/>
+                      </apex:outputPanel>
+                      <input type="hidden" value="" class="olHidden"/>
+                    </apex:outputPanel>
+
+                    <!-- Start of rollout buttons here -->
+                    <div class="editDel hide"> <!-- remove the hide, and make it display on mouseover-->
+                      <span>
+                        <!-- View Button -->
+                        <apex:commandLink id="btnView" action="{!showCurrentAccPlanSWOTRecordPopup}" >{!$Label.ACCOUNTPLANNING_SWOT_VIEW} <!-- we have the record's ID and other field values.
+                         <!-- Cannot call an action here, but can pass the parameter to the controller. Should pass in the full record. -->
+                        <!-- <apex:commandLink id="btnView" value="View" action="{!viewAccPlanSWOTRecord}"> -->
+                          <apex:param name="opportunityRecId" assignTo="{!currentRecId}" value="{!opportunityRecs.Id} "/>
+                          <!-- <apex:param name="opportunityRec" assignTo="{!currentRecDesc}" value="{!opportunityRecs.Description__c} "/> --> <!-- needs to be a string, number , or boolean. pass in 3 bits? -->
+                        <!-- </apex:outputLink> -->
+                        </apex:commandLink> <!-- View -->
+                        <!-- End of View Button -->
+
+                      </span> <!-- need to remove this span, and replace it with a command link, (With a param in it) and a method call for when the user clicks it -->
+                      
+                      <!-- Delete Button -->
+                      <span>
+                        <apex:commandLink id="btnDelete" action="{!deleteAccPlanSWOTRecord}" value="{!$Label.ACCOUNTPLANNING_SWOT_DELETE}">
+                          <apex:param name="opportunityRecId" assignTo="{!currentRecId}" value="{!opportunityRecs.Id}  "/> <!-- param seems to be set correctly here -->
+                        </apex:commandLink>
+                      </span>
+                      <!-- End of Delete Button -->
+
+                    </div>
+                    <!-- End of rollout buttons-->
+
+                    </li>
+                  </apex:repeat>
+                </ul>
+              </apex:outputPanel>
+
+              <!-- Opportunities end here -->
+
+              <!-- Threats start here -->
+
+              <apex:outputPanel styleClass="pull-left box redTheme" layout="block">
+                <h4>{!$Label.ACCOUNTPLANNING_SWOT_THREATS}</h4>
+
+                <!-- UL in here -->
+                <ul class="oHidden" id="strengthsId">
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+                  <li class="pull-left empty"> </li>
+
+                  <apex:repeat value="{!threatAccPlanSWOTs}"  var="threatRecs" rendered="{!threatAccPlanSWOTS.size>0}">
+                    <li class="pull-left window" style="">
+
+                    <apex:outputPanel styleClass="description" layout="block">
+                      <strong>{!$Label.ACCOUNTPLANNING_SWOT_DESCRIPTION}: </strong>
+                      <apex:outputText value="{!threatRecs.Description__c}" id="threatDesc"/>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel styleClass="importance" layout="block">
+                      <strong> {!$Label.ACCOUNTPLANNING_SWOT_IMPORTANCE}: </strong>
+                      <apex:outputPanel styleClass="value">
+                        <apex:outputText value="{!threatRecs.Importance__c}/10" id="threatImportance"/>
+                      </apex:outputPanel>
+                      <input type="hidden" value="" class="olHidden"/>
+                    </apex:outputPanel>
+
+                    <!-- Start of rollout buttons here -->
+                    <div class="editDel hide"> <!-- remove the hide, and make it display on mouseover-->
+                      <span>
+                        <!-- View Button -->
+                        <apex:commandLink id="btnView" action="{!showCurrentAccPlanSWOTRecordPopup}" >{!$Label.ACCOUNTPLANNING_SWOT_VIEW} <!-- we have the record's ID and other field values.
+                         <!-- Cannot call an action here, but can pass the parameter to the controller. Should pass in the full record. -->
+                        <!-- <apex:commandLink id="btnView" value="View" action="{!viewAccPlanSWOTRecord}"> -->
+                          <apex:param name="threatRecId" assignTo="{!currentRecId}" value="{!threatRecs.Id} "/>
+                          <!-- <apex:param name="threatRec" assignTo="{!currentRecDesc}" value="{!threatRecs.Description__c} "/> --> <!-- needs to be a string, number , or boolean. pass in 3 bits? -->
+                        <!-- </apex:outputLink> -->
+                        </apex:commandLink> <!-- View -->
+                        <!-- End of View Button -->
+
+                      </span> <!-- need to remove this span, and replace it with a command link, (With a param in it) and a method call for when the user clicks it -->
+                      
+                      <!-- Delete Button -->
+                      <span>
+                        <apex:commandLink id="btnDelete" action="{!deleteAccPlanSWOTRecord}" value="{!$Label.ACCOUNTPLANNING_SWOT_DELETE}">
+                          <apex:param name="threatRecId" assignTo="{!currentRecId}" value="{!threatRecs.Id}  "/> <!-- param seems to be set correctly here -->
+                        </apex:commandLink>
+                      </span>
+                      <!-- End of Delete Button -->
+
+                    </div>
+                    <!-- End of rollout buttons-->
+
+                    </li>
+                  </apex:repeat>
+                </ul>
+              </apex:outputPanel>               
+
+              <!-- Threats end here -->
+
+            </apex:outputPanel>
+          </apex:outputPanel>
+
+        </apex:outputPanel>
+      </apex:outputPanel>
+      <!-- End of content block -->
+
+      <!-- Create the 'Add Item' modal here, output panel to cover screen gray, and another on top of this for the popup screen -->
+      <apex:outputPanel styleClass="modal-overlay" layout="block" rendered="{!displayPopUp}" id="background"/> <!-- Gray background, works -->
+        <apex:outputPanel styleClass="modal" layout="block" rendered="{!displayPopUp}" id="addItem" > <!-- Shadow, works -->
+          <apex:outputPanel styleClass="modal-box" layout="block">
+            <apex:outputPanel styleClass="title" layout="block">
+              <h2>{!$Label.ACCOUNTPLANNING_SWOT_ADDITEM}</h2>
+              <apex:commandLink action="{!closeNewItemPopup}" styleClass="icon icon-close"/>
+            </apex:outputPanel>
+
+            <apex:outputPanel styleClass="inner" layout="block">
+
+              <apex:outputPanel styleClass="row" layout="block">
+                <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_SWOT_TYPE}" for="type"/>
+                <apex:outputPanel styleClass="input" layout="block">
+                  <apex:inputField value="{!newAccPlanSWOT.Type__c}"/>
+                </apex:outputPanel>
+              </apex:outputPanel>
+
+              <apex:outputPanel styleClass="row" layout="block">
+                <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_SWOT_IMPORTANCE}" for="impact"/>
+                <apex:outputPanel styleClass="input" layout="block">
+                  <apex:inputField value="{!newAccPlanSWOT.Importance__c}"/>
+                </apex:outputPanel>
+              </apex:outputPanel>
+
+              <apex:outputPanel styleClass="row" layout="block">
+                <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_SWOT_DESCRIPTION}" for="desc1"/>
+                <apex:outputPanel styleClass="input" layout="block">
+                  <apex:inputField value="{!newAccPlanSWOT.Description__c}"/>
+                </apex:outputPanel>
+              </apex:outputPanel>
+
+
+              <apex:outputPanel styleClass="row" layout="block">
+                <apex:outputLabel value="{!$Label.ACCOUNTPLANNING_SWOT_IMPACT}" for="impact1"/>
+                <apex:outputPanel styleClass="input" layout="block">
+                  <apex:inputField value="{!newAccPlanSWOT.Impact__c}"/>
+                </apex:outputPanel>
+              </apex:outputPanel>
+
+              <apex:outputPanel styleClass="dotted-line" layout="block"/>
+              <apex:outputPanel styleClass="action-buttons" layout="block">
+
+                <apex:commandLink styleClass="button gray pull-left btnCancel" value="{!$Label.ACCOUNTPLANNING_SWOT_BTN_CANCEL}" action="{!closeNewItemPopup}"/>
+                <apex:commandLink id="btnCreate" action="{!saveNewAccPlanSWOTRecord}" styleClass="button pull-right btnCancel"  value="{!$Label.ACCOUNTPLANNING_SWOT_BTN_CREATE}" />
+              </apex:outputPanel>
+            </apex:outputPanel>
+          </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- End of 'Add Item' modal -->
+
+
+        <!-- Create the 'Edit Item' modal here, output panel to cover screen gray, and another on top of this for the popup screen -->
+        <apex:outputPanel styleClass="modal-overlay" layout="block" rendered="{!displayCurrentRecordPopup}" id="currBackground"/> <!-- Gray background, works -->
+
+        <apex:outputPanel styleClass="modal" id="editItem" layout="block" rendered="{!displayCurrentRecordPopup}"> 
+          <apex:outputPanel styleClass="modal-box" layout="block">
+            <apex:outputPanel styleClass="title" layout="block">
+              <h2>{!$Label.ACCOUNTPLANNING_SWOT_VIEWITEM}</h2>
+              <apex:commandLink action="{!closeCurrentAccPlanSWOTRecordPopup}" styleClass="icon icon-close"/>
+            </apex:outputPanel>
+            <apex:outputPanel styleClass="inner" layout="block">
+
+              <apex:outputPanel styleClass="row" layout="block">
+                <label for="type" >{!$Label.ACCOUNTPLANNING_SWOT_TYPE}</label>
+                <apex:outputPanel styleClass="input" layout="block">
+                  <apex:outputField value="{!currentRec.Type__c}" />
+                </apex:outputPanel>
+              </apex:outputPanel>
+
+              <apex:outputPanel styleClass="row" layout="block">
+                <label for="importance">{!$Label.ACCOUNTPLANNING_SWOT_IMPORTANCE}</label>
+                <apex:outputPanel styleClass="input" layout="block">
+                  <apex:inputField value="{!currentRec.Importance__c}"/>
+                </apex:outputPanel>
+              </apex:outputPanel>
+
+              <apex:outputPanel styleClass="row" layout="block">
+                <label for="desc">{!$Label.ACCOUNTPLANNING_SWOT_DESCRIPTION}</label>
+                <apex:outputPanel styleClass="input" layout="block">
+                  <apex:inputTextArea value="{!currentRec.Description__c}"/>
+                </apex:outputPanel>
+              </apex:outputPanel>
+
+              <apex:outputPanel styleClass="row" layout="block">
+                <label for="impact">{!$Label.ACCOUNTPLANNING_SWOT_IMPACT}</label>
+                <apex:outputPanel styleClass="input" layout="block">
+                  <apex:inputTextarea value="{!currentRec.Impact__c}"/>
+                </apex:outputPanel>
+              </apex:outputPanel>
+
+              <apex:outputPanel styleClass="dotted-line" layout="block"/>
+              <apex:outputPanel styleClass="action-buttons" layout="block">
+                <apex:commandLink action="{!closeCurrentAccPlanSWOTRecordPopup}" styleClass="button gray pull-left btnCancel" value="{!$Label.ACCOUNTPLANNING_SWOT_BTN_CLOSE}"/>
+                <apex:commandLink action="{!updateCurrentAccPlanSWOTRecord}" styleClass="button pull-right" value="{!$Label.ACCOUNTPLANNING_SWOT_BTN_SAVE}"/>
+              </apex:outputPanel>
+
+            </apex:outputPanel>
+          </apex:outputPanel>
+        </apex:outputPanel>
+
+      <!-- End of 'Edit Item' modal -->
+
+      <footer></footer>
+    </html>
+  </apex:form>
+
+    <script>
+    var page_loaded = false; 
+    window.onload = function ()
+    {    
+      if (typeof history.pushState === "function")
+      {
+        history.pushState("jibberish", null, null);
+        window.onpopstate = function ()
+        { 
+          if(!page_loaded) return;          
+          history.pushState('newjibberish', null, null);
+          window.location.replace("/{!Account_Plan__c.id}");
+          // Handle the back (or forward) buttons here
+          // Will NOT handle refresh, use onbeforeunload for this.
+        };
+        
+        setTimeout(function(){page_loaded = true;},200);
+      }
+      else
+      {
+        var ignoreHashChange = true;
+        window.onhashchange = function ()
+        {
+          if (!ignoreHashChange)
+          {
+            ignoreHashChange = true;
+            window.location.hash = Math.random();
+            // Detect and redirect change here
+            // Works in older FF and IE9
+            // * it does mess with your hash symbol (anchor?) pound sign
+            // delimiter on the end of the URL
+          }
+          else
+          {
+            ignoreHashChange = false;   
+          }
+        };
+      }
+    }
+    </script>
+
+</apex:page>

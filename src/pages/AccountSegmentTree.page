@@ -1,0 +1,5 @@
+<apex:page standardController="account" tabStyle="Account" > 
+    <div style="height: 200px" class="bodyDiv" >
+        <c:AccountSegmentTree currentId="{!Account.id}" />
+    </div>
+</apex:page>

@@ -1,0 +1,123 @@
+<!--
+/**=====================================================================
+
+ * Name: AriaOrderPrintPreview
+ * Description: 
+ * Created Date: May 13th, 2014
+ * Created By: Sadar Yacob(Experian)
+ * 
+ * Date Modified      Modified By                  Description of the update
+ *
+  =====================================================================*/
+-->
+
+<apex:page standardController="ARIA_Order__c" standardStylesheets="true" showHeader="false" sidebar="false" tabStyle="ARIA_Order__c">
+    <table width="98%" border="0" cellpadding="0" cellspacing="0">
+    <tr><td align="right"><a href="javascript:window.print();">Print</a></td></tr>
+    </table>
+
+  <apex:pageBlock title="Aria Order: {!ARIA_Order__c.Name} Created By {!ARIA_Order__c.CreatedBy.FirstName} {!ARIA_Order__c.CreatedBy.LastName}">
+        <apex:pageBlockSection title="Aria Order Information" columns="2" showHeader="true" collapsible="false">
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Billing Account" for="account"/>
+                <apex:outputField id="account" value="{!ARIA_Order__c.Billing_Company_Name__c}"/>       
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Billing Account #" for="AccntNum"/>
+                <apex:outputField id="AccntNum" value="{!ARIA_Order__c.Billing_Account_Number__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Billing Contact" for="billc"/>
+                <apex:outputField id="billc" value="{!ARIA_Order__c.Billing_Contact_Name__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Billing Enquiries Contact" for="BillEc"/>
+                <apex:outputField id="BillEc" value="{!ARIA_Order__c.Billing_Enquiries_Contact__c}"/>
+            </apex:pageBlockSectionItem> 
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Billing Address 1" for="billaddr"/>
+                <apex:outputField id="billaddr" value="{!ARIA_Order__c.Billing_Account_Address1__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                 <apex:outputLabel value="Billing Address 2" for="billaddr2"/>
+                <apex:outputField id="billaddr2" value="{!ARIA_Order__c.Billing_Account_Address2__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                 <apex:outputLabel value="Billing Address City" for="billaddrc"/>
+                <apex:outputField id="billaddrc" value="{!ARIA_Order__c.Billing_Account_City__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                 <apex:outputLabel value="Billing Address Country" for="billaddrcty"/>
+                <apex:outputField id="billaddrcty" value="{!ARIA_Order__c.Billing_Account_Country__c}"/>
+            </apex:pageBlockSectionItem> 
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Invoice Template" for="invT"/>
+                <apex:outputField id="invT" value="{!ARIA_Order__c.Invoice_Template_Name__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Invoice Immediately" for="invI"/>
+                <apex:outputField id="invI" value="{!ARIA_Order__c.Invoice_Immediately__c}"/>
+            </apex:pageBlockSectionItem>
+               <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Invoice Delivery Method " for="idm"/>
+                <apex:outputField id="idm" value="{!ARIA_Order__c.Invoice_Delivery_Method__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Payment Method" for="PayM"/>
+                <apex:outputField id="PayM" value="{!ARIA_Order__c.Customer_Payment_Method__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="VAT Number" for="vat"/>
+                <apex:outputField id="vat" value="{!ARIA_Order__c.VAT_Number__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Tax Exempt" for="tem"/>
+                <apex:outputField id="tem" value="{!ARIA_Order__c.Tax_Exempt__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Order Status" for="stat"/>
+                <apex:outputField id="stat" value="{!ARIA_Order__c.Status__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Order Currency" for="tem"/>
+                <apex:outputField value="{!ARIA_Order__c.Order_Currency__c}"/>
+            </apex:pageBlockSectionItem>
+               <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Total Tax Amount" for="tax"/>
+                <apex:outputField id="tax" value="{!ARIA_Order__c.Estimated_Tax_Amount__c}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Total Order Amount" for="tem"/>
+                <apex:outputField value="{!ARIA_Order__c.Total_Order_Amount__c}"/>
+            </apex:pageBlockSectionItem>
+            
+        </apex:pageBlockSection>
+     <!--/apex:pageBlock-->   
+     
+     <!--apex:repeat var="oli" value="{!ARIA_Order__c.Aria_Order_Item_Details__r}"-->
+     <!--apex:pageBlock title="Aria Order Line Details THIS WORKED"-->
+        <apex:pageBlockSection title="Aria Order Line Details" showHeader="true" columns="1" collapsible="false">
+          <apex:pageBlockTable style="width=100%" value="{!ARIA_Order__c.Aria_Order_Item_Details__r}" var="oli">
+             <apex:column style="width=17%" headerValue="Product Name">
+               <apex:outputField id="prd" value="{!oli.Aria_Product_Name__c}"/>
+             </apex:column>
+             <apex:column style="width=17%" headerValue="Item SKU">
+               <apex:outputField id="sku" value="{!oli.Item_SKU__c}"/>
+             </apex:column>
+             <apex:column style="width=17%" headerValue="Comments">
+               <apex:outputField value="{!oli.Comments__c}"/>
+             </apex:column>
+             <apex:column style="width=16%" headervalue="Price Per Unit">
+                <apex:outputField value="{!oli.Price_Per_Unit__c}"/>
+             </apex:column>
+             <apex:column style="width=16%" headerValue="Quantity">
+                <apex:outputField value="{!oli.Quantity__c}"/>
+             </apex:column>
+             <apex:column style="width=16%" headerValue="Total">
+                <apex:outputField value="{!oli.Total__c}"/>
+             </apex:column>
+          </apex:pageBlockTable>
+        </apex:pageBlockSection>
+     </apex:pageBlock>  
+     <!--/apex:repeat-->
+</apex:page>
